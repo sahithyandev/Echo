@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f0f;
+      color: #e8e8e8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .wordmark {
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: #fff;
+      margin-bottom: 0.75rem;
+    }
+
+    .tagline {
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 3.5rem;
+    }
+
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 3rem;
+    }
+
+    .feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+    }
+
+    .feature-icon {
+      font-size: 1.1rem;
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+
+    .feature-text {
+      font-size: 0.875rem;
+      color: #888;
+      line-height: 1.5;
+    }
+
+    .feature-text strong {
+      color: #ccc;
+      font-weight: 500;
+    }
+
+    a.cta {
+      display: inline-block;
+      padding: 0.65rem 1.5rem;
+      background: #fff;
+      color: #0f0f0f;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    a.cta:hover { background: #ddd; }
+  </style>
+</head>
+<body>
+  <div class="wordmark">Echo</div>
+  <p class="tagline">Your personal music library</p>
+
+  <div class="features">
+    <div class="feature">
+      <span class="feature-icon">🎵</span>
+      <span class="feature-text"><strong>Own your music.</strong> Stream from your own collection, not a subscription.</span>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">📂</span>
+      <span class="feature-text"><strong>Organized library.</strong> Albums, artists, and tracks — automatically sorted.</span>
+    </div>
+    <div class="feature">
+      <span class="feature-icon">⚡</span>
+      <span class="feature-text"><strong>Fast and local.</strong> Runs on your machine, nothing leaves your network.</span>
+    </div>
+  </div>
+
+  <a class="cta" href="/library">Open Library</a>
+</body>
+</html>
