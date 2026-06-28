@@ -4,19 +4,33 @@ import { Layout } from "./layout";
 
 unused(Html);
 
-export function LoginPage() {
+export function LoginPage({
+	register,
+	error,
+}: {
+	register: boolean;
+	error?: boolean;
+}) {
+	const action = register ? "/auth/sign-up" : "/auth/sign-in";
+	const heading = register ? "Create admin account" : "Sign in";
+	const submit = register ? "Create account" : "Sign in";
+
 	return (
 		<Layout title="Echo — Login">
 			<div class="wordmark">Echo</div>
 
-			<form class="login-form" method="post" action="/auth/login">
+			<form class="login-form" method="post" action={action}>
+				<p class="form-heading">{heading}</p>
+				{error && (
+					<p class="form-error">Invalid email or password. Please try again.</p>
+				)}
 				<div class="field">
-					<label for="username">Username</label>
+					<label for="email">Email</label>
 					<input
-						id="username"
-						name="username"
-						type="text"
-						autocomplete="username"
+						id="email"
+						name="email"
+						type="email"
+						autocomplete="email"
 						required
 						autofocus
 					/>
@@ -27,12 +41,17 @@ export function LoginPage() {
 						id="password"
 						name="password"
 						type="password"
-						autocomplete="current-password"
+						autocomplete={register ? "new-password" : "current-password"}
 						required
 					/>
+					{register && (
+						<span class="field-hint">
+							8+ chars, upper &amp; lower case, number, special character
+						</span>
+					)}
 				</div>
 				<button type="submit" class="cta">
-					Sign in
+					{submit}
 				</button>
 			</form>
 		</Layout>

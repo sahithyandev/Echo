@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { user_sessions, users } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import type { AuthModel } from "./model";
@@ -7,6 +7,24 @@ import type { AuthModel } from "./model";
 export abstract class Auth {
 	static hashToken(token: string): string {
 		return createHash("sha256").update(token).digest("hex");
+	}
+
+	static async userCount(db: DbLike): Promise<number> {
+		const rows = await db.select({ count: sql<number>`count(*)` }).from(users);
+		return rows[0].count;
+	}
+
+	static async revokeSession(db: DbLike, token: string) {
+		const tokenHash = Auth.hashToken(token);
+		await db
+			.update(user_sessions)
+			.set({ revoked_at: new Date() })
+			.where(
+				and(
+					eq(user_sessions.token_hash, tokenHash),
+					isNull(user_sessions.revoked_at),
+				),
+			);
 	}
 
 	static async createSession(
@@ -46,32 +64,21 @@ export abstract class Auth {
 	}
 
 	static async signUp(db: DbLike, body: AuthModel.signUpBody) {
+		const count = await Auth.userCount(db);
+		if (count > 0) throw new Error("Registration is closed");
+
 		const hashedPassword = await Bun.password.hash(body.password);
-		try {
-			const inserted = await db
-				.insert(users)
-				.values({
-					email: body.email.toLowerCase().trim(),
-					password: hashedPassword,
-					name: body.email.split("@")[0],
-				})
-				.returning({ id: users.id });
-			if (inserted.length === 0) throw new Error("Failed to create user");
-			return { id: inserted[0].id };
-		} catch (error) {
-			const cause =
-				error instanceof Error
-					? (error as Error & { cause?: unknown }).cause
-					: undefined;
-			const causeMsg =
-				cause instanceof Error ? cause.message : String(cause ?? "");
-			if (causeMsg.includes("UNIQUE constraint failed: users.email")) {
-				throw new Error(
-					"This email is already registered. Please sign in instead.",
-				);
-			}
-			throw error;
-		}
+		const inserted = await db
+			.insert(users)
+			.values({
+				email: body.email.toLowerCase().trim(),
+				password: hashedPassword,
+				name: body.email.split("@")[0],
+				is_admin: true,
+			})
+			.returning({ id: users.id });
+		if (inserted.length === 0) throw new Error("Failed to create user");
+		return { id: inserted[0].id };
 	}
 
 	static async signIn(

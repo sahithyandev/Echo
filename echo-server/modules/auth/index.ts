@@ -1,10 +1,17 @@
-import { Elysia } from "elysia";
+import { type CookieOptions, Elysia } from "elysia";
 import type { DbLike } from "../../db/types";
 import { jwtInstance } from "../../utils/jwt";
 import { getRequestInfo } from "../../utils/request-info";
 import createAuthMiddleware from "./middleware";
 import { AuthModel } from "./model";
 import { Auth } from "./service";
+
+const SESSION_COOKIE: CookieOptions = {
+	httpOnly: true,
+	sameSite: "lax" as const,
+	path: "/",
+	maxAge: 60 * 60 * 24 * 30,
+};
 
 export default function createAuthModule(dbClient: DbLike) {
 	const authMiddleware = createAuthMiddleware(dbClient);
@@ -31,73 +38,69 @@ export default function createAuthModule(dbClient: DbLike) {
 		)
 		.post(
 			"/sign-up",
-			async ({ body, jwt, currentUser, status, db, request }) => {
-				if (currentUser) throw new Error("You are already signed in");
+			async ({ body, jwt, currentUser, db, request, cookie, redirect }) => {
+				if (currentUser) return redirect("/library");
 
-				await Auth.signUp(db, body);
-
-				const { ipAddress, userAgent } = getRequestInfo(request);
-				const signInResult = await Auth.signIn(db, {
-					email: body.email,
-					password: body.password,
-				});
-				const token = await jwt.sign({
-					id: signInResult.id,
-					jti: crypto.randomUUID(),
-				} satisfies AuthModel.JWTData & { jti: string });
-
-				await Auth.createSession(db, {
-					userId: signInResult.id,
-					token,
-					ipAddress,
-					userAgent,
-				});
-
-				return status(200, {
-					id: signInResult.id,
-					email: signInResult.email,
-					name: signInResult.name,
-					token,
-				});
+				try {
+					await Auth.signUp(db, body);
+					const { ipAddress, userAgent } = getRequestInfo(request);
+					const signInResult = await Auth.signIn(db, {
+						email: body.email,
+						password: body.password,
+					});
+					const token = await jwt.sign({
+						id: signInResult.id,
+						jti: crypto.randomUUID(),
+					} satisfies AuthModel.JWTData & { jti: string });
+					await Auth.createSession(db, {
+						userId: signInResult.id,
+						token,
+						ipAddress,
+						userAgent,
+					});
+					cookie.session.set({ value: token, ...SESSION_COOKIE });
+					return redirect("/library");
+				} catch {
+					return redirect("/login?error=1");
+				}
 			},
-			{
-				currentUser: true,
-				body: AuthModel.signUpBody,
-				parse: "application/json",
-				response: { 200: AuthModel.signUpResponse },
-			},
+			{ currentUser: true, body: AuthModel.signUpBody },
 		)
 		.post(
 			"/sign-in",
-			async ({ body, jwt, currentUser, status, db, request }) => {
-				if (currentUser) throw new Error("You are already signed in");
+			async ({ body, jwt, currentUser, db, request, cookie, redirect }) => {
+				if (currentUser) return redirect("/library");
 
-				const { ipAddress, userAgent } = getRequestInfo(request);
-				const result = await Auth.signIn(db, body);
-				const token = await jwt.sign({
-					id: result.id,
-					jti: crypto.randomUUID(),
-				} satisfies AuthModel.JWTData & { jti: string });
-
-				await Auth.createSession(db, {
-					userId: result.id,
-					token,
-					ipAddress,
-					userAgent,
-				});
-
-				return status(200, {
-					id: result.id,
-					email: result.email,
-					name: result.name,
-					token,
-				});
+				try {
+					const { ipAddress, userAgent } = getRequestInfo(request);
+					const result = await Auth.signIn(db, body);
+					const token = await jwt.sign({
+						id: result.id,
+						jti: crypto.randomUUID(),
+					} satisfies AuthModel.JWTData & { jti: string });
+					await Auth.createSession(db, {
+						userId: result.id,
+						token,
+						ipAddress,
+						userAgent,
+					});
+					cookie.session.set({ value: token, ...SESSION_COOKIE });
+					return redirect("/library");
+				} catch {
+					return redirect("/login?error=1");
+				}
 			},
-			{
-				currentUser: true,
-				body: AuthModel.signInBody,
-				parse: "application/json",
-				response: { 200: AuthModel.signInResponse },
+			{ currentUser: true, body: AuthModel.signInBody },
+		)
+		.post(
+			"/sign-out",
+			async ({ cookie, redirect }) => {
+				const token = (cookie as Record<string, { value?: string }>).session
+					?.value;
+				if (token) await Auth.revokeSession(dbClient, token);
+				cookie.session.remove();
+				return redirect("/login");
 			},
+			{ currentUser: true },
 		);
 }

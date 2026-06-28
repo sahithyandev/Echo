@@ -157,3 +157,38 @@ button.cta {
 button.cta:hover {
 	background: var(--cta-hover);
 }
+
+.form-heading {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--fg-strong);
+	margin-bottom: 0.25rem;
+}
+
+.form-error {
+	font-size: 0.8rem;
+	color: #e05a5a;
+}
+
+.field-hint {
+	font-size: 0.75rem;
+	color: var(--fg-subtle);
+}
+
+.library-empty {
+	font-size: 0.9rem;
+	color: var(--fg-muted);
+	margin-bottom: 2rem;
+}
+
+button.cta.sign-out {
+	background: transparent;
+	color: var(--fg-muted);
+	border: 1px solid var(--border);
+	font-weight: 400;
+}
+
+button.cta.sign-out:hover {
+	background: var(--surface);
+	color: var(--fg);
+}

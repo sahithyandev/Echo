@@ -14,17 +14,17 @@ export default function createAuthMiddleware(dbClient: DbLike) {
 			currentUser: {
 				resolve: async ({
 					headers,
+					cookie,
 					jwt,
 					db,
 				}): Promise<{
 					currentUser: AuthModel.JWTData | null;
 					sessionRevoked: boolean;
 				}> => {
-					if (!headers.authorization) {
-						return { currentUser: null, sessionRevoked: false };
-					}
-
-					const token = headers.authorization.split(" ")[1];
+					const authHeader = headers.authorization?.split(" ")[1];
+					const cookieToken = (cookie as Record<string, { value?: string }>)
+						.session?.value;
+					const token = authHeader ?? cookieToken;
 					if (!token) {
 						return { currentUser: null, sessionRevoked: false };
 					}

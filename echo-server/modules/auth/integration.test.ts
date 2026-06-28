@@ -30,28 +30,29 @@ function signInRequest(body = TEST_USER) {
 	});
 }
 
-async function signUp(
-	body = TEST_USER,
-): Promise<{ token: string; id: number }> {
+function extractSessionToken(res: Response): string {
+	const cookie = res.headers.get("set-cookie") ?? "";
+	return cookie.match(/session=([^;]+)/)?.[1] ?? "";
+}
+
+async function signUp(body = TEST_USER): Promise<{ token: string }> {
 	const res = await app.handle(signUpRequest(body));
-	return res.json();
+	return { token: extractSessionToken(res) };
 }
 
 describe("POST /auth/sign-up", () => {
-	it("creates user and returns token", async () => {
+	it("creates user, sets session cookie, and redirects to /library", async () => {
 		const res = await app.handle(signUpRequest());
-		expect(res.status).toBe(200);
-		const body = await res.json();
-		expect(body).toMatchObject({ email: "user@example.com", name: "user" });
-		expect(typeof body.token).toBe("string");
-		expect(typeof body.id).toBe("number");
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe("/library");
+		expect(res.headers.get("set-cookie")).toContain("session=");
 	});
 
-	it("rejects duplicate email with friendly message", async () => {
+	it("locks registration after first user", async () => {
 		await app.handle(signUpRequest());
 		const res = await app.handle(signUpRequest());
-		expect(res.status).toBeGreaterThanOrEqual(400);
-		expect(await res.text()).toContain("already registered");
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toContain("/login?error=1");
 	});
 
 	it("rejects weak password with 422", async () => {
@@ -63,21 +64,21 @@ describe("POST /auth/sign-up", () => {
 });
 
 describe("POST /auth/sign-in", () => {
-	it("returns token for valid credentials", async () => {
+	it("sets session cookie and redirects to /library for valid credentials", async () => {
 		await signUp();
 		const res = await app.handle(signInRequest());
-		expect(res.status).toBe(200);
-		const body = await res.json();
-		expect(typeof body.token).toBe("string");
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe("/library");
+		expect(res.headers.get("set-cookie")).toContain("session=");
 	});
 
-	it("rejects wrong password", async () => {
+	it("redirects to /login?error=1 for wrong password", async () => {
 		await signUp();
 		const res = await app.handle(
 			signInRequest({ ...TEST_USER, password: "WrongPass1!" }),
 		);
-		expect(res.status).toBeGreaterThanOrEqual(400);
-		expect(await res.text()).toContain("Invalid email or password");
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toContain("/login?error=1");
 	});
 });
 
@@ -91,7 +92,7 @@ describe("GET /auth/validate", () => {
 		);
 		expect(res.status).toBe(200);
 		const body = await res.json();
-		expect(body).toMatchObject({ email: "user@example.com" });
+		expect(body).toMatchObject({ email: "user@example.com", is_admin: true });
 	});
 
 	it("returns NOT_AUTHENTICATED without a token", async () => {
