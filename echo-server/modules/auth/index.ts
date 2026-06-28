@@ -5,8 +5,9 @@ import { getRequestInfo } from "../../utils/request-info";
 import createAuthMiddleware from "./middleware";
 import { AuthModel } from "./model";
 import { Auth } from "./service";
+import type { DbLike } from "../../db/types";
 
-export default function createAuthModule(dbClient: typeof client) {
+export default function createAuthModule(dbClient: DbLike) {
 	const authMiddleware = createAuthMiddleware(dbClient);
 	return new Elysia({ prefix: "/auth" })
 		.decorate("db", dbClient)

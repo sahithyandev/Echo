@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
-import type { client } from "../../db/client";
 import { user_sessions, users } from "../../db/schema";
 import type { AuthModel } from "./model";
+import type { DbLike } from "../../db/types";
 
 export abstract class Auth {
 	static hashToken(token: string): string {
@@ -10,7 +10,7 @@ export abstract class Auth {
 	}
 
 	static async createSession(
-		db: typeof client,
+		db: DbLike,
 		options: {
 			userId: number;
 			token: string;
@@ -28,7 +28,7 @@ export abstract class Auth {
 		return tokenHash;
 	}
 
-	static async findUserById(db: typeof client, id: number) {
+	static async findUserById(db: DbLike, id: number) {
 		const rows = await db
 			.select({
 				id: users.id,
@@ -45,7 +45,7 @@ export abstract class Auth {
 		return { ...row, is_verified: row.is_verified === 1 };
 	}
 
-	static async signUp(db: typeof client, body: AuthModel.signUpBody) {
+	static async signUp(db: DbLike, body: AuthModel.signUpBody) {
 		const hashedPassword = await Bun.password.hash(body.password);
 		try {
 			const inserted = await db
@@ -71,7 +71,7 @@ export abstract class Auth {
 	}
 
 	static async signIn(
-		db: typeof client,
+		db: DbLike,
 		{ email, password }: AuthModel.signInBody,
 	): Promise<AuthModel.signInReturn> {
 		const rows = await db

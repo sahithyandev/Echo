@@ -1,12 +1,12 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { Elysia } from "elysia";
-import type { client } from "../../db/client";
 import { user_sessions } from "../../db/schema";
 import { jwtInstance } from "../../utils/jwt";
 import { AuthModel } from "./model";
 import { Auth } from "./service";
+import type { DbLike } from "../../db/types";
 
-export default function createAuthMiddleware(dbClient: typeof client) {
+export default function createAuthMiddleware(dbClient: DbLike) {
 	return new Elysia({ name: "auth.middleware" })
 		.use(jwtInstance)
 		.decorate("db", dbClient)
