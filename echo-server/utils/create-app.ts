@@ -6,6 +6,7 @@ import type { DbLike } from "../db/types";
 export async function createApp(db: DbLike) {
 	return new Elysia()
 		.use(await staticPlugin({ prefix: "/" }))
-		.use(createAuthModule(db))
-		.listen(3000);
+		.use(createAuthModule(db));
 }
+
+export type App = Awaited<ReturnType<typeof createApp>>;
