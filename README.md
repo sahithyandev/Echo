@@ -14,9 +14,14 @@ My own music library and streaming setup.
 
 ```
 Echo/
-└── echo-server/   # Elysia HTTP server (Bun)
-    └── src/
-        └── index.ts
+└── echo-server/        # Elysia HTTP server (Bun)
+    ├── index.ts        # Entry point
+    ├── db/             # Drizzle ORM + libsql (SQLite)
+    ├── modules/
+    │   └── auth/       # Sign-up, sign-in, session management
+    ├── pages/          # JSX pages (HTML via @elysiajs/html)
+    ├── public/         # Static assets (CSS, favicons)
+    └── utils/          # JWT, env, misc helpers
 ```
 
 ### Running the server
@@ -24,6 +29,13 @@ Echo/
 ```sh
 cd echo-server
 bun run dev   # watch mode on port 3000
+```
+
+### Testing
+
+```sh
+cd echo-server
+bun test
 ```
 
 ### Commits
