@@ -5,9 +5,11 @@
   },
   "dependencies": {
     "@elysiajs/static": "^1.4.10",
-    "elysia": "latest"
+    "elysia": "latest",
+    "tailwindcss": "4"
   },
   "devDependencies": {
+    "bun-plugin-tailwind": "^0.1.2",
     "bun-types": "latest"
   }
 }
