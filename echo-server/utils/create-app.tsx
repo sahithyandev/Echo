@@ -5,6 +5,9 @@ import type { DbLike } from "../db/types";
 import createAuthModule from "../modules/auth";
 import { IndexPage } from "../pages/index";
 import { LoginPage } from "../pages/login";
+import { unused } from "./misc";
+
+unused(Html);
 
 export async function createApp(db: DbLike) {
 	return new Elysia()

@@ -1,4 +1,7 @@
 import { Html } from "@elysiajs/html";
+import { unused } from "../utils/misc";
+
+unused(Html);
 
 export function Layout({
 	title,

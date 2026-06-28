@@ -23,7 +23,7 @@
 				"noUnusedImports": "warn"
 			},
 			"suspicious": {
-				"noUnknownAtRules": "info"
+				"noUnknownAtRules": "off"
 			}
 		}
 	},

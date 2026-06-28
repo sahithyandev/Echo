@@ -1,5 +1,8 @@
 import { Html } from "@elysiajs/html";
+import { unused } from "../utils/misc";
 import { Layout } from "./layout";
+
+unused(Html);
 
 export function LoginPage() {
 	return (
