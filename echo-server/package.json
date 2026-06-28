@@ -3,7 +3,9 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --watch index.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "lint": "biome check",
+    "lint:fix": "biome check --write"
   },
   "dependencies": {
     "@elysiajs/html": "^1.4.2",
