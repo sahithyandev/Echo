@@ -1,10 +1,10 @@
 const DEFAULT_VALUES = {
-	DATABASE_URL: new URL("../echo.db", import.meta.url).pathname
+	DATABASE_URL: new URL("../echo.db", import.meta.url).pathname,
 } as const;
 
 type DEFINED_DEFAULT_VALUE_KEY = keyof typeof DEFAULT_VALUES;
 
-console.log("D", DEFAULT_VALUES.DATABASE_URL);
+console.log("DATABASE:", DEFAULT_VALUES.DATABASE_URL);
 
 export function getEnvVar(name: string, defaultValue?: string): string {
 	const value = process.env[name];
@@ -12,7 +12,7 @@ export function getEnvVar(name: string, defaultValue?: string): string {
 		if (defaultValue) {
 			return defaultValue;
 		}
-		
+
 		if (name in DEFAULT_VALUES) {
 			return DEFAULT_VALUES[name as DEFINED_DEFAULT_VALUE_KEY];
 		}

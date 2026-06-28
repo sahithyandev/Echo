@@ -1,24 +1,24 @@
 {
-  "name": "echo-server",
-  "type": "module",
-  "scripts": {
-    "dev": "bun run --watch index.ts",
-    "test": "bun test",
-    "lint": "biome check",
-    "lint:fix": "biome check --write"
-  },
-  "dependencies": {
-    "@elysiajs/html": "^1.4.2",
-    "@elysiajs/jwt": "^1.4.2",
-    "@elysiajs/static": "^1.4.10",
-    "@libsql/client": "^0.17.4",
-    "drizzle-orm": "^1.0.0-rc.4",
-    "elysia": "latest",
-    "tailwindcss": "4"
-  },
-  "devDependencies": {
-    "bun-plugin-tailwind": "^0.1.2",
-    "bun-types": "latest",
-    "drizzle-kit": "^1.0.0-rc.4"
-  }
+	"name": "echo-server",
+	"type": "module",
+	"scripts": {
+		"dev": "bun run --watch index.ts",
+		"test": "bun test",
+		"lint": "biome check",
+		"lint:fix": "biome check --write"
+	},
+	"dependencies": {
+		"@elysiajs/html": "^1.4.2",
+		"@elysiajs/jwt": "^1.4.2",
+		"@elysiajs/static": "^1.4.10",
+		"@libsql/client": "^0.17.4",
+		"drizzle-orm": "^1.0.0-rc.4",
+		"elysia": "latest",
+		"tailwindcss": "4"
+	},
+	"devDependencies": {
+		"bun-plugin-tailwind": "^0.1.2",
+		"bun-types": "latest",
+		"drizzle-kit": "^1.0.0-rc.4"
+	}
 }

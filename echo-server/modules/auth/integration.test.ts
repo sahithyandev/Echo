@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { makeTestDb } from "../../db/test-client";
 import { user_sessions } from "../../db/schema";
-import { createApp, type App } from "../../utils/create-app";
+import { makeTestDb } from "../../db/test-client";
 import type { DbLike } from "../../db/types";
+import { type App, createApp } from "../../utils/create-app";
 
 const TEST_USER = { email: "user@example.com", password: "Passw0rd!" };
 
@@ -30,7 +30,9 @@ function signInRequest(body = TEST_USER) {
 	});
 }
 
-async function signUp(body = TEST_USER): Promise<{ token: string; id: number }> {
+async function signUp(
+	body = TEST_USER,
+): Promise<{ token: string; id: number }> {
 	const res = await app.handle(signUpRequest(body));
 	return res.json();
 }
@@ -93,9 +95,7 @@ describe("GET /auth/validate", () => {
 	});
 
 	it("returns NOT_AUTHENTICATED without a token", async () => {
-		const res = await app.handle(
-			new Request("http://localhost/auth/validate"),
-		);
+		const res = await app.handle(new Request("http://localhost/auth/validate"));
 		expect(res.status).toBe(401);
 		expect(await res.text()).toBe("NOT_AUTHENTICATED");
 	});

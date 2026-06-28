@@ -1,10 +1,10 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { user_sessions } from "../../db/schema";
+import type { DbLike } from "../../db/types";
 import { jwtInstance } from "../../utils/jwt";
 import { AuthModel } from "./model";
 import { Auth } from "./service";
-import type { DbLike } from "../../db/types";
 
 export default function createAuthMiddleware(dbClient: DbLike) {
 	return new Elysia({ name: "auth.middleware" })
@@ -12,7 +12,11 @@ export default function createAuthMiddleware(dbClient: DbLike) {
 		.decorate("db", dbClient)
 		.macro({
 			currentUser: {
-				resolve: async ({ headers, jwt, db }): Promise<{
+				resolve: async ({
+					headers,
+					jwt,
+					db,
+				}): Promise<{
 					currentUser: AuthModel.JWTData | null;
 					sessionRevoked: boolean;
 				}> => {

@@ -1,10 +1,10 @@
-import { html, Html } from "@elysiajs/html";
+import { Html, html } from "@elysiajs/html";
 import staticPlugin from "@elysiajs/static";
 import { Elysia } from "elysia";
+import type { DbLike } from "../db/types";
+import createAuthModule from "../modules/auth";
 import { IndexPage } from "../pages/index";
 import { LoginPage } from "../pages/login";
-import createAuthModule from "../modules/auth";
-import type { DbLike } from "../db/types";
 
 export async function createApp(db: DbLike) {
 	return new Elysia()

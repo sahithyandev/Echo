@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { makeTestDb } from "../db/test-client";
-import { createApp, type App } from "../utils/create-app";
+import { type App, createApp } from "../utils/create-app";
 
 let app: App;
 

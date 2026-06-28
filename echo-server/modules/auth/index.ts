@@ -1,11 +1,10 @@
 import { Elysia } from "elysia";
-import type { client } from "../../db/client";
+import type { DbLike } from "../../db/types";
 import { jwtInstance } from "../../utils/jwt";
 import { getRequestInfo } from "../../utils/request-info";
 import createAuthMiddleware from "./middleware";
 import { AuthModel } from "./model";
 import { Auth } from "./service";
-import type { DbLike } from "../../db/types";
 
 export default function createAuthModule(dbClient: DbLike) {
 	const authMiddleware = createAuthMiddleware(dbClient);

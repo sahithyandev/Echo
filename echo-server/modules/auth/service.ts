@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
 import { user_sessions, users } from "../../db/schema";
-import type { AuthModel } from "./model";
 import type { DbLike } from "../../db/types";
+import type { AuthModel } from "./model";
 
 export abstract class Auth {
 	static hashToken(token: string): string {
@@ -59,8 +59,12 @@ export abstract class Auth {
 			if (inserted.length === 0) throw new Error("Failed to create user");
 			return { id: inserted[0].id };
 		} catch (error) {
-			const cause = error instanceof Error ? (error as Error & { cause?: unknown }).cause : undefined;
-			const causeMsg = cause instanceof Error ? cause.message : String(cause ?? "");
+			const cause =
+				error instanceof Error
+					? (error as Error & { cause?: unknown }).cause
+					: undefined;
+			const causeMsg =
+				cause instanceof Error ? cause.message : String(cause ?? "");
 			if (causeMsg.includes("UNIQUE constraint failed: users.email")) {
 				throw new Error(
 					"This email is already registered. Please sign in instead.",
