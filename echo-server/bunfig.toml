@@ -3,3 +3,5 @@ plugins = ["bun-plugin-tailwind"]
 
 [test]
 preload = ["./db/test-setup.ts"]
+coverage = true
+coverageSkipTestFiles = true
