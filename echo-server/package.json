@@ -1,7 +1,8 @@
 {
   "name": "echo-server",
+  "type": "module",
   "scripts": {
-    "dev": "bun run --watch src/index.ts"
+    "dev": "bun run --watch index.ts"
   },
   "dependencies": {
     "@elysiajs/static": "^1.4.10",

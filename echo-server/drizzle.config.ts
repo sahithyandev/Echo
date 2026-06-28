@@ -1,9 +1,10 @@
 import { defineConfig } from "drizzle-kit";
+import { getEnvVar } from "./utils/env";
 
 export default defineConfig({
 	dialect: "sqlite",
 	schema: "./db/schema.ts",
 	dbCredentials: {
-		url: process.env.DATABASE_URL
+		url: getEnvVar("DATABASE_URL")
 	},
 });
