@@ -2,7 +2,8 @@
   "name": "echo-server",
   "type": "module",
   "scripts": {
-    "dev": "bun run --watch index.ts"
+    "dev": "bun run --watch index.ts",
+    "test": "bun test"
   },
   "dependencies": {
     "@elysiajs/jwt": "^1.4.2",
