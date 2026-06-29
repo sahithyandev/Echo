@@ -6,9 +6,10 @@ My own music library and streaming setup.
 
 ### Prerequisites
 
-| Prereq. | Version | Notes |
-| ------- | ------- | ----- |
-| bun     | v1.3.14 |       |
+| Prereq.     | Version | Notes                                         |
+| ----------- | ------- | --------------------------------------------- |
+| chromaprint | ≥ 1.0   | Required in prod. `brew install chromaprint`. |
+| bun         | v1.3.14 | Required in dev.                              |
 
 ### Folder Structure
 
