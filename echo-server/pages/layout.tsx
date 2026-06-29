@@ -35,7 +35,9 @@ export function Layout({
 					href="/favicon-16x16.png"
 				/>
 			</head>
-			<body>{children}</body>
+			<body class="bg-background text-foreground font-sans antialiased">
+				{children}
+			</body>
 		</html>
 	);
 }
