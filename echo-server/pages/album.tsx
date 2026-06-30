@@ -34,7 +34,7 @@ export function AlbumPage({
 				<header class="flex items-center justify-between px-6 py-4 border-b border-border">
 					<a
 						href="/library"
-						class="wordmark-gradient text-xl font-bold tracking-tighter"
+						class="wordmark-gradient text-xl font-bold font-display"
 					>
 						Echo
 					</a>
@@ -52,8 +52,12 @@ export function AlbumPage({
 					<div class="flex items-center gap-4">
 						<AlbumArt size={56} src={album.cover_path} />
 						<div>
-							<p class="text-xs text-muted mb-0.5">Album</p>
-							<h1 class="text-2xl font-bold tracking-tight">{album.title}</h1>
+							<p class="text-xs text-accent font-medium uppercase tracking-wide mb-0.5">
+								Album
+							</p>
+							<h1 class="text-2xl font-bold tracking-tight font-display">
+								{album.title}
+							</h1>
 							<p class="text-xs text-muted mt-1">
 								{artists.join(", ")}
 								{album.year ? ` · ${album.year}` : ""}
@@ -78,11 +82,28 @@ export function AlbumPage({
 									data-title={t.title}
 									data-artist={artists.join(", ")}
 								>
-									<td class="py-2 pr-4 text-muted text-xs">
-										{t.track_number ?? "—"}
+									<td class="py-3 pr-4 text-xs w-8">
+										<span class="track-number text-muted">
+											{t.track_number ?? "—"}
+										</span>
+										<svg
+											class="track-play-hover"
+											width="10"
+											height="10"
+											viewBox="0 0 24 24"
+											fill="currentColor"
+											aria-hidden="true"
+										>
+											<polygon points="6,3 20,12 6,21" />
+										</svg>
+										<span class="track-bars" aria-hidden="true">
+											<span />
+											<span />
+											<span />
+										</span>
 									</td>
-									<td class="py-2 font-medium">{t.title}</td>
-									<td class="py-2 text-muted text-right tabular-nums">
+									<td class="py-3 font-medium track-title">{t.title}</td>
+									<td class="py-3 text-muted text-right tabular-nums">
 										{formatDuration(t.duration_seconds)}
 									</td>
 								</tr>

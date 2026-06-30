@@ -18,6 +18,12 @@ export function Layout({
 				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 				<title>{title}</title>
 				<link rel="stylesheet" href="/global.css" />
+				<meta name="theme-color" content="#0c0a09" />
+				<link rel="preconnect" href="https://api.fontshare.com" />
+				<link
+					href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&display=swap"
+					rel="stylesheet"
+				/>
 				<link
 					rel="apple-touch-icon"
 					sizes="180x180"
@@ -92,7 +98,7 @@ export function Layout({
 							<button
 								id="player-prev"
 								type="button"
-								class="w-7 h-7 flex items-center justify-center text-muted hover:text-foreground transition-colors cursor-pointer"
+								class="w-7 h-7 flex items-center justify-center text-muted hover:text-accent transition-colors cursor-pointer"
 								aria-label="Previous"
 							>
 								<svg
@@ -110,7 +116,7 @@ export function Layout({
 							<button
 								id="player-play"
 								type="button"
-								class="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity cursor-pointer"
+								class="w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center shrink-0 hover:opacity-90 transition-opacity cursor-pointer shadow-[0_0_16px_-2px_var(--color-accent)]"
 							>
 								<svg
 									id="icon-play"
@@ -138,7 +144,7 @@ export function Layout({
 							<button
 								id="player-next"
 								type="button"
-								class="w-7 h-7 flex items-center justify-center text-muted hover:text-foreground transition-colors cursor-pointer"
+								class="w-7 h-7 flex items-center justify-center text-muted hover:text-accent transition-colors cursor-pointer"
 								aria-label="Next"
 							>
 								<svg

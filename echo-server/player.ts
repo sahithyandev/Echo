@@ -29,10 +29,8 @@ function fmt(s: number): string {
 let seeking = false;
 let currentIndex = -1;
 
-function playlist(): HTMLTableRowElement[] {
-	return Array.from(
-		document.querySelectorAll<HTMLTableRowElement>("tr[data-track-id]"),
-	);
+function playlist(): HTMLElement[] {
+	return Array.from(document.querySelectorAll<HTMLElement>("[data-track-id]"));
 }
 
 function playTrack(
@@ -65,17 +63,15 @@ function playTrack(
 	}
 }
 
-function playRow(row: HTMLTableRowElement): void {
-	const { trackId, title = "Unknown", artist = "", art = "" } = row.dataset;
+function playRow(el: HTMLElement): void {
+	const { trackId, title = "Unknown", artist = "", art = "" } = el.dataset;
 	if (trackId) playTrack(trackId, title, artist, art);
 }
 
 document.addEventListener("click", (e) => {
-	const row = (e.target as Element).closest<HTMLTableRowElement>(
-		"tr[data-track-id]",
-	);
-	if (!row) return;
-	playRow(row);
+	const el = (e.target as Element).closest<HTMLElement>("[data-track-id]");
+	if (!el) return;
+	playRow(el);
 });
 
 playBtn.addEventListener("click", () => {
@@ -84,28 +80,28 @@ playBtn.addEventListener("click", () => {
 });
 
 prevBtn.addEventListener("click", () => {
-	const rows = playlist();
-	if (!rows.length) return;
+	const els = playlist();
+	if (!els.length) return;
 	if (audio.currentTime > 3) {
 		audio.currentTime = 0;
 		return;
 	}
-	const idx = currentIndex <= 0 ? rows.length - 1 : currentIndex - 1;
-	playRow(rows[idx]);
+	const idx = currentIndex <= 0 ? els.length - 1 : currentIndex - 1;
+	playRow(els[idx]);
 });
 
 nextBtn.addEventListener("click", () => {
-	const rows = playlist();
-	if (!rows.length) return;
-	const idx = currentIndex >= rows.length - 1 ? 0 : currentIndex + 1;
-	playRow(rows[idx]);
+	const els = playlist();
+	if (!els.length) return;
+	const idx = currentIndex >= els.length - 1 ? 0 : currentIndex + 1;
+	playRow(els[idx]);
 });
 
 audio.addEventListener("ended", () => {
-	const rows = playlist();
-	if (!rows.length) return;
-	const idx = currentIndex >= rows.length - 1 ? 0 : currentIndex + 1;
-	playRow(rows[idx]);
+	const els = playlist();
+	if (!els.length) return;
+	const idx = currentIndex >= els.length - 1 ? 0 : currentIndex + 1;
+	playRow(els[idx]);
 });
 
 let rafId = 0;

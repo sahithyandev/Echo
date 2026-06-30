@@ -43,8 +43,8 @@ export function AlbumArt({ size = 36, src }: Props) {
 				<path
 					d="M22 11v9.27A3 3 0 1 1 20 18V13l-6 1.5V22a3 3 0 1 1-2-2.83V13.5L22 11Z"
 					fill="currentColor"
-					class="text-muted"
-					opacity="0.7"
+					class="text-accent"
+					opacity="0.5"
 				/>
 			</g>
 			<defs>

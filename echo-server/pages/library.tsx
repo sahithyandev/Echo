@@ -1,6 +1,5 @@
 import { Html } from "@elysiajs/html";
-import { AlbumArt } from "../components/album-art";
-import { formatDuration, unused } from "../utils/misc";
+import { unused } from "../utils/misc";
 import { Layout } from "./layout";
 
 unused(Html);
@@ -26,7 +25,7 @@ export function LibraryPage({
 				<header class="flex items-center justify-between px-6 py-4 border-b border-border">
 					<a
 						href="/"
-						class="wordmark-gradient text-xl font-bold tracking-tighter"
+						class="wordmark-gradient text-xl font-bold font-display"
 					>
 						Echo
 					</a>
@@ -40,10 +39,9 @@ export function LibraryPage({
 					</form>
 				</header>
 
-				<main class="flex-1 flex flex-col p-6 gap-4">
+				<main class="flex-1 flex flex-col p-6 gap-6">
 					<p class="text-sm text-muted">
-						Welcome back,{" "}
-						<span class="text-foreground font-medium">{name}</span>
+						Welcome back, <span class="text-accent font-medium">{name}</span>
 					</p>
 
 					{tracks.length === 0 ? (
@@ -59,7 +57,7 @@ export function LibraryPage({
 									stroke-linecap="round"
 									stroke-linejoin="round"
 									aria-label="No tracks"
-									class="text-muted"
+									class="text-accent"
 								>
 									<path d="M9 18V5l12-2v13" />
 									<circle cx="6" cy="18" r="3" />
@@ -70,65 +68,70 @@ export function LibraryPage({
 							<p class="text-xs text-subtle">Add music files to get started.</p>
 						</div>
 					) : (
-						<table class="w-full text-sm border-collapse">
-							<thead>
-								<tr class="border-b border-border text-left text-xs text-muted">
-									<th class="pb-2 pr-4 font-medium w-8">#</th>
-									<th class="pb-2 pr-3 font-medium w-10"></th>
-									<th class="pb-2 pr-4 font-medium">Title</th>
-									<th class="pb-2 pr-4 font-medium">Artist</th>
-									<th class="pb-2 pr-4 font-medium">Album</th>
-									<th class="pb-2 font-medium text-right">Duration</th>
-								</tr>
-							</thead>
-							<tbody>
-								{tracks.map((t, i) => (
-									<tr
-										class="border-b border-border/50 hover:bg-surface/40 transition-colors cursor-pointer"
-										data-track-id={String(t.id)}
-										data-title={t.title}
-										data-artist={t.artists.map((a) => a.name).join(", ")}
-										data-art={t.album?.cover_path ?? ""}
-									>
-										<td class="py-2 pr-4 text-muted text-xs">{i + 1}</td>
-										<td class="py-2 pr-3">
-											<AlbumArt src={t.album?.cover_path} />
-										</td>
-										<td class="py-2 pr-4 font-medium">{t.title}</td>
-										<td class="py-2 pr-4 text-muted">
-											{t.artists.length === 0
-												? "—"
-												: t.artists.map((a, i) => (
-														<>
-															{i > 0 && ", "}
-															<a
-																href={`/artist/${a.id}`}
-																class="hover:text-foreground transition-colors"
-															>
-																{a.name}
-															</a>
-														</>
-													))}
-										</td>
-										<td class="py-2 pr-4 text-muted">
-											{t.album ? (
-												<a
-													href={`/album/${t.album.id}`}
-													class="hover:text-foreground transition-colors"
+						<div class="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3">
+							{tracks.map((t) => (
+								<div
+									class="group cursor-pointer"
+									data-track-id={String(t.id)}
+									data-title={t.title}
+									data-artist={t.artists.map((a) => a.name).join(", ")}
+									data-art={t.album?.cover_path ?? ""}
+								>
+									<div class="relative aspect-square overflow-hidden rounded-md bg-surface mb-2">
+										{t.album?.cover_path ? (
+											<img
+												src={t.album.cover_path}
+												class="w-full h-full object-cover"
+												alt=""
+											/>
+										) : (
+											<div class="w-full h-full flex items-center justify-center">
+												<svg
+													width="24"
+													height="24"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="1.5"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													class="text-accent opacity-40"
+													aria-hidden="true"
 												>
-													{t.album.title}
-												</a>
-											) : (
-												"—"
-											)}
-										</td>
-										<td class="py-2 text-muted text-right tabular-nums">
-											{formatDuration(t.duration_seconds)}
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
+													<path d="M9 18V5l12-2v13" />
+													<circle cx="6" cy="18" r="3" />
+													<circle cx="18" cy="16" r="3" />
+												</svg>
+											</div>
+										)}
+										<div class="track-card-hover">
+											<svg
+												width="20"
+												height="20"
+												viewBox="0 0 24 24"
+												fill="currentColor"
+												aria-hidden="true"
+											>
+												<polygon points="6,3 20,12 6,21" />
+											</svg>
+										</div>
+										<div class="track-card-playing">
+											<div class="track-bars">
+												<span />
+												<span />
+												<span />
+											</div>
+										</div>
+									</div>
+									<p class="text-xs font-medium truncate track-title">
+										{t.title}
+									</p>
+									<p class="text-xs text-muted truncate">
+										{t.artists.map((a) => a.name).join(", ") || "—"}
+									</p>
+								</div>
+							))}
+						</div>
 					)}
 				</main>
 			</div>

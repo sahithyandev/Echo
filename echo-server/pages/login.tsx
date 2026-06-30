@@ -20,7 +20,7 @@ export function LoginPage({
 			<div class="min-h-screen flex flex-col items-center justify-center p-8 gap-8">
 				<a
 					href="/"
-					class="wordmark-gradient text-3xl font-bold tracking-tighter"
+					class="wordmark-gradient text-3xl font-bold font-display"
 				>
 					Echo
 				</a>
@@ -71,7 +71,7 @@ export function LoginPage({
 
 						<button
 							type="submit"
-							class="w-full rounded-md bg-foreground text-background text-sm font-medium px-4 py-2.5 mt-1 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer"
+							class="w-full rounded-md bg-accent text-accent-foreground text-sm font-medium px-4 py-2.5 mt-1 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer"
 						>
 							{submit}
 						</button>
