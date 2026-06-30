@@ -18,7 +18,7 @@ export default function createLibraryModule(db: DbLike) {
 		.get(
 			"/library",
 			async ({ currentUser, redirect }) => {
-				if (!currentUser) return redirect("/auth/login");
+				if (!currentUser) return redirect("/login");
 				const [user, tracks] = await Promise.all([
 					Auth.findUserById(db, currentUser.id),
 					LibraryService.listTracks(db),

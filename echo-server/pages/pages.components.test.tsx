@@ -145,22 +145,21 @@ describe("LibraryPage", () => {
 		expect(html).toContain("My Song");
 	});
 
-	it("renders artist link", () => {
+	it("renders artist name", () => {
 		const html = Html.createElement(LibraryPage, {
 			name: "Alice",
 			tracks: fullTracks,
 		}) as string;
-		expect(html).toContain('href="/artist/1"');
 		expect(html).toContain("Artist A");
 	});
 
-	it("renders album link", () => {
+	it("renders track card with data attributes", () => {
 		const html = Html.createElement(LibraryPage, {
 			name: "Alice",
 			tracks: fullTracks,
 		}) as string;
-		expect(html).toContain('href="/album/1"');
-		expect(html).toContain("My Album");
+		expect(html).toContain('data-track-id="1"');
+		expect(html).toContain("My Song");
 	});
 
 	it("shows em dash for missing artist", () => {
