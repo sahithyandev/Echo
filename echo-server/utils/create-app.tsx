@@ -39,11 +39,16 @@ export async function createApp(db: DbLike) {
 
 	const assetPlugin = new Elysia();
 	for (const { route, content } of assets) {
-		const ext = route.split(".").pop()!;
-		assetPlugin.get(route, () =>
-			new Response(content, {
-				headers: { "content-type": `${contentTypes[ext]}; charset=utf-8` },
-			}),
+		const ext = route.split(".").pop();
+		if (!ext) {
+			throw new Error("extension is expected to be not null");
+		}
+		assetPlugin.get(
+			route,
+			() =>
+				new Response(content, {
+					headers: { "content-type": `${contentTypes[ext]}; charset=utf-8` },
+				}),
 		);
 	}
 

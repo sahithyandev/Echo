@@ -31,7 +31,7 @@ function playTrack(id: string, title: string, artist: string): void {
 	titleEl.textContent = title;
 	artistEl.textContent = artist;
 	bar.classList.remove("hidden");
-	document.body.style.paddingBottom = "4.5rem";
+	document.body.style.paddingBottom = "5.5rem";
 	for (const row of document.querySelectorAll<HTMLTableRowElement>(
 		"tr[data-track-id]",
 	)) {
@@ -53,13 +53,27 @@ playBtn.addEventListener("click", () => {
 	else audio.pause();
 });
 
+let rafId = 0;
+
+function tick() {
+	if (!seeking && audio.duration && !Number.isNaN(audio.duration)) {
+		const pct = (audio.currentTime / audio.duration) * 100;
+		seekBar.value = String(pct);
+		seekBar.style.setProperty("--progress", `${pct}%`);
+		currentTimeEl.textContent = fmt(audio.currentTime);
+	}
+	rafId = requestAnimationFrame(tick);
+}
+
 audio.addEventListener("play", () => {
 	iconPlay.classList.add("hidden");
 	iconPause.classList.remove("hidden");
+	rafId = requestAnimationFrame(tick);
 });
 audio.addEventListener("pause", () => {
 	iconPlay.classList.remove("hidden");
 	iconPause.classList.add("hidden");
+	cancelAnimationFrame(rafId);
 });
 
 seekBar.addEventListener("mousedown", () => {
@@ -72,17 +86,12 @@ seekBar.addEventListener("mouseup", () => {
 	}
 });
 seekBar.addEventListener("input", () => {
+	seekBar.style.setProperty("--progress", `${seekBar.value}%`);
 	if (audio.duration && !Number.isNaN(audio.duration)) {
 		currentTimeEl.textContent = fmt(
 			(Number(seekBar.value) / 100) * audio.duration,
 		);
 	}
-});
-
-audio.addEventListener("timeupdate", () => {
-	if (seeking || !audio.duration || Number.isNaN(audio.duration)) return;
-	seekBar.value = String((audio.currentTime / audio.duration) * 100);
-	currentTimeEl.textContent = fmt(audio.currentTime);
 });
 
 audio.addEventListener("durationchange", () => {

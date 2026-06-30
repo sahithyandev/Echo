@@ -26,6 +26,35 @@ tr.playing {
 	background-color: color-mix(in srgb, var(--color-surface) 60%, transparent);
 }
 
+.seek-bar {
+	-webkit-appearance: none;
+	appearance: none;
+	height: 3px;
+	border-radius: 9999px;
+	background: linear-gradient(
+		to right,
+		var(--color-foreground) var(--progress, 0%),
+		color-mix(in srgb, var(--color-foreground) 18%, transparent)
+			var(--progress, 0%)
+	);
+	cursor: pointer;
+	outline: none;
+}
+.seek-bar::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--color-foreground);
+	opacity: 0;
+	transition: opacity 0.15s;
+}
+.seek-bar:hover::-webkit-slider-thumb,
+.seek-bar:active::-webkit-slider-thumb {
+	opacity: 1;
+}
+
 .wordmark-gradient {
 	background: linear-gradient(
 		145deg,

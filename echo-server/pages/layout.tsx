@@ -1,4 +1,5 @@
 import { Html } from "@elysiajs/html";
+import { AlbumArt } from "../components/album-art";
 import { unused } from "../utils/misc";
 
 unused(Html);
@@ -39,60 +40,76 @@ export function Layout({
 				{children}
 				<div
 					id="player-bar"
-					class="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-3 flex items-center gap-4 z-50"
+					class="hidden fixed bottom-0 left-0 right-0 backdrop-blur-xl bg-background/85 border-t border-border/40 z-50"
 				>
-					<div class="flex flex-col min-w-0 w-40 shrink-0">
-						<span id="player-title" class="text-sm font-medium truncate" />
-						<span id="player-artist" class="text-xs text-muted truncate" />
+					<div class="flex items-center gap-6 px-6 py-3">
+						<div class="flex items-center gap-3 w-56 shrink-0 min-w-0">
+							<AlbumArt size={40} />
+							<div class="min-w-0">
+								<div
+									id="player-title"
+									class="text-sm font-medium truncate leading-snug"
+								/>
+								<div
+									id="player-artist"
+									class="text-xs text-muted truncate leading-snug"
+								/>
+							</div>
+						</div>
+
+						<div class="flex-1 flex items-center gap-3 min-w-0">
+							<span
+								id="player-current"
+								class="text-xs text-muted tabular-nums shrink-0"
+							>
+								0:00
+							</span>
+							<input
+								id="player-seek"
+								type="range"
+								min="0"
+								max="100"
+								step="any"
+								value="0"
+								class="seek-bar flex-1"
+							/>
+							<span
+								id="player-duration"
+								class="text-xs text-muted tabular-nums shrink-0"
+							>
+								0:00
+							</span>
+						</div>
+
+						<button
+							id="player-play"
+							type="button"
+							class="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity cursor-pointer"
+						>
+							<svg
+								id="icon-play"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								aria-label="Play"
+							>
+								<polygon points="6,3 20,12 6,21" />
+							</svg>
+							<svg
+								id="icon-pause"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								aria-label="Pause"
+								class="hidden"
+							>
+								<rect x="6" y="4" width="4" height="16" />
+								<rect x="14" y="4" width="4" height="16" />
+							</svg>
+						</button>
 					</div>
-					<button
-						id="player-play"
-						type="button"
-						class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface transition-colors cursor-pointer"
-					>
-						<svg
-							id="icon-play"
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							aria-label="Play"
-						>
-							<polygon points="5,3 19,12 5,21" />
-						</svg>
-						<svg
-							id="icon-pause"
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							aria-label="Pause"
-							class="hidden"
-						>
-							<rect x="6" y="4" width="4" height="16" />
-							<rect x="14" y="4" width="4" height="16" />
-						</svg>
-					</button>
-					<span
-						id="player-current"
-						class="text-xs text-muted tabular-nums shrink-0"
-					>
-						0:00
-					</span>
-					<input
-						id="player-seek"
-						type="range"
-						min="0"
-						max="100"
-						value="0"
-						class="flex-1 accent-foreground"
-					/>
-					<span
-						id="player-duration"
-						class="text-xs text-muted tabular-nums shrink-0"
-					>
-						0:00
-					</span>
 				</div>
 				<audio id="echo-audio" preload="none" />
 				<script src="/player.js" defer />
