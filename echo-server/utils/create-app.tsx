@@ -6,6 +6,9 @@ import type { DbLike } from "../db/types";
 import createAuthModule from "../modules/auth";
 import createAuthMiddleware from "../modules/auth/middleware";
 import { Auth } from "../modules/auth/service";
+import { LibraryService } from "../modules/library/service";
+import { AlbumPage } from "../pages/album";
+import { ArtistPage } from "../pages/artist";
 import { IndexPage } from "../pages/index";
 import { LibraryPage } from "../pages/library";
 import { LoginPage } from "../pages/login";
@@ -51,8 +54,42 @@ export async function createApp(db: DbLike) {
 			"/library",
 			async ({ currentUser, redirect }) => {
 				if (!currentUser) return redirect("/login");
-				const user = await Auth.findUserById(db, currentUser.id);
-				return <LibraryPage name={user.name} />;
+				const [user, tracks] = await Promise.all([
+					Auth.findUserById(db, currentUser.id),
+					LibraryService.listTracks(db),
+				]);
+				return <LibraryPage name={user.name} tracks={tracks} />;
+			},
+			{ currentUser: true },
+		)
+		.get(
+			"/artist/:id",
+			async ({ currentUser, redirect, params }) => {
+				if (!currentUser) return redirect("/login");
+				const artistId = Number(params.id);
+				const [artist, tracks] = await Promise.all([
+					LibraryService.findArtist(db, artistId),
+					LibraryService.getArtistTracks(db, artistId),
+				]);
+				if (!artist) return redirect("/library");
+				return <ArtistPage artist={artist} tracks={tracks} />;
+			},
+			{ currentUser: true },
+		)
+		.get(
+			"/album/:id",
+			async ({ currentUser, redirect, params }) => {
+				if (!currentUser) return redirect("/login");
+				const albumId = Number(params.id);
+				const [album, tracks, artistNames] = await Promise.all([
+					LibraryService.findAlbum(db, albumId),
+					LibraryService.getAlbumTracks(db, albumId),
+					LibraryService.getAlbumArtists(db, albumId),
+				]);
+				if (!album) return redirect("/library");
+				return (
+					<AlbumPage album={album} tracks={tracks} artists={artistNames} />
+				);
 			},
 			{ currentUser: true },
 		)

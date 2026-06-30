@@ -1,0 +1,73 @@
+import { Html } from "@elysiajs/html";
+import { AlbumArt } from "../components/album-art";
+import { formatDuration, unused } from "../utils/misc";
+import { Layout } from "./layout";
+
+unused(Html);
+
+type Track = { id: number; title: string; duration_seconds: number | null };
+
+export function ArtistPage({
+	artist,
+	tracks,
+}: {
+	artist: { id: number; name: string };
+	tracks: Track[];
+}) {
+	return (
+		<Layout title={`Echo — ${artist.name}`}>
+			<div class="min-h-screen flex flex-col">
+				<header class="flex items-center justify-between px-6 py-4 border-b border-border">
+					<a
+						href="/library"
+						class="wordmark-gradient text-xl font-bold tracking-tighter"
+					>
+						Echo
+					</a>
+					<form method="post" action="/auth/sign-out">
+						<button
+							type="submit"
+							class="text-xs text-muted hover:text-foreground border border-border rounded-md px-3 py-1.5 transition-colors hover:bg-surface cursor-pointer"
+						>
+							Sign out
+						</button>
+					</form>
+				</header>
+
+				<main class="flex-1 flex flex-col p-6 gap-6">
+					<div class="flex items-center gap-4">
+						<AlbumArt size={56} />
+						<div>
+							<p class="text-xs text-muted mb-0.5">Artist</p>
+							<h1 class="text-2xl font-bold tracking-tight">{artist.name}</h1>
+							<p class="text-xs text-muted mt-1">
+								{tracks.length} track{tracks.length !== 1 ? "s" : ""}
+							</p>
+						</div>
+					</div>
+
+					<table class="w-full text-sm border-collapse">
+						<thead>
+							<tr class="border-b border-border text-left text-xs text-muted">
+								<th class="pb-2 pr-4 font-medium w-8">#</th>
+								<th class="pb-2 font-medium">Title</th>
+								<th class="pb-2 font-medium text-right">Duration</th>
+							</tr>
+						</thead>
+						<tbody>
+							{tracks.map((t, i) => (
+								<tr class="border-b border-border/50 hover:bg-surface/40 transition-colors">
+									<td class="py-2 pr-4 text-muted text-xs">{i + 1}</td>
+									<td class="py-2 font-medium">{t.title}</td>
+									<td class="py-2 text-muted text-right tabular-nums">
+										{formatDuration(t.duration_seconds)}
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</main>
+			</div>
+		</Layout>
+	);
+}

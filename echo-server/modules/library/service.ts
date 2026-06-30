@@ -61,7 +61,102 @@ async function upsertAlbum(
 	return row.id;
 }
 
+export type TrackEntry = {
+	id: number;
+	title: string;
+	duration_seconds: number | null;
+	artists: { id: number; name: string }[];
+	album: { id: number; title: string } | null;
+};
+
 export abstract class LibraryService {
+	static async listTracks(client: DbLike): Promise<TrackEntry[]> {
+		const rows = await client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				duration_seconds: tracks.duration_seconds,
+				artist_id: artists.id,
+				artist_name: artists.name,
+				album_id: albums.id,
+				album_title: albums.title,
+			})
+			.from(tracks)
+			.leftJoin(track_artists, eq(track_artists.track_id, tracks.id))
+			.leftJoin(artists, eq(artists.id, track_artists.artist_id))
+			.leftJoin(albums, eq(albums.id, tracks.album_id))
+			.orderBy(tracks.title);
+
+		const trackMap = new Map<number, TrackEntry>();
+		for (const row of rows) {
+			if (!trackMap.has(row.id)) {
+				trackMap.set(row.id, {
+					id: row.id,
+					title: row.title,
+					duration_seconds: row.duration_seconds,
+					artists: [],
+					album:
+						row.album_id && row.album_title
+							? { id: row.album_id, title: row.album_title }
+							: null,
+				});
+			}
+			if (row.artist_id && row.artist_name)
+				trackMap
+					.get(row.id)
+					?.artists.push({ id: row.artist_id, name: row.artist_name });
+		}
+		return [...trackMap.values()];
+	}
+
+	static async findArtist(client: DbLike, id: number) {
+		const rows = await client.select().from(artists).where(eq(artists.id, id));
+		return rows[0] ?? null;
+	}
+
+	static async getArtistTracks(client: DbLike, artistId: number) {
+		return client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				duration_seconds: tracks.duration_seconds,
+			})
+			.from(tracks)
+			.innerJoin(track_artists, eq(track_artists.track_id, tracks.id))
+			.where(eq(track_artists.artist_id, artistId))
+			.orderBy(tracks.title);
+	}
+
+	static async findAlbum(client: DbLike, id: number) {
+		const rows = await client.select().from(albums).where(eq(albums.id, id));
+		return rows[0] ?? null;
+	}
+
+	static async getAlbumTracks(client: DbLike, albumId: number) {
+		return client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				duration_seconds: tracks.duration_seconds,
+				track_number: tracks.track_number,
+			})
+			.from(tracks)
+			.where(eq(tracks.album_id, albumId))
+			.orderBy(tracks.track_number);
+	}
+
+	static async getAlbumArtists(
+		client: DbLike,
+		albumId: number,
+	): Promise<string[]> {
+		const rows = await client
+			.select({ name: artists.name })
+			.from(artists)
+			.innerJoin(album_artists, eq(album_artists.artist_id, artists.id))
+			.where(eq(album_artists.album_id, albumId));
+		return rows.map((r) => r.name);
+	}
+
 	static async scanMusicFolder(client: DbLike, dir: string): Promise<number> {
 		const glob = new Bun.Glob("**/*.{mp3,flac,m4a,aac,ogg,wav}");
 		let count = 0;
