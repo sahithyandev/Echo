@@ -159,9 +159,23 @@ export abstract class LibraryService {
 
 	static async scanMusicFolder(client: DbLike, dir: string): Promise<number> {
 		const glob = new Bun.Glob("**/*.{mp3,flac,m4a,aac,ogg,wav}");
-		let count = 0;
+		let skipped = 0;
+		let processed = 0;
 		for await (const file of glob.scan({ cwd: dir, absolute: true })) {
 			try {
+				const stat = await Bun.file(file).stat();
+				const mtime = Math.floor(stat.mtimeMs);
+
+				const existing = await client
+					.select({ file_mtime: tracks.file_mtime })
+					.from(tracks)
+					.where(eq(tracks.file_path, file));
+
+				if (existing.length > 0 && existing[0].file_mtime === mtime) {
+					skipped++;
+					continue;
+				}
+
 				const [meta, fingerprint] = await Promise.all([
 					getTrackMeta(file),
 					fingerprintFile(file).catch(() => null),
@@ -184,6 +198,7 @@ export abstract class LibraryService {
 						year: meta.year,
 						duration_seconds: meta.duration_seconds,
 						file_path: file,
+						file_mtime: mtime,
 						fingerprint,
 					})
 					.onConflictDoUpdate({
@@ -194,6 +209,7 @@ export abstract class LibraryService {
 							track_number: meta.track_number,
 							year: meta.year,
 							duration_seconds: meta.duration_seconds,
+							file_mtime: mtime,
 							fingerprint,
 						},
 					})
@@ -213,11 +229,12 @@ export abstract class LibraryService {
 					}
 				}
 
-				count++;
+				processed++;
 			} catch (err) {
 				console.warn(`Skipped ${file}:`, err);
 			}
 		}
-		return count;
+		console.log(`Library scan complete: ${processed} processed, ${skipped} unchanged`);
+		return processed + skipped;
 	}
 }

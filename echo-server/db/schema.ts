@@ -55,6 +55,7 @@ export const tracks = sqliteTable("tracks", {
 	year: integer("year"),
 	duration_seconds: integer("duration_seconds"),
 	file_path: text("file_path").notNull().unique(),
+	file_mtime: integer("file_mtime"),
 	fingerprint: text("fingerprint"),
 	added_at: integer("added_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())
