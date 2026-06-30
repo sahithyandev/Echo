@@ -1,4 +1,9 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+	integer,
+	primaryKey,
+	sqliteTable,
+	text,
+} from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
@@ -29,14 +34,25 @@ export const user_sessions = sqliteTable("user_sessions", {
 	revoked_at: integer("revoked_at", { mode: "timestamp" }),
 });
 
+export const artists = sqliteTable("artists", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	name: text("name").notNull().unique(),
+});
+
+export const albums = sqliteTable("albums", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	title: text("title").notNull(),
+	year: integer("year"),
+	genre: text("genre"),
+	cover_path: text("cover_path"),
+});
+
 export const tracks = sqliteTable("tracks", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	title: text("title").notNull(),
-	artist: text("artist"),
-	album: text("album"),
+	album_id: integer("album_id").references(() => albums.id),
 	track_number: integer("track_number"),
 	year: integer("year"),
-	genre: text("genre"),
 	duration_seconds: integer("duration_seconds"),
 	file_path: text("file_path").notNull().unique(),
 	fingerprint: text("fingerprint"),
@@ -45,3 +61,29 @@ export const tracks = sqliteTable("tracks", {
 		.notNull(),
 	added_by: integer("added_by").references(() => users.id),
 });
+
+export const album_artists = sqliteTable(
+	"album_artists",
+	{
+		album_id: integer("album_id")
+			.notNull()
+			.references(() => albums.id),
+		artist_id: integer("artist_id")
+			.notNull()
+			.references(() => artists.id),
+	},
+	(t) => [primaryKey({ columns: [t.album_id, t.artist_id] })],
+);
+
+export const track_artists = sqliteTable(
+	"track_artists",
+	{
+		track_id: integer("track_id")
+			.notNull()
+			.references(() => tracks.id),
+		artist_id: integer("artist_id")
+			.notNull()
+			.references(() => artists.id),
+	},
+	(t) => [primaryKey({ columns: [t.track_id, t.artist_id] })],
+);
