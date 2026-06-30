@@ -3,7 +3,23 @@ import { unused } from "../utils/misc";
 
 unused(Html);
 
-export function AlbumArt({ size = 36 }: { size?: number }) {
+interface Props {
+	size?: number;
+	src?: string | null;
+}
+
+export function AlbumArt({ size = 36, src }: Props) {
+	if (src) {
+		return (
+			<img
+				src={src}
+				width={size}
+				height={size}
+				class="rounded-sm shrink-0 object-cover"
+				alt="Album art"
+			/>
+		);
+	}
 	return (
 		<svg
 			width={size}

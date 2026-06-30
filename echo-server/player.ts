@@ -2,6 +2,10 @@ const audio = document.getElementById("echo-audio") as HTMLAudioElement;
 const bar = document.getElementById("player-bar") as HTMLDivElement;
 const titleEl = document.getElementById("player-title") as HTMLSpanElement;
 const artistEl = document.getElementById("player-artist") as HTMLSpanElement;
+const artImg = document.getElementById("player-art") as HTMLImageElement;
+const artPlaceholder = document.getElementById(
+	"player-art-placeholder",
+) as HTMLElement;
 const playBtn = document.getElementById("player-play") as HTMLButtonElement;
 const prevBtn = document.getElementById("player-prev") as HTMLButtonElement;
 const nextBtn = document.getElementById("player-next") as HTMLButtonElement;
@@ -31,7 +35,12 @@ function playlist(): HTMLTableRowElement[] {
 	);
 }
 
-function playTrack(id: string, title: string, artist: string): void {
+function playTrack(
+	id: string,
+	title: string,
+	artist: string,
+	art: string,
+): void {
 	if (audio.dataset.trackId !== id) {
 		audio.src = `/track/${id}/stream`;
 		audio.dataset.trackId = id;
@@ -39,6 +48,14 @@ function playTrack(id: string, title: string, artist: string): void {
 	audio.play();
 	titleEl.textContent = title;
 	artistEl.textContent = artist;
+	if (art) {
+		artImg.src = art;
+		artImg.classList.remove("hidden");
+		artPlaceholder.classList.add("hidden");
+	} else {
+		artImg.classList.add("hidden");
+		artPlaceholder.classList.remove("hidden");
+	}
 	bar.classList.remove("hidden");
 	document.body.style.paddingBottom = "5.5rem";
 	const rows = playlist();
@@ -49,8 +66,8 @@ function playTrack(id: string, title: string, artist: string): void {
 }
 
 function playRow(row: HTMLTableRowElement): void {
-	const { trackId, title = "Unknown", artist = "" } = row.dataset;
-	if (trackId) playTrack(trackId, title, artist);
+	const { trackId, title = "Unknown", artist = "", art = "" } = row.dataset;
+	if (trackId) playTrack(trackId, title, artist, art);
 }
 
 document.addEventListener("click", (e) => {

@@ -50,7 +50,7 @@ export function AlbumPage({
 
 				<main class="flex-1 flex flex-col p-6 gap-6">
 					<div class="flex items-center gap-4">
-						<AlbumArt size={56} />
+						<AlbumArt size={56} src={album.cover_path} />
 						<div>
 							<p class="text-xs text-muted mb-0.5">Album</p>
 							<h1 class="text-2xl font-bold tracking-tight">{album.title}</h1>

@@ -44,7 +44,14 @@ export function Layout({
 				>
 					<div class="flex items-center gap-6 px-6 py-3">
 						<div class="flex items-center gap-3 w-56 shrink-0 min-w-0">
-							<AlbumArt size={40} />
+							<img
+								id="player-art"
+								class="hidden rounded-sm shrink-0 object-cover w-10 h-10"
+								alt="Album art"
+							/>
+							<div id="player-art-placeholder">
+								<AlbumArt size={40} />
+							</div>
 							<div class="min-w-0">
 								<div
 									id="player-title"
@@ -88,7 +95,14 @@ export function Layout({
 								class="w-7 h-7 flex items-center justify-center text-muted hover:text-foreground transition-colors cursor-pointer"
 								aria-label="Previous"
 							>
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="currentColor"
+									role="img"
+									aria-label="Previous"
+								>
 									<rect x="4" y="4" width="2" height="16" />
 									<polygon points="19,4 7,12 19,20" />
 								</svg>
@@ -127,7 +141,14 @@ export function Layout({
 								class="w-7 h-7 flex items-center justify-center text-muted hover:text-foreground transition-colors cursor-pointer"
 								aria-label="Next"
 							>
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="currentColor"
+									role="img"
+									aria-label="Next"
+								>
 									<polygon points="5,4 17,12 5,20" />
 									<rect x="18" y="4" width="2" height="16" />
 								</svg>

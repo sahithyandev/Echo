@@ -10,7 +10,7 @@ type Track = {
 	title: string;
 	duration_seconds: number | null;
 	artists: { id: number; name: string }[];
-	album: { id: number; title: string } | null;
+	album: { id: number; title: string; cover_path: string | null } | null;
 };
 
 export function LibraryPage({
@@ -88,10 +88,11 @@ export function LibraryPage({
 										data-track-id={String(t.id)}
 										data-title={t.title}
 										data-artist={t.artists.map((a) => a.name).join(", ")}
+										data-art={t.album?.cover_path ?? ""}
 									>
 										<td class="py-2 pr-4 text-muted text-xs">{i + 1}</td>
 										<td class="py-2 pr-3">
-											<AlbumArt />
+											<AlbumArt src={t.album?.cover_path} />
 										</td>
 										<td class="py-2 pr-4 font-medium">{t.title}</td>
 										<td class="py-2 pr-4 text-muted">

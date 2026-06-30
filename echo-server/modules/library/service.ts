@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import { eq } from "drizzle-orm";
 import { fingerprintFile } from "../../bindings/chromaprint";
 import {
@@ -43,6 +44,32 @@ async function upsertArtist(client: DbLike, name: string): Promise<number> {
 	return row.id;
 }
 
+async function extractAlbumArt(
+	client: DbLike,
+	albumId: number,
+	trackPath: string,
+	artDir: string,
+): Promise<void> {
+	const outPath = `${artDir}/${albumId}.jpg`;
+	if (await Bun.file(outPath).exists()) {
+		console.log(`[art] skip album ${albumId}: already exists`);
+		return;
+	}
+	await mkdir(artDir, { recursive: true });
+	const result =
+		await Bun.$`ffmpeg -y -i ${trackPath} -an -vcodec copy -frames:v 1 ${outPath}`.quiet();
+	if (result.exitCode !== 0) {
+		console.warn(
+			`[art] ffmpeg failed for album ${albumId} (exit ${result.exitCode}):\n${result.stderr.toString()}`,
+		);
+		return;
+	}
+	await client
+		.update(albums)
+		.set({ cover_path: `/art/${albumId}` })
+		.where(eq(albums.id, albumId));
+}
+
 async function upsertAlbum(
 	client: DbLike,
 	title: string,
@@ -66,7 +93,7 @@ export type TrackEntry = {
 	title: string;
 	duration_seconds: number | null;
 	artists: { id: number; name: string }[];
-	album: { id: number; title: string } | null;
+	album: { id: number; title: string; cover_path: string | null } | null;
 };
 
 export abstract class LibraryService {
@@ -80,6 +107,7 @@ export abstract class LibraryService {
 				artist_name: artists.name,
 				album_id: albums.id,
 				album_title: albums.title,
+				album_cover_path: albums.cover_path,
 			})
 			.from(tracks)
 			.leftJoin(track_artists, eq(track_artists.track_id, tracks.id))
@@ -97,7 +125,11 @@ export abstract class LibraryService {
 					artists: [],
 					album:
 						row.album_id && row.album_title
-							? { id: row.album_id, title: row.album_title }
+							? {
+									id: row.album_id,
+									title: row.album_title,
+									cover_path: row.album_cover_path ?? null,
+								}
 							: null,
 				});
 			}
@@ -117,7 +149,11 @@ export abstract class LibraryService {
 		return rows[0] ?? null;
 	}
 
-	static async scanMusicFolder(client: DbLike, dir: string): Promise<number> {
+	static async scanMusicFolder(
+		client: DbLike,
+		dir: string,
+		artDir: string,
+	): Promise<number> {
 		const glob = new Bun.Glob("**/*.{mp3,flac,m4a,aac,ogg,wav}");
 		let skipped = 0;
 		let processed = 0;
@@ -148,6 +184,10 @@ export abstract class LibraryService {
 				const albumId = meta.album
 					? await upsertAlbum(client, meta.album, meta.year, meta.genre)
 					: null;
+
+				if (albumId !== null) {
+					extractAlbumArt(client, albumId, file, artDir).catch(() => null);
+				}
 
 				const [track] = await client
 					.insert(tracks)
