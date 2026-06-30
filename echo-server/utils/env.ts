@@ -5,8 +5,6 @@ const DEFAULT_VALUES = {
 
 type DEFINED_DEFAULT_VALUE_KEY = keyof typeof DEFAULT_VALUES;
 
-console.log("DATABASE:", DEFAULT_VALUES.DATABASE_URL);
-
 export function getEnvVar(name: string, defaultValue?: string): string {
 	const value = process.env[name];
 	if (value === undefined) {

@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { album_artists, albums, artists, track_artists, tracks } from "../db/schema";
+import {
+	album_artists,
+	albums,
+	artists,
+	track_artists,
+	tracks,
+} from "../db/schema";
 import { makeTestDb } from "../db/test-client";
 import type { DbLike } from "../db/types";
 import { type App, createApp } from "../utils/create-app";
@@ -30,7 +36,9 @@ async function signUp(): Promise<string> {
 }
 
 function authed(url: string, token: string) {
-	return app.handle(new Request(url, { headers: { Cookie: `session=${token}` } }));
+	return app.handle(
+		new Request(url, { headers: { Cookie: `session=${token}` } }),
+	);
 }
 
 async function seedArtist(client: DbLike) {
@@ -50,12 +58,20 @@ async function seedAlbum(client: DbLike) {
 		.insert(albums)
 		.values({ title: "Test Album" })
 		.returning({ id: albums.id });
-	await client.insert(album_artists).values({ album_id: album.id, artist_id: artist.id });
+	await client
+		.insert(album_artists)
+		.values({ album_id: album.id, artist_id: artist.id });
 	const [track] = await client
 		.insert(tracks)
-		.values({ title: "Track 1", album_id: album.id, file_path: "/music/t1.mp3" })
+		.values({
+			title: "Track 1",
+			album_id: album.id,
+			file_path: "/music/t1.mp3",
+		})
 		.returning({ id: tracks.id });
-	await client.insert(track_artists).values({ track_id: track.id, artist_id: artist.id });
+	await client
+		.insert(track_artists)
+		.values({ track_id: track.id, artist_id: artist.id });
 	return album.id;
 }
 

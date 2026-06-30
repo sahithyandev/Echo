@@ -33,3 +33,7 @@ Echo is a personal music library and streaming application.
 
 The author is learning Swift/SwiftUI/macOS development. Explain concepts briefly
 before implementing, and keep explanations concise.
+
+## Style
+
+- No emojis or Unicode symbol characters (arrows, music notes, etc.) in UI or code comments. Use SVG icons instead.
