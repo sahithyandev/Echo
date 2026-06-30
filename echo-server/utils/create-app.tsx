@@ -23,6 +23,15 @@ export async function createApp(db: DbLike) {
 		throw new Error(`CSS build failed: ${cssBuild.logs.join("\n")}`);
 	const css = await cssBuild.outputs[0].text();
 
+	const playerPath = new URL("../player.ts", import.meta.url).pathname;
+	const playerBuild = await Bun.build({
+		entrypoints: [playerPath],
+		target: "browser",
+	});
+	if (!playerBuild.success)
+		throw new Error(`Player build failed: ${playerBuild.logs.join("\n")}`);
+	const playerJs = await playerBuild.outputs[0].text();
+
 	const authMiddleware = createAuthMiddleware(db);
 	return new Elysia()
 		.use(html())
@@ -31,6 +40,13 @@ export async function createApp(db: DbLike) {
 			() =>
 				new Response(css, {
 					headers: { "content-type": "text/css; charset=utf-8" },
+				}),
+		)
+		.get(
+			"/player.js",
+			() =>
+				new Response(playerJs, {
+					headers: { "content-type": "application/javascript; charset=utf-8" },
 				}),
 		)
 		.use(await staticPlugin({ prefix: "/" }))

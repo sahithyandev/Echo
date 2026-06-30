@@ -48,8 +48,23 @@ export function LibraryPage({
 
 					{tracks.length === 0 ? (
 						<div class="flex-1 flex flex-col items-center justify-center gap-3 text-center">
-							<div class="flex items-center justify-center w-14 h-14 rounded-full bg-surface border border-border text-2xl mb-2">
-								♫
+							<div class="flex items-center justify-center w-14 h-14 rounded-full bg-surface border border-border mb-2">
+								<svg
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1.5"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									aria-label="No tracks"
+									class="text-muted"
+								>
+									<path d="M9 18V5l12-2v13" />
+									<circle cx="6" cy="18" r="3" />
+									<circle cx="18" cy="16" r="3" />
+								</svg>
 							</div>
 							<p class="text-sm text-muted">Your library is empty.</p>
 							<p class="text-xs text-subtle">Add music files to get started.</p>
@@ -68,7 +83,12 @@ export function LibraryPage({
 							</thead>
 							<tbody>
 								{tracks.map((t, i) => (
-									<tr class="border-b border-border/50 hover:bg-surface/40 transition-colors">
+									<tr
+										class="border-b border-border/50 hover:bg-surface/40 transition-colors cursor-pointer"
+										data-track-id={String(t.id)}
+										data-title={t.title}
+										data-artist={t.artists.map((a) => a.name).join(", ")}
+									>
 										<td class="py-2 pr-4 text-muted text-xs">{i + 1}</td>
 										<td class="py-2 pr-3">
 											<AlbumArt />

@@ -72,7 +72,12 @@ export function AlbumPage({
 						</thead>
 						<tbody>
 							{tracks.map((t) => (
-								<tr class="border-b border-border/50 hover:bg-surface/40 transition-colors">
+								<tr
+									class="border-b border-border/50 hover:bg-surface/40 transition-colors cursor-pointer"
+									data-track-id={String(t.id)}
+									data-title={t.title}
+									data-artist={artists.join(", ")}
+								>
 									<td class="py-2 pr-4 text-muted text-xs">
 										{t.track_number ?? "—"}
 									</td>

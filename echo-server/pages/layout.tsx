@@ -37,6 +37,65 @@ export function Layout({
 			</head>
 			<body class="bg-background text-foreground font-sans antialiased">
 				{children}
+				<div
+					id="player-bar"
+					class="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-3 flex items-center gap-4 z-50"
+				>
+					<div class="flex flex-col min-w-0 w-40 shrink-0">
+						<span id="player-title" class="text-sm font-medium truncate" />
+						<span id="player-artist" class="text-xs text-muted truncate" />
+					</div>
+					<button
+						id="player-play"
+						type="button"
+						class="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface transition-colors cursor-pointer"
+					>
+						<svg
+							id="icon-play"
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+							aria-label="Play"
+						>
+							<polygon points="5,3 19,12 5,21" />
+						</svg>
+						<svg
+							id="icon-pause"
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+							aria-label="Pause"
+							class="hidden"
+						>
+							<rect x="6" y="4" width="4" height="16" />
+							<rect x="14" y="4" width="4" height="16" />
+						</svg>
+					</button>
+					<span
+						id="player-current"
+						class="text-xs text-muted tabular-nums shrink-0"
+					>
+						0:00
+					</span>
+					<input
+						id="player-seek"
+						type="range"
+						min="0"
+						max="100"
+						value="0"
+						class="flex-1 accent-foreground"
+					/>
+					<span
+						id="player-duration"
+						class="text-xs text-muted tabular-nums shrink-0"
+					>
+						0:00
+					</span>
+				</div>
+				<audio id="echo-audio" preload="none" />
+				<script src="/player.js" defer />
 			</body>
 		</html>
 	);

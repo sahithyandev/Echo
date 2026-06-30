@@ -109,6 +109,14 @@ export abstract class LibraryService {
 		return [...trackMap.values()];
 	}
 
+	static async findTrackById(client: DbLike, id: number) {
+		const rows = await client
+			.select({ file_path: tracks.file_path })
+			.from(tracks)
+			.where(eq(tracks.id, id));
+		return rows[0] ?? null;
+	}
+
 	static async scanMusicFolder(client: DbLike, dir: string): Promise<number> {
 		const glob = new Bun.Glob("**/*.{mp3,flac,m4a,aac,ogg,wav}");
 		let skipped = 0;

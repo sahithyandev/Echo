@@ -56,7 +56,12 @@ export function ArtistPage({
 						</thead>
 						<tbody>
 							{tracks.map((t, i) => (
-								<tr class="border-b border-border/50 hover:bg-surface/40 transition-colors">
+								<tr
+									class="border-b border-border/50 hover:bg-surface/40 transition-colors cursor-pointer"
+									data-track-id={String(t.id)}
+									data-title={t.title}
+									data-artist={artist.name}
+								>
 									<td class="py-2 pr-4 text-muted text-xs">{i + 1}</td>
 									<td class="py-2 font-medium">{t.title}</td>
 									<td class="py-2 text-muted text-right tabular-nums">

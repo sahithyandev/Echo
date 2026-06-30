@@ -19,6 +19,9 @@
 			"complexity": {
 				"noStaticOnlyClass": "off"
 			},
+			"a11y": {
+				"useMediaCaption": "off"
+			},
 			"correctness": {
 				"noUnusedImports": "warn"
 			},
