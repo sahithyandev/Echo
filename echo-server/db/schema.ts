@@ -28,3 +28,20 @@ export const user_sessions = sqliteTable("user_sessions", {
 		.notNull(),
 	revoked_at: integer("revoked_at", { mode: "timestamp" }),
 });
+
+export const tracks = sqliteTable("tracks", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	title: text("title").notNull(),
+	artist: text("artist"),
+	album: text("album"),
+	track_number: integer("track_number"),
+	year: integer("year"),
+	genre: text("genre"),
+	duration_seconds: integer("duration_seconds"),
+	file_path: text("file_path").notNull().unique(),
+	fingerprint: text("fingerprint"),
+	added_at: integer("added_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.notNull(),
+	added_by: integer("added_by").references(() => users.id),
+});
