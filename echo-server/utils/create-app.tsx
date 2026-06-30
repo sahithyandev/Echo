@@ -13,42 +13,44 @@ import { unused } from "./misc";
 
 unused(Html);
 
-export async function createApp(db: DbLike) {
-	const cssPath = new URL("../styles.css", import.meta.url).pathname;
-	const cssBuild = await Bun.build({
-		entrypoints: [cssPath],
-		plugins: [tailwind],
-	});
-	if (!cssBuild.success)
-		throw new Error(`CSS build failed: ${cssBuild.logs.join("\n")}`);
-	const css = await cssBuild.outputs[0].text();
+const contentTypes: Record<string, string> = {
+	css: "text/css",
+	js: "application/javascript",
+} as const;
 
-	const playerPath = new URL("../player.ts", import.meta.url).pathname;
-	const playerBuild = await Bun.build({
-		entrypoints: [playerPath],
-		target: "browser",
-	});
-	if (!playerBuild.success)
-		throw new Error(`Player build failed: ${playerBuild.logs.join("\n")}`);
-	const playerJs = await playerBuild.outputs[0].text();
+async function buildAsset(
+	route: string,
+	srcPath: string,
+	options: Omit<Parameters<typeof Bun.build>[0], "entrypoints">,
+) {
+	const build = await Bun.build({ entrypoints: [srcPath], ...options });
+	if (!build.success)
+		throw new Error(`Build failed for ${route}: ${build.logs.join("\n")}`);
+	return { route, content: await build.outputs[0].text() };
+}
+
+export async function createApp(db: DbLike) {
+	const base = (p: string) => new URL(p, import.meta.url).pathname;
+
+	const assets = await Promise.all([
+		buildAsset("/global.css", base("../styles.css"), { plugins: [tailwind] }),
+		buildAsset("/player.js", base("../player.ts"), { target: "browser" }),
+	]);
+
+	const assetPlugin = new Elysia();
+	for (const { route, content } of assets) {
+		const ext = route.split(".").pop()!;
+		assetPlugin.get(route, () =>
+			new Response(content, {
+				headers: { "content-type": `${contentTypes[ext]}; charset=utf-8` },
+			}),
+		);
+	}
 
 	const authMiddleware = createAuthMiddleware(db);
 	return new Elysia()
 		.use(html())
-		.get(
-			"/global.css",
-			() =>
-				new Response(css, {
-					headers: { "content-type": "text/css; charset=utf-8" },
-				}),
-		)
-		.get(
-			"/player.js",
-			() =>
-				new Response(playerJs, {
-					headers: { "content-type": "application/javascript; charset=utf-8" },
-				}),
-		)
+		.use(assetPlugin)
 		.use(await staticPlugin({ prefix: "/" }))
 		.use(authMiddleware)
 		.get("/", () => <IndexPage />)
