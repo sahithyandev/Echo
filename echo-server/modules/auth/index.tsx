@@ -1,10 +1,15 @@
+import { Html } from "@elysiajs/html";
 import { type CookieOptions, Elysia } from "elysia";
 import type { DbLike } from "../../db/types";
+import { LoginPage } from "../../pages/login";
 import { jwtInstance } from "../../utils/jwt";
+import { unused } from "../../utils/misc";
 import { getRequestInfo } from "../../utils/request-info";
 import createAuthMiddleware from "./middleware";
 import { AuthModel } from "./model";
 import { Auth } from "./service";
+
+unused(Html);
 
 const SESSION_COOKIE: CookieOptions = {
 	httpOnly: true,
@@ -19,6 +24,17 @@ export default function createAuthModule(dbClient: DbLike) {
 		.decorate("db", dbClient)
 		.use(jwtInstance)
 		.use(authMiddleware)
+		.get(
+			"/login",
+			async ({ currentUser, redirect, query, db }) => {
+				if (currentUser) return redirect("/library");
+				const usersCount = await Auth.userCount(db);
+
+				const register = usersCount === 0;
+				return <LoginPage register={register} error={!!query.error} />;
+			},
+			{ currentUser: true },
+		)
 		.get(
 			"/validate",
 			async ({ currentUser, sessionRevoked, db, status }) => {

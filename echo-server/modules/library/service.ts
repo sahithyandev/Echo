@@ -109,54 +109,6 @@ export abstract class LibraryService {
 		return [...trackMap.values()];
 	}
 
-	static async findArtist(client: DbLike, id: number) {
-		const rows = await client.select().from(artists).where(eq(artists.id, id));
-		return rows[0] ?? null;
-	}
-
-	static async getArtistTracks(client: DbLike, artistId: number) {
-		return client
-			.select({
-				id: tracks.id,
-				title: tracks.title,
-				duration_seconds: tracks.duration_seconds,
-			})
-			.from(tracks)
-			.innerJoin(track_artists, eq(track_artists.track_id, tracks.id))
-			.where(eq(track_artists.artist_id, artistId))
-			.orderBy(tracks.title);
-	}
-
-	static async findAlbum(client: DbLike, id: number) {
-		const rows = await client.select().from(albums).where(eq(albums.id, id));
-		return rows[0] ?? null;
-	}
-
-	static async getAlbumTracks(client: DbLike, albumId: number) {
-		return client
-			.select({
-				id: tracks.id,
-				title: tracks.title,
-				duration_seconds: tracks.duration_seconds,
-				track_number: tracks.track_number,
-			})
-			.from(tracks)
-			.where(eq(tracks.album_id, albumId))
-			.orderBy(tracks.track_number);
-	}
-
-	static async getAlbumArtists(
-		client: DbLike,
-		albumId: number,
-	): Promise<string[]> {
-		const rows = await client
-			.select({ name: artists.name })
-			.from(artists)
-			.innerJoin(album_artists, eq(album_artists.artist_id, artists.id))
-			.where(eq(album_artists.album_id, albumId));
-		return rows.map((r) => r.name);
-	}
-
 	static async scanMusicFolder(client: DbLike, dir: string): Promise<number> {
 		const glob = new Bun.Glob("**/*.{mp3,flac,m4a,aac,ogg,wav}");
 		let skipped = 0;
@@ -234,7 +186,9 @@ export abstract class LibraryService {
 				console.warn(`Skipped ${file}:`, err);
 			}
 		}
-		console.log(`Library scan complete: ${processed} processed, ${skipped} unchanged`);
+		console.log(
+			`Library scan complete: ${processed} processed, ${skipped} unchanged`,
+		);
 		return processed + skipped;
 	}
 }
