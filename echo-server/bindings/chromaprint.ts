@@ -1,4 +1,4 @@
-import { type Pointer, CString, FFIType, dlopen, ptr, read } from "bun:ffi";
+import { CString, dlopen, FFIType, type Pointer, ptr, read } from "bun:ffi";
 
 const LIB =
 	process.arch === "arm64"
@@ -82,7 +82,8 @@ export function computeFingerprint(
  * Handles audio decoding internally — no ffmpeg required separately.
  */
 export async function fingerprintFile(filePath: string): Promise<string> {
-	const result = await Bun.$`fpcalc -plain -length ${MAX_SECONDS} ${filePath}`.text();
+	const result =
+		await Bun.$`fpcalc -plain -length ${MAX_SECONDS} ${filePath}`.text();
 	const fingerprint = result.trim();
 	if (!fingerprint) throw new Error(`fpcalc returned nothing for ${filePath}`);
 	return fingerprint;

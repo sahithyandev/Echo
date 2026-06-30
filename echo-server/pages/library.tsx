@@ -1,7 +1,8 @@
 import { Html } from "@elysiajs/html";
 import { unused } from "../utils/misc";
 import { Layout } from "./layout";
-import { AlbumArt, formatDuration } from "./shared";
+import { AlbumArt } from "../components/album-art";
+import { formatDuration } from "../utils/misc";
 
 unused(Html);
 

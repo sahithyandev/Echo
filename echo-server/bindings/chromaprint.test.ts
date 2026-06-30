@@ -113,8 +113,16 @@ describe("fingerprintFile", () => {
 
 	it("differs for different audio files", async () => {
 		// C major vs F# major — no shared pitch classes, distinct chroma profiles
-		const pathA = await writeTmpWav(chord([261, 329, 392], 10, 44100), 44100, 1);
-		const pathB = await writeTmpWav(chord([370, 466, 554], 10, 44100), 44100, 1);
+		const pathA = await writeTmpWav(
+			chord([261, 329, 392], 10, 44100),
+			44100,
+			1,
+		);
+		const pathB = await writeTmpWav(
+			chord([370, 466, 554], 10, 44100),
+			44100,
+			1,
+		);
 		const fpA = await fingerprintFile(pathA);
 		const fpB = await fingerprintFile(pathB);
 		expect(fpA).not.toBe(fpB);
