@@ -31,62 +31,10 @@
 	color: var(--color-accent);
 }
 
-/* Track table rows (album / artist pages) */
-tr.playing {
-	background-color: color-mix(in srgb, var(--color-accent) 8%, transparent);
-}
-
 /* Base hidden state — must come before higher-specificity overrides */
 .track-play-hover,
 .track-bars {
 	display: none;
-}
-
-/* Row hover: swap index number for a play icon */
-tr:hover .track-number {
-	display: none;
-}
-
-tr:hover .track-play-hover {
-	display: inline-flex;
-	align-items: center;
-	color: var(--color-muted);
-}
-
-/* Row playing: swap index number for eq bars */
-tr.playing .track-number {
-	display: none;
-}
-
-tr.playing:hover .track-play-hover {
-	display: none;
-}
-
-tr.playing .track-bars {
-	display: inline-flex;
-	align-items: flex-end;
-	gap: 2px;
-	height: 12px;
-}
-
-tr.playing .track-bars span {
-	width: 2px;
-	background: var(--color-accent);
-	border-radius: 1px;
-	animation: eq-bar 0.8s ease-in-out infinite;
-	transform-origin: bottom;
-}
-
-tr.playing .track-bars span:nth-child(1) {
-	height: 8px;
-}
-tr.playing .track-bars span:nth-child(2) {
-	height: 12px;
-	animation-delay: 0.15s;
-}
-tr.playing .track-bars span:nth-child(3) {
-	height: 6px;
-	animation-delay: 0.3s;
 }
 
 /* Track card grid (library page) */
@@ -147,6 +95,58 @@ tr.playing .track-bars span:nth-child(3) {
 }
 .track-card-playing .track-bars span:nth-child(3) {
 	height: 7px;
+	animation-delay: 0.3s;
+}
+
+/* Track table rows (album / artist pages) */
+tr.playing {
+	background-color: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+/* Row hover: swap index number for a play icon */
+tr:hover .track-number {
+	display: none;
+}
+
+tr:hover .track-play-hover {
+	display: inline-flex;
+	align-items: center;
+	color: var(--color-muted);
+}
+
+/* Row playing: swap index number for eq bars */
+tr.playing .track-number {
+	display: none;
+}
+
+tr.playing:hover .track-play-hover {
+	display: none;
+}
+
+tr.playing .track-bars {
+	display: inline-flex;
+	align-items: flex-end;
+	gap: 2px;
+	height: 12px;
+}
+
+tr.playing .track-bars span {
+	width: 2px;
+	background: var(--color-accent);
+	border-radius: 1px;
+	animation: eq-bar 0.8s ease-in-out infinite;
+	transform-origin: bottom;
+}
+
+tr.playing .track-bars span:nth-child(1) {
+	height: 8px;
+}
+tr.playing .track-bars span:nth-child(2) {
+	height: 12px;
+	animation-delay: 0.15s;
+}
+tr.playing .track-bars span:nth-child(3) {
+	height: 6px;
 	animation-delay: 0.3s;
 }
 

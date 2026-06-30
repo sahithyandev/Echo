@@ -23,10 +23,7 @@ export function LibraryPage({
 		<Layout title="Echo — Library">
 			<div class="min-h-screen flex flex-col">
 				<header class="flex items-center justify-between px-6 py-4 border-b border-border">
-					<a
-						href="/"
-						class="wordmark-gradient text-xl font-bold font-display"
-					>
+					<a href="/" class="wordmark-gradient text-xl font-bold font-display">
 						Echo
 					</a>
 					<form method="post" action="/auth/sign-out">
