@@ -39,6 +39,8 @@ const { symbols: ffi } = dlopen(LIB, {
 // CHROMAPRINT_ALGORITHM_TEST2 — the default, same as fpcalc
 const ALGORITHM = 1;
 
+const MAX_SECONDS = 30;
+
 /**
  * Compute a Chromaprint fingerprint from raw signed 16-bit PCM samples.
  * `samples.length` is the number of samples (not bytes).
@@ -48,11 +50,14 @@ export function computeFingerprint(
 	sampleRate: number,
 	channels: number,
 ): string {
+	const maxSamples = sampleRate * channels * MAX_SECONDS;
+	const limited =
+		samples.length > maxSamples ? samples.subarray(0, maxSamples) : samples;
 	const ctx = ffi.chromaprint_new(ALGORITHM);
 	try {
 		if (!ffi.chromaprint_start(ctx, sampleRate, channels))
 			throw new Error("chromaprint_start failed");
-		if (!ffi.chromaprint_feed(ctx, ptr(samples), samples.length))
+		if (!ffi.chromaprint_feed(ctx, ptr(limited), limited.length))
 			throw new Error("chromaprint_feed failed");
 		if (!ffi.chromaprint_finish(ctx))
 			throw new Error("chromaprint_finish failed");
@@ -77,7 +82,7 @@ export function computeFingerprint(
  * Handles audio decoding internally — no ffmpeg required separately.
  */
 export async function fingerprintFile(filePath: string): Promise<string> {
-	const result = await Bun.$`fpcalc -plain ${filePath}`.text();
+	const result = await Bun.$`fpcalc -plain -length ${MAX_SECONDS} ${filePath}`.text();
 	const fingerprint = result.trim();
 	if (!fingerprint) throw new Error(`fpcalc returned nothing for ${filePath}`);
 	return fingerprint;
