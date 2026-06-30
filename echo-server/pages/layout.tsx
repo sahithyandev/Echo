@@ -81,34 +81,58 @@ export function Layout({
 							</span>
 						</div>
 
-						<button
-							id="player-play"
-							type="button"
-							class="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity cursor-pointer"
-						>
-							<svg
-								id="icon-play"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="currentColor"
-								aria-label="Play"
+						<div class="flex items-center gap-2 shrink-0">
+							<button
+								id="player-prev"
+								type="button"
+								class="w-7 h-7 flex items-center justify-center text-muted hover:text-foreground transition-colors cursor-pointer"
+								aria-label="Previous"
 							>
-								<polygon points="6,3 20,12 6,21" />
-							</svg>
-							<svg
-								id="icon-pause"
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="currentColor"
-								aria-label="Pause"
-								class="hidden"
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+									<rect x="4" y="4" width="2" height="16" />
+									<polygon points="19,4 7,12 19,20" />
+								</svg>
+							</button>
+							<button
+								id="player-play"
+								type="button"
+								class="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center shrink-0 hover:opacity-75 transition-opacity cursor-pointer"
 							>
-								<rect x="6" y="4" width="4" height="16" />
-								<rect x="14" y="4" width="4" height="16" />
-							</svg>
-						</button>
+								<svg
+									id="icon-play"
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="currentColor"
+									aria-label="Play"
+								>
+									<polygon points="6,3 20,12 6,21" />
+								</svg>
+								<svg
+									id="icon-pause"
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="currentColor"
+									aria-label="Pause"
+									class="hidden"
+								>
+									<rect x="6" y="4" width="4" height="16" />
+									<rect x="14" y="4" width="4" height="16" />
+								</svg>
+							</button>
+							<button
+								id="player-next"
+								type="button"
+								class="w-7 h-7 flex items-center justify-center text-muted hover:text-foreground transition-colors cursor-pointer"
+								aria-label="Next"
+							>
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+									<polygon points="5,4 17,12 5,20" />
+									<rect x="18" y="4" width="2" height="16" />
+								</svg>
+							</button>
+						</div>
 					</div>
 				</div>
 				<audio id="echo-audio" preload="none" />

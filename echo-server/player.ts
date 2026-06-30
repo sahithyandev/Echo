@@ -3,6 +3,8 @@ const bar = document.getElementById("player-bar") as HTMLDivElement;
 const titleEl = document.getElementById("player-title") as HTMLSpanElement;
 const artistEl = document.getElementById("player-artist") as HTMLSpanElement;
 const playBtn = document.getElementById("player-play") as HTMLButtonElement;
+const prevBtn = document.getElementById("player-prev") as HTMLButtonElement;
+const nextBtn = document.getElementById("player-next") as HTMLButtonElement;
 const iconPlay = document.getElementById("icon-play") as Element;
 const iconPause = document.getElementById("icon-pause") as Element;
 const seekBar = document.getElementById("player-seek") as HTMLInputElement;
@@ -21,6 +23,13 @@ function fmt(s: number): string {
 }
 
 let seeking = false;
+let currentIndex = -1;
+
+function playlist(): HTMLTableRowElement[] {
+	return Array.from(
+		document.querySelectorAll<HTMLTableRowElement>("tr[data-track-id]"),
+	);
+}
 
 function playTrack(id: string, title: string, artist: string): void {
 	if (audio.dataset.trackId !== id) {
@@ -32,11 +41,16 @@ function playTrack(id: string, title: string, artist: string): void {
 	artistEl.textContent = artist;
 	bar.classList.remove("hidden");
 	document.body.style.paddingBottom = "5.5rem";
-	for (const row of document.querySelectorAll<HTMLTableRowElement>(
-		"tr[data-track-id]",
-	)) {
+	const rows = playlist();
+	currentIndex = rows.findIndex((r) => r.dataset.trackId === id);
+	for (const row of rows) {
 		row.classList.toggle("playing", row.dataset.trackId === id);
 	}
+}
+
+function playRow(row: HTMLTableRowElement): void {
+	const { trackId, title = "Unknown", artist = "" } = row.dataset;
+	if (trackId) playTrack(trackId, title, artist);
 }
 
 document.addEventListener("click", (e) => {
@@ -44,13 +58,37 @@ document.addEventListener("click", (e) => {
 		"tr[data-track-id]",
 	);
 	if (!row) return;
-	const { trackId, title = "Unknown", artist = "" } = row.dataset;
-	if (trackId) playTrack(trackId, title, artist);
+	playRow(row);
 });
 
 playBtn.addEventListener("click", () => {
 	if (audio.paused) audio.play();
 	else audio.pause();
+});
+
+prevBtn.addEventListener("click", () => {
+	const rows = playlist();
+	if (!rows.length) return;
+	if (audio.currentTime > 3) {
+		audio.currentTime = 0;
+		return;
+	}
+	const idx = currentIndex <= 0 ? rows.length - 1 : currentIndex - 1;
+	playRow(rows[idx]);
+});
+
+nextBtn.addEventListener("click", () => {
+	const rows = playlist();
+	if (!rows.length) return;
+	const idx = currentIndex >= rows.length - 1 ? 0 : currentIndex + 1;
+	playRow(rows[idx]);
+});
+
+audio.addEventListener("ended", () => {
+	const rows = playlist();
+	if (!rows.length) return;
+	const idx = currentIndex >= rows.length - 1 ? 0 : currentIndex + 1;
+	playRow(rows[idx]);
 });
 
 let rafId = 0;
