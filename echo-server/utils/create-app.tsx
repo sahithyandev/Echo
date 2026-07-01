@@ -36,8 +36,12 @@ export async function createApp(db: DbLike) {
 
 	const assets = await Promise.all([
 		buildAsset("/global.css", base("../styles.css"), { plugins: [tailwind] }),
-		buildAsset("/player.js", base("../player.ts"), { target: "browser" }),
-		buildAsset("/search.js", base("../search.ts"), { target: "browser" }),
+		buildAsset("/player.js", base("../client/player.ts"), {
+			target: "browser",
+		}),
+		buildAsset("/search.js", base("../client/search.ts"), {
+			target: "browser",
+		}),
 	]);
 
 	const assetPlugin = new Elysia();
