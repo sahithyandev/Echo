@@ -13,6 +13,11 @@ export const users = sqliteTable("users", {
 	is_admin: integer("is_admin", { mode: "boolean" }).default(false).notNull(),
 	shuffle: integer("shuffle", { mode: "boolean" }).default(false).notNull(),
 	repeat_mode: text("repeat_mode").default("off").notNull(),
+	playback_track_id: integer("playback_track_id").references(() => tracks.id),
+	playback_position_seconds: integer("playback_position_seconds"),
+	playback_playing: integer("playback_playing", { mode: "boolean" })
+		.default(false)
+		.notNull(),
 	verified_at: integer("verified_at", { mode: "timestamp" }),
 	created_at: integer("created_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())

@@ -43,10 +43,14 @@ export default function createLibraryModule(db: DbLike) {
 				const rangeHeader = request.headers.get("Range");
 
 				if (rangeHeader) {
-					const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+					const match = rangeHeader.match(/bytes=(\d*)-(\d*)/);
 					if (match) {
-						const start = Number.parseInt(match[1], 10);
-						const end = match[2] ? Number.parseInt(match[2], 10) : size - 1;
+						// A suffix range ("bytes=-500") has no start; it means the last N bytes.
+						const start = match[1]
+							? Number.parseInt(match[1], 10)
+							: size - Number.parseInt(match[2], 10);
+						const end =
+							match[1] && match[2] ? Number.parseInt(match[2], 10) : size - 1;
 						return new Response(file.slice(start, end + 1), {
 							status: 206,
 							headers: {

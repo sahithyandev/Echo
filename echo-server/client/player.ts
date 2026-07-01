@@ -60,6 +60,13 @@ async function loadPlaybackModes(): Promise<void> {
 		shuffle = Boolean(data.shuffle);
 		repeatMode = data.repeat_mode;
 		renderPlaybackModes();
+		if (data.playback_track_id) {
+			restorePlayback(
+				data.playback_track_id,
+				data.playback_position_seconds ?? 0,
+				Boolean(data.playback_playing),
+			);
+		}
 	} catch {
 		// keep defaults if settings can't be loaded
 	}
@@ -71,6 +78,64 @@ function savePlaybackModes(): void {
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ shuffle, repeat_mode: repeatMode }),
 	});
+}
+
+function savePlaybackPosition(): void {
+	const trackId = audio.dataset.trackId;
+	fetch("/settings/playback", {
+		method: "PUT",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({
+			track_id: trackId ? Number(trackId) : null,
+			position_seconds: trackId ? Math.floor(audio.currentTime) : null,
+			playing: trackId ? !audio.paused : false,
+		}),
+	});
+}
+
+function resumeOnNextInteraction(): void {
+	const resume = () => audio.play();
+	document.addEventListener("pointerdown", resume, { once: true });
+	document.addEventListener("keydown", resume, { once: true });
+}
+
+function restorePlayback(
+	trackId: number,
+	positionSeconds: number,
+	playing: boolean,
+): void {
+	const row = playlist().find((r) => r.dataset.trackId === String(trackId));
+	if (!row) return;
+	const { title = "Unknown", artist = "", art = "" } = row.dataset;
+	audio.src = `/track/${trackId}/stream`;
+	audio.dataset.trackId = String(trackId);
+	audio.addEventListener(
+		"loadedmetadata",
+		() => {
+			audio.currentTime = positionSeconds;
+			renderProgress();
+			if (playing) audio.play().catch(() => resumeOnNextInteraction());
+		},
+		{ once: true },
+	);
+	// preload="none" won't fetch metadata just from setting src; force it.
+	audio.load();
+	titleEl.textContent = title;
+	artistEl.textContent = artist;
+	if (art) {
+		artImg.src = art;
+		artImg.classList.remove("hidden");
+		artPlaceholder.classList.add("hidden");
+	} else {
+		artImg.classList.add("hidden");
+		artPlaceholder.classList.remove("hidden");
+	}
+	bar.classList.remove("hidden");
+	document.body.style.paddingBottom = "5.5rem";
+	currentIndex = playlist().findIndex(
+		(r) => r.dataset.trackId === String(trackId),
+	);
+	row.classList.add("playing");
 }
 
 loadPlaybackModes();
@@ -189,13 +254,16 @@ audio.addEventListener("ended", () => {
 
 let rafId = 0;
 
+function renderProgress(): void {
+	if (!audio.duration || Number.isNaN(audio.duration)) return;
+	const pct = (audio.currentTime / audio.duration) * 100;
+	seekBar.value = String(pct);
+	seekBar.style.setProperty("--progress", `${pct}%`);
+	currentTimeEl.textContent = fmt(audio.currentTime);
+}
+
 function tick() {
-	if (!seeking && audio.duration && !Number.isNaN(audio.duration)) {
-		const pct = (audio.currentTime / audio.duration) * 100;
-		seekBar.value = String(pct);
-		seekBar.style.setProperty("--progress", `${pct}%`);
-		currentTimeEl.textContent = fmt(audio.currentTime);
-	}
+	if (!seeking) renderProgress();
 	rafId = requestAnimationFrame(tick);
 }
 
@@ -208,7 +276,17 @@ audio.addEventListener("pause", () => {
 	iconPlay.classList.remove("hidden");
 	iconPause.classList.add("hidden");
 	cancelAnimationFrame(rafId);
+	savePlaybackPosition();
 });
+
+let lastSavedAt = 0;
+audio.addEventListener("timeupdate", () => {
+	if (audio.currentTime - lastSavedAt < 5) return;
+	lastSavedAt = audio.currentTime;
+	savePlaybackPosition();
+});
+
+window.addEventListener("beforeunload", savePlaybackPosition);
 
 seekBar.addEventListener("mousedown", () => {
 	seeking = true;
