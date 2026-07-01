@@ -11,6 +11,8 @@ export const users = sqliteTable("users", {
 	email: text("email").notNull().unique(),
 	password: text("password").notNull(),
 	is_admin: integer("is_admin", { mode: "boolean" }).default(false).notNull(),
+	shuffle: integer("shuffle", { mode: "boolean" }).default(false).notNull(),
+	repeat_mode: text("repeat_mode").default("off").notNull(),
 	verified_at: integer("verified_at", { mode: "timestamp" }),
 	created_at: integer("created_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())

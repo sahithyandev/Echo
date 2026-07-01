@@ -96,6 +96,32 @@ export function Layout({
 
 						<div class="flex items-center gap-2 shrink-0">
 							<button
+								id="player-shuffle"
+								type="button"
+								class="w-7 h-7 rounded-full flex items-center justify-center text-muted hover:text-accent transition-colors cursor-pointer"
+								aria-label="Shuffle"
+								aria-pressed="false"
+							>
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									role="img"
+									aria-label="Shuffle"
+								>
+									<polyline points="16,3 21,3 21,8" />
+									<line x1="4" y1="20" x2="21" y2="3" />
+									<polyline points="21,16 21,21 16,21" />
+									<line x1="15" y1="15" x2="21" y2="21" />
+									<line x1="4" y1="4" x2="9" y2="9" />
+								</svg>
+							</button>
+							<button
 								id="player-prev"
 								type="button"
 								class="w-7 h-7 flex items-center justify-center text-muted hover:text-accent transition-colors cursor-pointer"
@@ -158,6 +184,37 @@ export function Layout({
 									<polygon points="5,4 17,12 5,20" />
 									<rect x="18" y="4" width="2" height="16" />
 								</svg>
+							</button>
+							<button
+								id="player-repeat"
+								type="button"
+								class="w-7 h-7 rounded-full flex items-center justify-center text-muted hover:text-accent transition-colors cursor-pointer relative"
+								aria-label="Repeat"
+								aria-pressed="false"
+							>
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									role="img"
+									aria-label="Repeat"
+								>
+									<polyline points="17,1 21,5 17,9" />
+									<path d="M3 11V9a4 4 0 0 1 4-4h14" />
+									<polyline points="7,23 3,19 7,15" />
+									<path d="M21 13v2a4 4 0 0 1-4 4H3" />
+								</svg>
+								<span
+									id="player-repeat-one"
+									class="hidden absolute -top-0.5 -right-0.5 text-[8px] leading-none font-semibold bg-accent text-accent-foreground rounded-full w-3 h-3 flex items-center justify-center"
+								>
+									1
+								</span>
 							</button>
 						</div>
 					</div>

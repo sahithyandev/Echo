@@ -9,6 +9,13 @@ const artPlaceholder = document.getElementById(
 const playBtn = document.getElementById("player-play") as HTMLButtonElement;
 const prevBtn = document.getElementById("player-prev") as HTMLButtonElement;
 const nextBtn = document.getElementById("player-next") as HTMLButtonElement;
+const shuffleBtn = document.getElementById(
+	"player-shuffle",
+) as HTMLButtonElement;
+const repeatBtn = document.getElementById("player-repeat") as HTMLButtonElement;
+const repeatOneBadge = document.getElementById(
+	"player-repeat-one",
+) as HTMLSpanElement;
 const iconPlay = document.getElementById("icon-play") as Element;
 const iconPause = document.getElementById("icon-pause") as Element;
 const seekBar = document.getElementById("player-seek") as HTMLInputElement;
@@ -29,8 +36,73 @@ function fmt(s: number): string {
 let seeking = false;
 let currentIndex = -1;
 
+type RepeatMode = "off" | "all" | "one";
+let shuffle = false;
+let repeatMode: RepeatMode = "off";
+
+function setActive(btn: HTMLButtonElement, active: boolean): void {
+	btn.classList.toggle("text-accent", active);
+	btn.classList.toggle("bg-accent/10", active);
+	btn.setAttribute("aria-pressed", String(active));
+}
+
+function renderPlaybackModes(): void {
+	setActive(shuffleBtn, shuffle);
+	setActive(repeatBtn, repeatMode !== "off");
+	repeatOneBadge.classList.toggle("hidden", repeatMode !== "one");
+}
+
+async function loadPlaybackModes(): Promise<void> {
+	try {
+		const res = await fetch("/settings");
+		if (!res.ok) return;
+		const data = await res.json();
+		shuffle = Boolean(data.shuffle);
+		repeatMode = data.repeat_mode;
+		renderPlaybackModes();
+	} catch {
+		// keep defaults if settings can't be loaded
+	}
+}
+
+function savePlaybackModes(): void {
+	fetch("/settings", {
+		method: "PUT",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ shuffle, repeat_mode: repeatMode }),
+	});
+}
+
+loadPlaybackModes();
+
+shuffleBtn.addEventListener("click", () => {
+	shuffle = !shuffle;
+	renderPlaybackModes();
+	savePlaybackModes();
+});
+
+repeatBtn.addEventListener("click", () => {
+	const order: RepeatMode[] = ["off", "all", "one"];
+	repeatMode = order[(order.indexOf(repeatMode) + 1) % order.length];
+	renderPlaybackModes();
+	savePlaybackModes();
+});
+
 function playlist(): HTMLElement[] {
 	return Array.from(document.querySelectorAll<HTMLElement>("[data-track-id]"));
+}
+
+/** Index of the track to advance to, or -1 if playback should stop. */
+function nextIndex(els: HTMLElement[]): number {
+	if (!els.length) return -1;
+	if (shuffle) {
+		if (els.length === 1) return 0;
+		let idx = currentIndex;
+		while (idx === currentIndex) idx = Math.floor(Math.random() * els.length);
+		return idx;
+	}
+	if (currentIndex >= els.length - 1) return repeatMode === "off" ? -1 : 0;
+	return currentIndex + 1;
 }
 
 function playTrack(
@@ -93,15 +165,24 @@ prevBtn.addEventListener("click", () => {
 nextBtn.addEventListener("click", () => {
 	const els = playlist();
 	if (!els.length) return;
-	const idx = currentIndex >= els.length - 1 ? 0 : currentIndex + 1;
+	// Manual "next" always advances (wraps at the end) regardless of repeat mode.
+	const idx = shuffle
+		? nextIndex(els)
+		: currentIndex >= els.length - 1
+			? 0
+			: currentIndex + 1;
 	playRow(els[idx]);
 });
 
 audio.addEventListener("ended", () => {
+	if (repeatMode === "one") {
+		audio.currentTime = 0;
+		audio.play();
+		return;
+	}
 	const els = playlist();
-	if (!els.length) return;
-	const idx = currentIndex >= els.length - 1 ? 0 : currentIndex + 1;
-	playRow(els[idx]);
+	const idx = nextIndex(els);
+	if (idx >= 0) playRow(els[idx]);
 });
 
 let rafId = 0;

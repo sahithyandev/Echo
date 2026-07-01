@@ -95,7 +95,7 @@ describe("GET /library", () => {
 	it("redirects to /login when unauthenticated", async () => {
 		const res = await app.handle(new Request("http://localhost/library"));
 		expect(res.status).toBe(302);
-		expect(res.headers.get("location")).toBe("/login");
+		expect(res.headers.get("location")).toBe("/auth/login");
 	});
 
 	it("returns 200 html when authenticated", async () => {
@@ -110,7 +110,7 @@ describe("GET /artist/:id", () => {
 	it("redirects to /login when unauthenticated", async () => {
 		const res = await app.handle(new Request("http://localhost/artist/1"));
 		expect(res.status).toBe(302);
-		expect(res.headers.get("location")).toBe("/login");
+		expect(res.headers.get("location")).toBe("/auth/login");
 	});
 
 	it("returns 200 html for a valid artist", async () => {
@@ -133,7 +133,7 @@ describe("GET /album/:id", () => {
 	it("redirects to /login when unauthenticated", async () => {
 		const res = await app.handle(new Request("http://localhost/album/1"));
 		expect(res.status).toBe(302);
-		expect(res.headers.get("location")).toBe("/login");
+		expect(res.headers.get("location")).toBe("/auth/login");
 	});
 
 	it("returns 200 html for a valid album", async () => {

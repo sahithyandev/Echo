@@ -8,6 +8,7 @@ import createArtistModule from "../modules/artist";
 import createAuthModule from "../modules/auth";
 import createAuthMiddleware from "../modules/auth/middleware";
 import createLibraryModule from "../modules/library";
+import createSettingsModule from "../modules/settings";
 import { IndexPage } from "../pages/index";
 import { unused } from "./misc";
 
@@ -62,7 +63,8 @@ export async function createApp(db: DbLike) {
 		.use(createLibraryModule(db))
 		.use(createAuthModule(db))
 		.use(createAlbumModule(db))
-		.use(createArtistModule(db));
+		.use(createArtistModule(db))
+		.use(createSettingsModule(db));
 }
 
 export type App = Awaited<ReturnType<typeof createApp>>;
