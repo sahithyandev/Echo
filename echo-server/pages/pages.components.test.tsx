@@ -7,6 +7,7 @@ import { ArtistsPage } from "./artists";
 import { IndexPage } from "./index";
 import { LibraryPage } from "./library";
 import { LoginPage } from "./login";
+import { SearchResults } from "./search-results";
 
 const album = {
 	id: 1,
@@ -269,6 +270,49 @@ describe("LoginPage", () => {
 	it("shows password hint in register mode", () => {
 		const html = Html.createElement(LoginPage, { register: true }) as string;
 		expect(html).toContain("8+");
+	});
+});
+
+describe("SearchResults", () => {
+	it("shows a no-results message when everything is empty", () => {
+		const html = Html.createElement(SearchResults, {
+			artists: [],
+			albums: [],
+			tracks: [],
+		}) as string;
+		expect(html).toContain("No results");
+	});
+
+	it("renders artist and album links", () => {
+		const html = Html.createElement(SearchResults, {
+			artists: [{ id: 1, name: "Artist A" }],
+			albums: [{ id: 2, title: "Album B", cover_path: null }],
+			tracks: [],
+		}) as string;
+		expect(html).toContain('href="/artist/1"');
+		expect(html).toContain("Artist A");
+		expect(html).toContain('href="/album/2"');
+		expect(html).toContain("Album B");
+	});
+
+	it("renders track rows with player data attributes", () => {
+		const html = Html.createElement(SearchResults, {
+			artists: [],
+			albums: [],
+			tracks: [
+				{
+					id: 3,
+					title: "Track C",
+					duration_seconds: 120,
+					artists: [{ id: 1, name: "Artist A" }],
+					album: { id: 2, title: "Album B", cover_path: null },
+				},
+			],
+		}) as string;
+		expect(html).toContain('data-track-id="3"');
+		expect(html).toContain('data-title="Track C"');
+		expect(html).toContain('data-artist="Artist A"');
+		expect(html).toContain("Track C");
 	});
 });
 

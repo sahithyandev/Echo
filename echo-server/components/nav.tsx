@@ -36,6 +36,19 @@ export function Nav({ active }: { active: Tab }) {
 					))}
 				</nav>
 			</div>
+			<div class="relative w-96">
+				<input
+					id="search-input"
+					type="text"
+					placeholder="Search artists, albums, tracks"
+					autocomplete="off"
+					class="w-full text-sm bg-surface border border-border rounded-md px-3 py-1.5 placeholder:text-subtle focus:outline-none focus:border-accent transition-colors"
+				/>
+				<div
+					id="search-panel"
+					class="hidden absolute right-0 top-[calc(100%+0.5rem)] w-full max-h-[70vh] overflow-y-auto bg-background border border-border rounded-md shadow-lg z-50"
+				/>
+			</div>
 			<form method="post" action="/auth/sign-out">
 				<button
 					type="submit"

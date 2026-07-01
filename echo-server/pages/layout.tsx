@@ -221,6 +221,7 @@ export function Layout({
 				</div>
 				<audio id="echo-audio" preload="none" />
 				<script src="/player.js" defer />
+				<script src="/search.js" defer />
 			</body>
 		</html>
 	);

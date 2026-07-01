@@ -8,6 +8,7 @@ import createArtistModule from "../modules/artist";
 import createAuthModule from "../modules/auth";
 import createAuthMiddleware from "../modules/auth/middleware";
 import createLibraryModule from "../modules/library";
+import createSearchModule from "../modules/search";
 import createSettingsModule from "../modules/settings";
 import { IndexPage } from "../pages/index";
 import { unused } from "./misc";
@@ -36,6 +37,7 @@ export async function createApp(db: DbLike) {
 	const assets = await Promise.all([
 		buildAsset("/global.css", base("../styles.css"), { plugins: [tailwind] }),
 		buildAsset("/player.js", base("../player.ts"), { target: "browser" }),
+		buildAsset("/search.js", base("../search.ts"), { target: "browser" }),
 	]);
 
 	const assetPlugin = new Elysia();
@@ -64,6 +66,7 @@ export async function createApp(db: DbLike) {
 		.use(createAuthModule(db))
 		.use(createAlbumModule(db))
 		.use(createArtistModule(db))
+		.use(createSearchModule(db))
 		.use(createSettingsModule(db));
 }
 
