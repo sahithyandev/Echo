@@ -1,4 +1,5 @@
 import { Html } from "@elysiajs/html";
+import { Nav } from "../components/nav";
 import { unused } from "../utils/misc";
 import { Layout } from "./layout";
 
@@ -22,19 +23,7 @@ export function LibraryPage({
 	return (
 		<Layout title="Echo — Library">
 			<div class="min-h-screen flex flex-col">
-				<header class="flex items-center justify-between px-6 py-4 border-b border-border">
-					<a href="/" class="wordmark-gradient text-xl font-bold font-display">
-						Echo
-					</a>
-					<form method="post" action="/auth/sign-out">
-						<button
-							type="submit"
-							class="text-xs text-muted hover:text-foreground border border-border rounded-md px-3 py-1.5 transition-colors hover:bg-surface cursor-pointer"
-						>
-							Sign out
-						</button>
-					</form>
-				</header>
+				<Nav active="library" />
 
 				<main class="flex-1 flex flex-col p-6 gap-6">
 					<p class="text-sm text-muted">
@@ -124,7 +113,21 @@ export function LibraryPage({
 										{t.title}
 									</p>
 									<p class="text-xs text-muted truncate">
-										{t.artists.map((a) => a.name).join(", ") || "—"}
+										{t.artists.length ? (
+											t.artists.map((a, i) => (
+												<>
+													{i > 0 ? ", " : ""}
+													<a
+														href={`/artist/${a.id}`}
+														class="hover:text-foreground hover:underline"
+													>
+														{a.name}
+													</a>
+												</>
+											))
+										) : (
+											<>—</>
+										)}
 									</p>
 								</div>
 							))}

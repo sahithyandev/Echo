@@ -84,3 +84,11 @@ describe("ArtistService.getArtistTracks", () => {
 		expect(result.map((t) => t.title)).toEqual(["Alpha"]);
 	});
 });
+
+describe("ArtistService.listArtists", () => {
+	it("returns all artists ordered by name", async () => {
+		await seed(db);
+		const result = await ArtistService.listArtists(db);
+		expect(result.map((a) => a.name)).toEqual(["Artist A", "Artist B"]);
+	});
+});

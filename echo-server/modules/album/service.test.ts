@@ -75,7 +75,7 @@ describe("AlbumService.getAlbumArtists", () => {
 	it("returns artist names for an album", async () => {
 		const { album } = await seed(db);
 		const result = await AlbumService.getAlbumArtists(db, album.id);
-		expect(result).toEqual(["Artist A"]);
+		expect(result.map((a) => a.name)).toEqual(["Artist A"]);
 	});
 
 	it("returns empty array for album with no artists", async () => {
@@ -85,5 +85,28 @@ describe("AlbumService.getAlbumArtists", () => {
 			.returning({ id: albums.id });
 		const result = await AlbumService.getAlbumArtists(db, newAlbum.id);
 		expect(result).toHaveLength(0);
+	});
+});
+
+describe("AlbumService.listAlbums", () => {
+	it("dedupes albums with multiple artists into one entry", async () => {
+		const { album } = await seed(db);
+		const [artistB] = await db
+			.insert(artists)
+			.values({ name: "Artist B" })
+			.returning({ id: artists.id });
+		await db
+			.insert(album_artists)
+			.values({ album_id: album.id, artist_id: artistB.id });
+
+		const result = await AlbumService.listAlbums(db);
+		expect(result).toHaveLength(1);
+		expect(result[0].artists).toEqual(["Artist A", "Artist B"]);
+	});
+
+	it("returns album with empty artists array when it has none", async () => {
+		await db.insert(albums).values({ title: "Solo" });
+		const result = await AlbumService.listAlbums(db);
+		expect(result.find((a) => a.title === "Solo")?.artists).toEqual([]);
 	});
 });

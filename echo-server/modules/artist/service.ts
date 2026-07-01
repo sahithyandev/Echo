@@ -8,6 +8,13 @@ export abstract class ArtistService {
 		return rows[0] ?? null;
 	}
 
+	static async listArtists(client: DbLike) {
+		return client
+			.select({ id: artists.id, name: artists.name })
+			.from(artists)
+			.orderBy(artists.name);
+	}
+
 	static async getArtistTracks(client: DbLike, artistId: number) {
 		return client
 			.select({

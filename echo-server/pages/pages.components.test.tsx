@@ -1,7 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import { Html } from "@elysiajs/html";
 import { AlbumPage } from "./album";
+import { AlbumsPage } from "./albums";
 import { ArtistPage } from "./artist";
+import { ArtistsPage } from "./artists";
 import { IndexPage } from "./index";
 import { LibraryPage } from "./library";
 import { LoginPage } from "./login";
@@ -23,7 +25,7 @@ describe("AlbumPage", () => {
 		const html = Html.createElement(AlbumPage, {
 			album,
 			tracks,
-			artists: ["Artist A"],
+			artists: [{ id: 1, name: "Artist A" }],
 		}) as string;
 		expect(html).toContain("Dummy Album");
 	});
@@ -32,9 +34,13 @@ describe("AlbumPage", () => {
 		const html = Html.createElement(AlbumPage, {
 			album,
 			tracks,
-			artists: ["Artist A", "Artist B"],
+			artists: [
+				{ id: 1, name: "Artist A" },
+				{ id: 2, name: "Artist B" },
+			],
 		}) as string;
-		expect(html).toContain("Artist A, Artist B");
+		expect(html).toContain("Artist A");
+		expect(html).toContain("Artist B");
 	});
 
 	it("renders year and genre", () => {
@@ -186,6 +192,51 @@ describe("LibraryPage", () => {
 			tracks: [],
 		}) as string;
 		expect(html).toContain("Alice");
+	});
+});
+
+describe("AlbumsPage", () => {
+	it("shows empty state when no albums", () => {
+		const html = Html.createElement(AlbumsPage, { albums: [] }) as string;
+		expect(html).toContain("No albums yet");
+	});
+
+	it("renders album links", () => {
+		const html = Html.createElement(AlbumsPage, {
+			albums: [
+				{ id: 1, title: "My Album", cover_path: null, artists: ["Artist A"] },
+			],
+		}) as string;
+		expect(html).toContain("My Album");
+		expect(html).toContain('href="/album/1"');
+	});
+});
+
+describe("ArtistsPage", () => {
+	it("shows empty state when no artists", () => {
+		const html = Html.createElement(ArtistsPage, { artists: [] }) as string;
+		expect(html).toContain("No artists yet");
+	});
+
+	it("renders artist links", () => {
+		const html = Html.createElement(ArtistsPage, {
+			artists: [{ id: 1, name: "Artist A" }],
+		}) as string;
+		expect(html).toContain("Artist A");
+		expect(html).toContain('href="/artist/1"');
+	});
+
+	it("groups artists under letter headers", () => {
+		const html = Html.createElement(ArtistsPage, {
+			artists: [
+				{ id: 1, name: "Adele" },
+				{ id: 2, name: "Beck" },
+			],
+		}) as string;
+		const aIndex = html.indexOf(">A<");
+		const bIndex = html.indexOf(">B<");
+		expect(aIndex).toBeGreaterThan(-1);
+		expect(bIndex).toBeGreaterThan(aIndex);
 	});
 });
 

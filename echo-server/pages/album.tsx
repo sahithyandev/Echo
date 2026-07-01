@@ -1,5 +1,6 @@
 import { Html } from "@elysiajs/html";
 import { AlbumArt } from "../components/album-art";
+import { Nav } from "../components/nav";
 import { formatDuration, unused } from "../utils/misc";
 import { Layout } from "./layout";
 
@@ -19,6 +20,8 @@ type Album = {
 	cover_path: string | null;
 };
 
+type Artist = { id: number; name: string };
+
 export function AlbumPage({
 	album,
 	tracks,
@@ -26,27 +29,13 @@ export function AlbumPage({
 }: {
 	album: Album;
 	tracks: Track[];
-	artists: string[];
+	artists: Artist[];
 }) {
+	const artistNames = artists.map((a) => a.name).join(", ");
 	return (
 		<Layout title={`Echo — ${album.title}`}>
 			<div class="min-h-screen flex flex-col">
-				<header class="flex items-center justify-between px-6 py-4 border-b border-border">
-					<a
-						href="/library"
-						class="wordmark-gradient text-xl font-bold font-display"
-					>
-						Echo
-					</a>
-					<form method="post" action="/auth/sign-out">
-						<button
-							type="submit"
-							class="text-xs text-muted hover:text-foreground border border-border rounded-md px-3 py-1.5 transition-colors hover:bg-surface cursor-pointer"
-						>
-							Sign out
-						</button>
-					</form>
-				</header>
+				<Nav active="albums" />
 
 				<main class="flex-1 flex flex-col p-6 gap-6">
 					<div class="flex items-center gap-4">
@@ -59,7 +48,17 @@ export function AlbumPage({
 								{album.title}
 							</h1>
 							<p class="text-xs text-muted mt-1">
-								{artists.join(", ")}
+								{artists.map((a, i) => (
+									<>
+										{i > 0 ? ", " : ""}
+										<a
+											href={`/artist/${a.id}`}
+											class="hover:text-foreground hover:underline"
+										>
+											{a.name}
+										</a>
+									</>
+								))}
 								{album.year ? ` · ${album.year}` : ""}
 								{album.genre ? ` · ${album.genre}` : ""}
 							</p>
@@ -80,7 +79,7 @@ export function AlbumPage({
 									class="border-b border-border/50 hover:bg-surface/40 transition-colors cursor-pointer"
 									data-track-id={String(t.id)}
 									data-title={t.title}
-									data-artist={artists.join(", ")}
+									data-artist={artistNames}
 								>
 									<td class="py-3 pr-4 text-xs w-8">
 										<span class="track-number text-muted">

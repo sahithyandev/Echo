@@ -141,7 +141,9 @@ function playRow(el: HTMLElement): void {
 }
 
 document.addEventListener("click", (e) => {
-	const el = (e.target as Element).closest<HTMLElement>("[data-track-id]");
+	const target = e.target as Element;
+	if (target.closest("a")) return;
+	const el = target.closest<HTMLElement>("[data-track-id]");
 	if (!el) return;
 	playRow(el);
 });
