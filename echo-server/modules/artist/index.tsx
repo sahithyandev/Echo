@@ -12,7 +12,7 @@ export default function createArtistModule(db: DbLike) {
 	return new Elysia().use(createAuthMiddleware(db)).get(
 		"/artist/:id",
 		async ({ currentUser, redirect, params }) => {
-			if (!currentUser) return redirect("/login");
+			if (!currentUser) return redirect("/auth/login");
 			const artistId = Number(params.id);
 			const [artist, tracks] = await Promise.all([
 				ArtistService.findArtist(db, artistId),

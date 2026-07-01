@@ -52,7 +52,7 @@ describe("POST /auth/sign-up", () => {
 		await app.handle(signUpRequest());
 		const res = await app.handle(signUpRequest());
 		expect(res.status).toBe(302);
-		expect(res.headers.get("location")).toContain("/login?error=1");
+		expect(res.headers.get("location")).toContain("/auth/login?error=1");
 	});
 
 	it("rejects weak password with 422", async () => {
@@ -78,7 +78,7 @@ describe("POST /auth/sign-in", () => {
 			signInRequest({ ...TEST_USER, password: "WrongPass1!" }),
 		);
 		expect(res.status).toBe(302);
-		expect(res.headers.get("location")).toContain("/login?error=1");
+		expect(res.headers.get("location")).toContain("/auth/login?error=1");
 	});
 });
 

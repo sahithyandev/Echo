@@ -77,7 +77,7 @@ export default function createAuthModule(dbClient: DbLike) {
 					cookie.session.set({ value: token, ...SESSION_COOKIE });
 					return redirect("/library");
 				} catch {
-					return redirect("/login?error=1");
+					return redirect("/auth/login?error=1");
 				}
 			},
 			{ currentUser: true, body: AuthModel.signUpBody },
@@ -103,7 +103,7 @@ export default function createAuthModule(dbClient: DbLike) {
 					cookie.session.set({ value: token, ...SESSION_COOKIE });
 					return redirect("/library");
 				} catch {
-					return redirect("/login?error=1");
+					return redirect("/auth/login?error=1");
 				}
 			},
 			{ currentUser: true, body: AuthModel.signInBody },
@@ -115,7 +115,7 @@ export default function createAuthModule(dbClient: DbLike) {
 					?.value;
 				if (token) await Auth.revokeSession(dbClient, token);
 				cookie.session.remove();
-				return redirect("/login");
+				return redirect("/auth/login");
 			},
 			{ currentUser: true },
 		);

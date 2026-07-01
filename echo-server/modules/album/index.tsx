@@ -12,7 +12,7 @@ export default function createAlbumModule(db: DbLike) {
 	return new Elysia().use(createAuthMiddleware(db)).get(
 		"/album/:id",
 		async ({ currentUser, redirect, params }) => {
-			if (!currentUser) return redirect("/login");
+			if (!currentUser) return redirect("/auth/login");
 			const albumId = Number(params.id);
 			const [album, tracks, artistNames] = await Promise.all([
 				AlbumService.findAlbum(db, albumId),

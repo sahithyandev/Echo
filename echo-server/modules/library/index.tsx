@@ -18,7 +18,7 @@ export default function createLibraryModule(db: DbLike) {
 		.get(
 			"/library",
 			async ({ currentUser, redirect }) => {
-				if (!currentUser) return redirect("/login");
+				if (!currentUser) return redirect("/auth/login");
 				const [user, tracks] = await Promise.all([
 					Auth.findUserById(db, currentUser.id),
 					LibraryService.listTracks(db),
@@ -34,7 +34,7 @@ export default function createLibraryModule(db: DbLike) {
 		.get(
 			"/track/:id/stream",
 			async ({ currentUser, redirect, params, request }) => {
-				if (!currentUser) return redirect("/login");
+				if (!currentUser) return redirect("/auth/login");
 				const track = await LibraryService.findTrackById(db, Number(params.id));
 				if (!track) return new Response("Not found", { status: 404 });
 
