@@ -70,6 +70,19 @@ export const tracks = sqliteTable("tracks", {
 	added_by: integer("added_by").references(() => users.id),
 });
 
+export const play_history = sqliteTable("play_history", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	user_id: integer("user_id")
+		.notNull()
+		.references(() => users.id),
+	track_id: integer("track_id")
+		.notNull()
+		.references(() => tracks.id),
+	played_at: integer("played_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.notNull(),
+});
+
 export const album_artists = sqliteTable(
 	"album_artists",
 	{

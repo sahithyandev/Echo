@@ -76,8 +76,15 @@ async function seedAlbum(client: DbLike) {
 }
 
 describe("GET /", () => {
-	it("returns 200 with html content-type", async () => {
+	it("redirects to /login when unauthenticated", async () => {
 		const res = await app.handle(new Request("http://localhost/"));
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe("/auth/login");
+	});
+
+	it("returns 200 html when authenticated", async () => {
+		const token = await signUp();
+		const res = await authed("http://localhost/", token);
 		expect(res.status).toBe(200);
 		expect(res.headers.get("content-type")).toContain("text/html");
 	});

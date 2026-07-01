@@ -4,7 +4,7 @@ import { AlbumPage } from "./album";
 import { AlbumsPage } from "./albums";
 import { ArtistPage } from "./artist";
 import { ArtistsPage } from "./artists";
-import { IndexPage } from "./index";
+import { HomePage } from "./home";
 import { LibraryPage } from "./library";
 import { LoginPage } from "./login";
 import { SearchResults } from "./search-results";
@@ -316,15 +316,34 @@ describe("SearchResults", () => {
 	});
 });
 
-describe("IndexPage", () => {
-	it("renders Echo heading", () => {
-		const html = Html.createElement(IndexPage, {}) as string;
-		expect(html).toContain("Echo");
+describe("HomePage", () => {
+	it("shows an empty state when there is nothing to show", () => {
+		const html = Html.createElement(HomePage, {
+			name: "Dummy",
+			continueListening: null,
+			recentlyAdded: [],
+			recentlyPlayed: [],
+		}) as string;
+		expect(html).toContain("Your library is empty.");
 	});
 
-	it("has Open Library link", () => {
-		const html = Html.createElement(IndexPage, {}) as string;
-		expect(html).toContain('href="/library"');
-		expect(html).toContain("Open Library");
+	it("renders recently added tracks", () => {
+		const html = Html.createElement(HomePage, {
+			name: "Dummy",
+			continueListening: null,
+			recentlyAdded: [
+				{
+					id: 3,
+					title: "Track C",
+					duration_seconds: 120,
+					artists: [{ id: 1, name: "Artist A" }],
+					album: { id: 2, title: "Album B", cover_path: null },
+				},
+			],
+			recentlyPlayed: [],
+		}) as string;
+		expect(html).toContain("Recently added");
+		expect(html).toContain('data-track-id="3"');
+		expect(html).not.toContain("Recently played");
 	});
 });

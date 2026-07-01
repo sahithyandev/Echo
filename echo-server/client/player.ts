@@ -179,6 +179,11 @@ function playTrack(
 	if (audio.dataset.trackId !== id) {
 		audio.src = `/track/${id}/stream`;
 		audio.dataset.trackId = id;
+		fetch("/history", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ track_id: Number(id) }),
+		});
 	}
 	audio.play();
 	titleEl.textContent = title;

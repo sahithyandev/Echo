@@ -3,9 +3,10 @@ import { unused } from "../utils/misc";
 
 unused(Html);
 
-type Tab = "library" | "albums" | "artists";
+type Tab = "home" | "library" | "albums" | "artists";
 
 const tabs: { tab: Tab; href: string; label: string }[] = [
+	{ tab: "home", href: "/", label: "Home" },
 	{ tab: "library", href: "/library", label: "Library" },
 	{ tab: "albums", href: "/albums", label: "Albums" },
 	{ tab: "artists", href: "/artists", label: "Artists" },
@@ -15,10 +16,7 @@ export function Nav({ active }: { active: Tab }) {
 	return (
 		<header class="flex items-center justify-between px-6 py-4 border-b border-border">
 			<div class="flex items-center gap-6">
-				<a
-					href="/library"
-					class="wordmark-gradient text-xl font-bold font-display"
-				>
+				<a href="/" class="wordmark-gradient text-xl font-bold font-display">
 					Echo
 				</a>
 				<nav class="flex items-center gap-4">

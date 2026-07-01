@@ -1,10 +1,11 @@
 import { mkdir } from "node:fs/promises";
-import { eq } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { fingerprintFile } from "../../bindings/chromaprint";
 import {
 	album_artists,
 	albums,
 	artists,
+	play_history,
 	track_artists,
 	tracks,
 } from "../../db/schema";
@@ -96,6 +97,44 @@ export type TrackEntry = {
 	album: { id: number; title: string; cover_path: string | null } | null;
 };
 
+type TrackRow = {
+	id: number;
+	title: string;
+	duration_seconds: number | null;
+	artist_id: number | null;
+	artist_name: string | null;
+	album_id: number | null;
+	album_title: string | null;
+	album_cover_path: string | null;
+};
+
+function hydrateTracks(rows: TrackRow[]): TrackEntry[] {
+	const trackMap = new Map<number, TrackEntry>();
+	for (const row of rows) {
+		if (!trackMap.has(row.id)) {
+			trackMap.set(row.id, {
+				id: row.id,
+				title: row.title,
+				duration_seconds: row.duration_seconds,
+				artists: [],
+				album:
+					row.album_id && row.album_title
+						? {
+								id: row.album_id,
+								title: row.album_title,
+								cover_path: row.album_cover_path ?? null,
+							}
+						: null,
+			});
+		}
+		if (row.artist_id && row.artist_name)
+			trackMap
+				.get(row.id)
+				?.artists.push({ id: row.artist_id, name: row.artist_name });
+	}
+	return [...trackMap.values()];
+}
+
 export abstract class LibraryService {
 	static async listTracks(client: DbLike): Promise<TrackEntry[]> {
 		const rows = await client
@@ -115,30 +154,91 @@ export abstract class LibraryService {
 			.leftJoin(albums, eq(albums.id, tracks.album_id))
 			.orderBy(tracks.title);
 
-		const trackMap = new Map<number, TrackEntry>();
-		for (const row of rows) {
-			if (!trackMap.has(row.id)) {
-				trackMap.set(row.id, {
-					id: row.id,
-					title: row.title,
-					duration_seconds: row.duration_seconds,
-					artists: [],
-					album:
-						row.album_id && row.album_title
-							? {
-									id: row.album_id,
-									title: row.album_title,
-									cover_path: row.album_cover_path ?? null,
-								}
-							: null,
-				});
-			}
-			if (row.artist_id && row.artist_name)
-				trackMap
-					.get(row.id)
-					?.artists.push({ id: row.artist_id, name: row.artist_name });
-		}
-		return [...trackMap.values()];
+		return hydrateTracks(rows);
+	}
+
+	/** Newest tracks by when they were added to the library. */
+	static async listRecentlyAdded(
+		client: DbLike,
+		limit: number,
+	): Promise<TrackEntry[]> {
+		const recentIds = await client
+			.select({ id: tracks.id })
+			.from(tracks)
+			.orderBy(desc(tracks.added_at))
+			.limit(limit);
+		if (recentIds.length === 0) return [];
+
+		const rows = await client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				duration_seconds: tracks.duration_seconds,
+				artist_id: artists.id,
+				artist_name: artists.name,
+				album_id: albums.id,
+				album_title: albums.title,
+				album_cover_path: albums.cover_path,
+			})
+			.from(tracks)
+			.leftJoin(track_artists, eq(track_artists.track_id, tracks.id))
+			.leftJoin(artists, eq(artists.id, track_artists.artist_id))
+			.leftJoin(albums, eq(albums.id, tracks.album_id))
+			.where(
+				inArray(
+					tracks.id,
+					recentIds.map((r) => r.id),
+				),
+			);
+
+		const byId = new Map(hydrateTracks(rows).map((t) => [t.id, t]));
+		return recentIds.map((r) => byId.get(r.id)).filter((t) => t !== undefined);
+	}
+
+	/** Most recently played tracks for a user, newest first, deduped by track. */
+	static async listRecentlyPlayed(
+		client: DbLike,
+		userId: number,
+		limit: number,
+	): Promise<TrackEntry[]> {
+		const recent = await client
+			.select({
+				track_id: play_history.track_id,
+				last_played_at: sql<number>`max(${play_history.played_at})`,
+			})
+			.from(play_history)
+			.where(eq(play_history.user_id, userId))
+			.groupBy(play_history.track_id)
+			.orderBy(desc(sql`max(${play_history.played_at})`))
+			.limit(limit);
+		if (recent.length === 0) return [];
+
+		const rows = await client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				duration_seconds: tracks.duration_seconds,
+				artist_id: artists.id,
+				artist_name: artists.name,
+				album_id: albums.id,
+				album_title: albums.title,
+				album_cover_path: albums.cover_path,
+			})
+			.from(tracks)
+			.leftJoin(track_artists, eq(track_artists.track_id, tracks.id))
+			.leftJoin(artists, eq(artists.id, track_artists.artist_id))
+			.leftJoin(albums, eq(albums.id, tracks.album_id))
+			.where(
+				inArray(
+					tracks.id,
+					recent.map((r) => r.track_id),
+				),
+			);
+
+		const byId = new Map(hydrateTracks(rows).map((t) => [t.id, t]));
+		return recent
+			.map((r) => byId.get(r.track_id))
+			.filter((t) => t !== undefined);
 	}
 
 	static async findTrackById(client: DbLike, id: number) {
@@ -147,6 +247,30 @@ export abstract class LibraryService {
 			.from(tracks)
 			.where(eq(tracks.id, id));
 		return rows[0] ?? null;
+	}
+
+	/** Full track entry (with artists/album) for a single id, e.g. "continue listening". */
+	static async findTrackEntryById(
+		client: DbLike,
+		id: number,
+	): Promise<TrackEntry | null> {
+		const rows = await client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				duration_seconds: tracks.duration_seconds,
+				artist_id: artists.id,
+				artist_name: artists.name,
+				album_id: albums.id,
+				album_title: albums.title,
+				album_cover_path: albums.cover_path,
+			})
+			.from(tracks)
+			.leftJoin(track_artists, eq(track_artists.track_id, tracks.id))
+			.leftJoin(artists, eq(artists.id, track_artists.artist_id))
+			.leftJoin(albums, eq(albums.id, tracks.album_id))
+			.where(eq(tracks.id, id));
+		return hydrateTracks(rows)[0] ?? null;
 	}
 
 	static async scanMusicFolder(

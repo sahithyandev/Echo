@@ -7,10 +7,10 @@ import createAlbumModule from "../modules/album";
 import createArtistModule from "../modules/artist";
 import createAuthModule from "../modules/auth";
 import createAuthMiddleware from "../modules/auth/middleware";
+import createHomeModule from "../modules/home";
 import createLibraryModule from "../modules/library";
 import createSearchModule from "../modules/search";
 import createSettingsModule from "../modules/settings";
-import { IndexPage } from "../pages/index";
 import { unused } from "./misc";
 
 unused(Html);
@@ -65,7 +65,7 @@ export async function createApp(db: DbLike) {
 		.use(assetPlugin)
 		.use(await staticPlugin({ prefix: "/" }))
 		.use(authMiddleware)
-		.get("/", () => <IndexPage />)
+		.use(createHomeModule(db))
 		.use(createLibraryModule(db))
 		.use(createAuthModule(db))
 		.use(createAlbumModule(db))

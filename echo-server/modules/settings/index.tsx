@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
-import { users } from "../../db/schema";
+import { play_history, users } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import createAuthMiddleware from "../auth/middleware";
 
@@ -62,5 +62,16 @@ export default function createSettingsModule(db: DbLike) {
 				return body;
 			},
 			{ currentUser: true, body: playbackBody },
+		)
+		.post(
+			"/history",
+			async ({ currentUser, status, body }) => {
+				if (!currentUser) return status(401);
+				await db
+					.insert(play_history)
+					.values({ user_id: currentUser.id, track_id: body.track_id });
+				return status(204);
+			},
+			{ currentUser: true, body: t.Object({ track_id: t.Integer() }) },
 		);
 }
