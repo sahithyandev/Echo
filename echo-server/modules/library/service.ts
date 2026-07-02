@@ -53,18 +53,20 @@ async function extractAlbumArt(
 ): Promise<void> {
 	const outPath = `${artDir}/${albumId}.jpg`;
 	if (await Bun.file(outPath).exists()) {
-		console.log(`[art] skip album ${albumId}: already exists`);
-		return;
+		console.log(`[art] album ${albumId}: already exists`);
+	} else {
+		await mkdir(artDir, { recursive: true });
+		const result =
+			await Bun.$`ffmpeg -y -i ${trackPath} -an -vcodec copy -frames:v 1 ${outPath}`.quiet();
+
+		if (result.exitCode !== 0) {
+			console.warn(
+				`[art] ffmpeg failed for album ${albumId} (exit ${result.exitCode}):\n${result.stderr.toString()}`,
+			);
+			return;
+		}
 	}
-	await mkdir(artDir, { recursive: true });
-	const result =
-		await Bun.$`ffmpeg -y -i ${trackPath} -an -vcodec copy -frames:v 1 ${outPath}`.quiet();
-	if (result.exitCode !== 0) {
-		console.warn(
-			`[art] ffmpeg failed for album ${albumId} (exit ${result.exitCode}):\n${result.stderr.toString()}`,
-		);
-		return;
-	}
+
 	await client
 		.update(albums)
 		.set({ cover_path: `/art/${albumId}` })

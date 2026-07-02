@@ -17,7 +17,8 @@ const NODE_ENV = getEnvVar("NODE_ENV");
 
 	const musicDir = `${homedir()}/Music`;
 	const dataDir = getEnvVar("DATA_DIR");
-	LibraryService.scanMusicFolder(client, musicDir, `${dataDir}/art`).then((n) =>
+	const artDir = `${dataDir}/art`;
+	LibraryService.scanMusicFolder(client, musicDir, artDir).then((n) =>
 		console.log(`Scanned ${n} tracks from ${musicDir}`),
 	);
 
