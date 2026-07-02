@@ -95,7 +95,7 @@ function TrackGrid({ tracks }: { tracks: Track[] }) {
 }
 
 function Section({ title, tracks }: { title: string; tracks: Track[] }) {
-	if (tracks.length === 0) return <></>;
+	if (tracks.length === 0) return null;
 	return (
 		<section class="flex flex-col gap-3">
 			<h2 class="text-sm font-medium text-muted">{title}</h2>
