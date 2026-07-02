@@ -2,6 +2,7 @@ import { Html, html } from "@elysiajs/html";
 import staticPlugin from "@elysiajs/static";
 import tailwind from "bun-plugin-tailwind";
 import { Elysia } from "elysia";
+import logixlysia from "logixlysia";
 import type { DbLike } from "../db/types";
 import createAlbumModule from "../modules/album";
 import createAnalyticsModule from "../modules/analytics";
@@ -65,6 +66,16 @@ export async function createApp(db: DbLike) {
 
 	const authMiddleware = createAuthMiddleware(db);
 	return new Elysia()
+		.use(
+			logixlysia({
+				config: {
+					ip: true,
+					startupMessageFormat: "simple",
+					customLogFormat:
+						"{level} {duration} {method} {pathname} {status} {message}",
+				},
+			}),
+		)
 		.use(html())
 		.use(assetPlugin)
 		.use(await staticPlugin({ prefix: "/" }))
