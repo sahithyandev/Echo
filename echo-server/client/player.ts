@@ -394,3 +394,15 @@ audio.addEventListener("durationchange", () => {
 		durationEl.textContent = fmt(audio.duration);
 	}
 });
+
+// Content is swapped in-place on nav.ts navigation: re-apply the "playing" row
+// highlight and remap currentIndex to the newly rendered playlist.
+document.addEventListener("page:loaded", () => {
+	const id = audio.dataset.trackId;
+	const rows = playlist();
+	currentIndex = id ? rows.findIndex((r) => r.dataset.trackId === id) : -1;
+	if (!id) return;
+	for (const row of rows) {
+		row.classList.toggle("playing", row.dataset.trackId === id);
+	}
+});

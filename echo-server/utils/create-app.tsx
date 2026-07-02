@@ -43,6 +43,9 @@ export async function createApp(db: DbLike) {
 		buildAsset("/search.js", base("../client/search.ts"), {
 			target: "browser",
 		}),
+		buildAsset("/nav.js", base("../client/nav.ts"), {
+			target: "browser",
+		}),
 	]);
 
 	const assetPlugin = new Elysia();

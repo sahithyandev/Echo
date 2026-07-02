@@ -1,5 +1,4 @@
 import { Html } from "@elysiajs/html";
-import { Nav } from "../components/nav";
 import { unused } from "../utils/misc";
 import { Layout } from "./layout";
 
@@ -121,50 +120,46 @@ export function HomePage({
 		recentlyPlayed.length === 0;
 
 	return (
-		<Layout title="Echo — Home">
-			<div class="min-h-screen flex flex-col">
-				<Nav active="home" />
+		<Layout title="Echo — Home" active="home">
+			<main class="flex-1 flex flex-col p-6 gap-8">
+				<p class="text-sm text-muted">
+					Welcome back, <span class="text-accent font-medium">{name}</span>
+				</p>
 
-				<main class="flex-1 flex flex-col p-6 gap-8">
-					<p class="text-sm text-muted">
-						Welcome back, <span class="text-accent font-medium">{name}</span>
-					</p>
-
-					{isEmpty ? (
-						<div class="flex-1 flex flex-col items-center justify-center gap-3 text-center">
-							<div class="flex items-center justify-center w-14 h-14 rounded-full bg-surface border border-border mb-2">
-								<svg
-									width="24"
-									height="24"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="1.5"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									aria-label="No tracks"
-									class="text-accent"
-								>
-									<path d="M9 18V5l12-2v13" />
-									<circle cx="6" cy="18" r="3" />
-									<circle cx="18" cy="16" r="3" />
-								</svg>
-							</div>
-							<p class="text-sm text-muted">Your library is empty.</p>
-							<p class="text-xs text-subtle">Add music files to get started.</p>
+				{isEmpty ? (
+					<div class="flex-1 flex flex-col items-center justify-center gap-3 text-center">
+						<div class="flex items-center justify-center w-14 h-14 rounded-full bg-surface border border-border mb-2">
+							<svg
+								width="24"
+								height="24"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-label="No tracks"
+								class="text-accent"
+							>
+								<path d="M9 18V5l12-2v13" />
+								<circle cx="6" cy="18" r="3" />
+								<circle cx="18" cy="16" r="3" />
+							</svg>
 						</div>
-					) : (
-						<>
-							<Section
-								title="Continue listening"
-								tracks={continueListening ? [continueListening] : []}
-							/>
-							<Section title="Recently added" tracks={recentlyAdded} />
-							<Section title="Recently played" tracks={recentlyPlayed} />
-						</>
-					)}
-				</main>
-			</div>
+						<p class="text-sm text-muted">Your library is empty.</p>
+						<p class="text-xs text-subtle">Add music files to get started.</p>
+					</div>
+				) : (
+					<>
+						<Section
+							title="Continue listening"
+							tracks={continueListening ? [continueListening] : []}
+						/>
+						<Section title="Recently added" tracks={recentlyAdded} />
+						<Section title="Recently played" tracks={recentlyPlayed} />
+					</>
+				)}
+			</main>
 		</Layout>
 	);
 }

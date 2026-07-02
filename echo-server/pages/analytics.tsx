@@ -1,5 +1,4 @@
 import { Html } from "@elysiajs/html";
-import { Nav } from "../components/nav";
 import { formatHours, unused } from "../utils/misc";
 import { Layout } from "./layout";
 
@@ -159,45 +158,41 @@ export function AnalyticsPage({
 	byDay: ByDay[];
 }) {
 	return (
-		<Layout title="Echo — Analytics">
-			<div class="min-h-screen flex flex-col">
-				<Nav active="analytics" />
+		<Layout title="Echo — Analytics" active="analytics">
+			<main class="flex-1 flex flex-col p-6 gap-8">
+				<div>
+					<p class="text-xs text-accent font-medium uppercase tracking-wide mb-0.5">
+						Analytics
+					</p>
+					<h1 class="text-2xl font-bold tracking-tight font-display">
+						{formatHours(totalSeconds)} played
+					</h1>
+				</div>
 
-				<main class="flex-1 flex flex-col p-6 gap-8">
-					<div>
-						<p class="text-xs text-accent font-medium uppercase tracking-wide mb-0.5">
-							Analytics
-						</p>
-						<h1 class="text-2xl font-bold tracking-tight font-display">
-							{formatHours(totalSeconds)} played
-						</h1>
-					</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 w-full gap-8">
+					<BarChart rows={byDay} />
 
-					<div class="grid grid-cols-1 md:grid-cols-2 w-full gap-8">
-						<BarChart rows={byDay} />
+					<AlbumGallery
+						rows={byAlbum.filter((r) => r.seconds > 0).slice(0, 10)}
+					/>
 
-						<AlbumGallery
-							rows={byAlbum.filter((r) => r.seconds > 0).slice(0, 10)}
-						/>
+					<Section
+						title="By artist"
+						rows={byArtist
+							.filter((r) => r.seconds > 0)
+							.slice(0, 10)
+							.map((r) => ({ label: r.artist_name, seconds: r.seconds }))}
+					/>
 
-						<Section
-							title="By artist"
-							rows={byArtist
-								.filter((r) => r.seconds > 0)
-								.slice(0, 10)
-								.map((r) => ({ label: r.artist_name, seconds: r.seconds }))}
-						/>
-
-						<Section
-							title="By year"
-							rows={byYear
-								.filter((r) => r.year !== null && r.seconds > 0)
-								.slice(0, 10)
-								.map((r) => ({ label: String(r.year), seconds: r.seconds }))}
-						/>
-					</div>
-				</main>
-			</div>
+					<Section
+						title="By year"
+						rows={byYear
+							.filter((r) => r.year !== null && r.seconds > 0)
+							.slice(0, 10)
+							.map((r) => ({ label: String(r.year), seconds: r.seconds }))}
+					/>
+				</div>
+			</main>
 		</Layout>
 	);
 }

@@ -1,14 +1,17 @@
 import { Html } from "@elysiajs/html";
 import { AlbumArt } from "../components/album-art";
+import { Nav, type Tab } from "../components/nav";
 import { unused } from "../utils/misc";
 
 unused(Html);
 
 export function Layout({
 	title,
+	active,
 	children,
 }: {
 	title: string;
+	active?: Tab;
 	children: JSX.Element | JSX.Element[];
 }) {
 	return (
@@ -43,7 +46,12 @@ export function Layout({
 				/>
 			</head>
 			<body class="bg-background text-foreground font-sans antialiased">
-				{children}
+				<div class="min-h-screen flex flex-col">
+					{active && <Nav active={active} />}
+					<div id="page-content" class="contents">
+						{children}
+					</div>
+				</div>
 				<div
 					id="player-bar"
 					class="hidden fixed bottom-0 left-0 right-0 backdrop-blur-xl bg-background/85 border-t border-border/40 z-50"
@@ -211,7 +219,7 @@ export function Layout({
 								</svg>
 								<span
 									id="player-repeat-one"
-									class="hidden absolute -top-0.5 -right-0.5 text-[8px] leading-none font-semibold bg-accent text-accent-foreground rounded-full w-3 h-3 flex items-center justify-center"
+									class="hidden absolute -top-0.5 -right-0.5 text-[8px] leading-none font-semibold bg-accent text-accent-foreground rounded-full w-3 h-3 items-center justify-center"
 								>
 									1
 								</span>
@@ -222,6 +230,7 @@ export function Layout({
 				<audio id="echo-audio" preload="none" />
 				<script src="/player.js" defer />
 				<script src="/search.js" defer />
+				<script src="/nav.js" defer />
 			</body>
 		</html>
 	);

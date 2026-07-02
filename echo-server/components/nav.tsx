@@ -3,7 +3,7 @@ import { unused } from "../utils/misc";
 
 unused(Html);
 
-type Tab = "home" | "library" | "albums" | "artists" | "analytics";
+export type Tab = "home" | "library" | "albums" | "artists" | "analytics";
 
 const tabs: { tab: Tab; href: string; label: string }[] = [
 	{ tab: "home", href: "/", label: "Home" },
