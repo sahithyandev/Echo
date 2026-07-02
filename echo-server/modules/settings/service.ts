@@ -27,43 +27,40 @@ export abstract class SettingsService {
 		await db.update(users).set(body).where(eq(users.id, userId));
 	}
 
-	static async updatePlayback(
-		db: DbLike,
-		userId: number,
-		body: SettingsModel.PlaybackBody,
-	) {
-		await db
-			.update(users)
-			.set({
-				playback_track_id: body.track_id,
-				playback_position_seconds: body.position_seconds,
-				playback_playing: body.playing,
-			})
-			.where(eq(users.id, userId));
-	}
-
 	static async recordHistory(db: DbLike, userId: number, trackId: number) {
 		await db
 			.insert(play_history)
 			.values({ user_id: userId, track_id: trackId });
 	}
 
-	static async recordHeartbeat(
+	static async syncPlayback(
 		db: DbLike,
 		userId: number,
-		body: SettingsModel.HeartbeatBody,
+		body: SettingsModel.PlaybackSyncBody,
 	) {
-		await db
-			.insert(listening)
-			.values({
-				user_id: userId,
-				track_id: body.track_id,
-				seconds: Math.round(body.seconds),
-				day: new Date().toISOString().slice(0, 10),
-			})
-			.onConflictDoUpdate({
-				target: [listening.day, listening.user_id, listening.track_id],
-				set: { seconds: sql`${listening.seconds} + excluded.seconds` },
-			});
+		if (body.position_seconds !== undefined || body.playing !== undefined) {
+			await db
+				.update(users)
+				.set({
+					playback_track_id: body.track_id,
+					playback_position_seconds: body.position_seconds ?? null,
+					playback_playing: body.playing ?? false,
+				})
+				.where(eq(users.id, userId));
+		}
+		if (body.seconds > 0 && body.track_id) {
+			await db
+				.insert(listening)
+				.values({
+					user_id: userId,
+					track_id: body.track_id,
+					seconds: Math.round(body.seconds),
+					day: new Date().toISOString().slice(0, 10),
+				})
+				.onConflictDoUpdate({
+					target: [listening.day, listening.user_id, listening.track_id],
+					set: { seconds: sql`${listening.seconds} + excluded.seconds` },
+				});
+		}
 	}
 }

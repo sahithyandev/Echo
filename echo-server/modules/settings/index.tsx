@@ -25,15 +25,6 @@ export default function createSettingsModule(db: DbLike) {
 			},
 			{ currentUser: true, body: SettingsModel.SettingsBody },
 		)
-		.put(
-			"/settings/playback",
-			async ({ currentUser, status, body }) => {
-				if (!currentUser) return status(401);
-				await SettingsService.updatePlayback(db, currentUser.id, body);
-				return body;
-			},
-			{ currentUser: true, body: SettingsModel.PlaybackBody },
-		)
 		.post(
 			"/history",
 			async ({ currentUser, status, body }) => {
@@ -44,13 +35,12 @@ export default function createSettingsModule(db: DbLike) {
 			{ currentUser: true, body: t.Object({ track_id: t.Integer() }) },
 		)
 		.post(
-			"/playback/heartbeat",
+			"/playback/sync",
 			async ({ currentUser, status, body }) => {
 				if (!currentUser) return status(401);
-				if (body.seconds <= 0) return status(204);
-				await SettingsService.recordHeartbeat(db, currentUser.id, body);
+				await SettingsService.syncPlayback(db, currentUser.id, body);
 				return status(204);
 			},
-			{ currentUser: true, body: SettingsModel.HeartbeatBody },
+			{ currentUser: true, body: SettingsModel.PlaybackSyncBody },
 		);
 }

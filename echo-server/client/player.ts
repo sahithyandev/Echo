@@ -80,48 +80,48 @@ function savePlaybackModes(): void {
 	});
 }
 
-function savePlaybackPosition(): void {
-	const trackId = audio.dataset.trackId;
-	fetch("/settings/playback", {
-		method: "PUT",
+function sendSync(body: Record<string, unknown>, beacon: boolean): void {
+	const json = JSON.stringify(body);
+	if (beacon && navigator.sendBeacon) {
+		navigator.sendBeacon(
+			"/playback/sync",
+			new Blob([json], { type: "application/json" }),
+		);
+		return;
+	}
+	fetch("/playback/sync", {
+		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
+		body: json,
+	});
+}
+
+/** Save current position/playing state, plus any accrued listening time for the track. */
+function savePlaybackPosition(beacon = false): void {
+	const trackId = audio.dataset.trackId;
+	const seconds = listenAccrued;
+	listenAccrued = 0;
+	sendSync(
+		{
 			track_id: trackId ? Number(trackId) : null,
 			position_seconds: trackId ? Math.floor(audio.currentTime) : null,
 			playing: trackId ? !audio.paused : false,
-		}),
-	});
+			seconds,
+		},
+		beacon,
+	);
 }
 
 let listenTrackId: string | null = null;
 let listenAnchor = 0;
 let listenAccrued = 0;
 
-function sendHeartbeat(
-	trackId: string,
-	seconds: number,
-	beacon: boolean,
-): void {
-	const body = JSON.stringify({ track_id: Number(trackId), seconds });
-	if (beacon && navigator.sendBeacon) {
-		navigator.sendBeacon(
-			"/playback/heartbeat",
-			new Blob([body], { type: "application/json" }),
-		);
-		return;
-	}
-	fetch("/playback/heartbeat", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body,
-	});
-}
-
 /** Report accrued listening time for the current track, then reset the accrual. */
 function flushListening(beacon = false): void {
 	if (listenAccrued <= 0 || !listenTrackId) return;
-	sendHeartbeat(listenTrackId, listenAccrued, beacon);
+	const seconds = listenAccrued;
 	listenAccrued = 0;
+	sendSync({ track_id: Number(listenTrackId), seconds }, beacon);
 }
 
 function resetListenTracking(trackId: string): void {
@@ -351,7 +351,6 @@ audio.addEventListener("pause", () => {
 	iconPause.classList.add("hidden");
 	cancelAnimationFrame(rafId);
 	savePlaybackPosition();
-	flushListening();
 });
 
 let lastSavedAt = 0;
@@ -361,7 +360,6 @@ audio.addEventListener("timeupdate", () => {
 	listenAnchor = audio.currentTime;
 	if (!audio.paused && delta > 0 && delta < 1.5) {
 		listenAccrued += delta;
-		if (listenAccrued >= 7.5) flushListening();
 	}
 
 	if (audio.currentTime - lastSavedAt < 5) return;
@@ -371,10 +369,7 @@ audio.addEventListener("timeupdate", () => {
 
 audio.addEventListener("ended", () => flushListening());
 
-window.addEventListener("beforeunload", () => {
-	savePlaybackPosition();
-	flushListening(true);
-});
+window.addEventListener("beforeunload", () => savePlaybackPosition(true));
 
 seekBar.addEventListener("mousedown", () => {
 	seeking = true;
