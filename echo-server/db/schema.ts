@@ -15,11 +15,6 @@ export const users = sqliteTable("users", {
 	is_active: integer("is_active", { mode: "boolean" }).default(true).notNull(),
 	shuffle: integer("shuffle", { mode: "boolean" }).default(false).notNull(),
 	repeat_mode: text("repeat_mode").default("off").notNull(),
-	playback_track_id: integer("playback_track_id").references(() => tracks.id),
-	playback_position_seconds: integer("playback_position_seconds"),
-	playback_playing: integer("playback_playing", { mode: "boolean" })
-		.default(false)
-		.notNull(),
 	verified_at: integer("verified_at", { mode: "timestamp" }),
 	created_at: integer("created_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())
@@ -70,6 +65,15 @@ export const tracks = sqliteTable("tracks", {
 		.$defaultFn(() => new Date())
 		.notNull(),
 	added_by: integer("added_by").references(() => users.id),
+});
+
+export const user_playback_state = sqliteTable("user_playback_state", {
+	user_id: integer("user_id")
+		.primaryKey()
+		.references(() => users.id),
+	track_id: integer("track_id").references(() => tracks.id),
+	position_seconds: integer("position_seconds"),
+	playing: integer("playing", { mode: "boolean" }).default(false).notNull(),
 });
 
 export const play_history = sqliteTable("play_history", {

@@ -5,6 +5,7 @@ import {
 	listening,
 	play_history,
 	tracks,
+	user_playback_state,
 	users,
 } from "../../db/schema";
 import type { DbLike } from "../../db/types";
@@ -27,18 +28,29 @@ export abstract class SettingsService {
 	}
 
 	static async getSettings(db: DbLike, userId: number) {
-		const rows = await db
-			.select({
-				shuffle: users.shuffle,
-				repeat_mode: users.repeat_mode,
-				playback_track_id: users.playback_track_id,
-				playback_position_seconds: users.playback_position_seconds,
-				playback_playing: users.playback_playing,
-			})
-			.from(users)
-			.where(eq(users.id, userId))
-			.limit(1);
-		return rows[0];
+		const [[userRow], [playbackRow]] = await Promise.all([
+			db
+				.select({ shuffle: users.shuffle, repeat_mode: users.repeat_mode })
+				.from(users)
+				.where(eq(users.id, userId))
+				.limit(1),
+			db
+				.select({
+					track_id: user_playback_state.track_id,
+					position_seconds: user_playback_state.position_seconds,
+					playing: user_playback_state.playing,
+				})
+				.from(user_playback_state)
+				.where(eq(user_playback_state.user_id, userId))
+				.limit(1),
+		]);
+		return {
+			shuffle: userRow.shuffle,
+			repeat_mode: userRow.repeat_mode,
+			playback_track_id: playbackRow?.track_id ?? null,
+			playback_position_seconds: playbackRow?.position_seconds ?? null,
+			playback_playing: playbackRow?.playing ?? false,
+		};
 	}
 
 	static async updateSettings(
@@ -61,14 +73,18 @@ export abstract class SettingsService {
 		body: SettingsModel.PlaybackSyncBody,
 	) {
 		if (body.position_seconds !== undefined || body.playing !== undefined) {
+			const values = {
+				track_id: body.track_id,
+				position_seconds: body.position_seconds ?? null,
+				playing: body.playing ?? false,
+			};
 			await db
-				.update(users)
-				.set({
-					playback_track_id: body.track_id,
-					playback_position_seconds: body.position_seconds ?? null,
-					playback_playing: body.playing ?? false,
-				})
-				.where(eq(users.id, userId));
+				.insert(user_playback_state)
+				.values({ user_id: userId, ...values })
+				.onConflictDoUpdate({
+					target: user_playback_state.user_id,
+					set: values,
+				});
 		}
 		if (body.seconds > 0 && body.track_id) {
 			await db

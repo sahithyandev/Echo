@@ -1,7 +1,7 @@
 import { Html } from "@elysiajs/html";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { users } from "../../db/schema";
+import { user_playback_state } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import { HomePage } from "../../pages/home";
 import { unused } from "../../utils/misc";
@@ -24,16 +24,16 @@ export default function createHomeModule(db: DbLike) {
 				[
 					Auth.findUserById(db, currentUser.id),
 					db
-						.select({ playback_track_id: users.playback_track_id })
-						.from(users)
-						.where(eq(users.id, currentUser.id))
+						.select({ track_id: user_playback_state.track_id })
+						.from(user_playback_state)
+						.where(eq(user_playback_state.user_id, currentUser.id))
 						.limit(1),
 					LibraryService.listRecentlyAdded(db, RECENT_LIMIT),
 					LibraryService.listRecentlyPlayed(db, currentUser.id, RECENT_LIMIT),
 				],
 			);
 
-			const playbackTrackId = playback[0]?.playback_track_id ?? null;
+			const playbackTrackId = playback[0]?.track_id ?? null;
 			const continueListening = playbackTrackId
 				? await LibraryService.findTrackEntryById(db, playbackTrackId)
 				: null;
