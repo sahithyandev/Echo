@@ -9,10 +9,14 @@ function swapNav(doc: Document): void {
 	});
 }
 
-async function loadPage(url: string, push: boolean): Promise<void> {
+async function loadPage(
+	url: string,
+	push: boolean,
+	init?: RequestInit,
+): Promise<void> {
 	let res: Response;
 	try {
-		res = await fetch(url);
+		res = await fetch(url, init);
 	} catch {
 		location.href = url;
 		return;
@@ -30,7 +34,7 @@ async function loadPage(url: string, push: boolean): Promise<void> {
 	content.innerHTML = newContent.innerHTML;
 	document.title = doc.title;
 	swapNav(doc);
-	if (push) history.pushState({}, "", url);
+	if (push) history.pushState({}, "", res.url || url);
 	window.scrollTo(0, 0);
 	document.dispatchEvent(new CustomEvent("page:loaded"));
 }
@@ -44,6 +48,26 @@ document.addEventListener("click", (e) => {
 		return;
 	e.preventDefault();
 	loadPage(a.href, true);
+});
+
+document.addEventListener("submit", (e) => {
+	const form = e.target;
+	if (!(form instanceof HTMLFormElement)) return;
+	if (form.method.toLowerCase() !== "post") return;
+	if (form.target || form.enctype !== "application/x-www-form-urlencoded")
+		return;
+	const url = new URL(form.action);
+	if (url.origin !== location.origin) return;
+	e.preventDefault();
+	const params = new URLSearchParams();
+	for (const [key, value] of new FormData(form)) {
+		if (typeof value === "string") params.append(key, value);
+	}
+	loadPage(url.pathname + url.search, true, {
+		method: "POST",
+		headers: { "Content-Type": "application/x-www-form-urlencoded" },
+		body: params,
+	});
 });
 
 window.addEventListener("popstate", () => loadPage(location.href, false));

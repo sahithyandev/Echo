@@ -1,9 +1,31 @@
-import { eq, sql } from "drizzle-orm";
-import { listening, play_history, users } from "../../db/schema";
+import { count, eq, sql } from "drizzle-orm";
+import {
+	albums,
+	artists,
+	listening,
+	play_history,
+	tracks,
+	users,
+} from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import type { SettingsModel } from "./model";
 
 export abstract class SettingsService {
+	static async getStats(db: DbLike) {
+		const [[t], [al], [ar], [u]] = await Promise.all([
+			db.select({ count: count() }).from(tracks),
+			db.select({ count: count() }).from(albums),
+			db.select({ count: count() }).from(artists),
+			db.select({ count: count() }).from(users),
+		]);
+		return {
+			tracks: t.count,
+			albums: al.count,
+			artists: ar.count,
+			users: u.count,
+		};
+	}
+
 	static async getSettings(db: DbLike, userId: number) {
 		const rows = await db
 			.select({

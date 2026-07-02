@@ -1,6 +1,24 @@
 import { t } from "elysia";
+import { AuthModel } from "../auth/model";
 
 export namespace SettingsModel {
+	export const ProfileBody = t.Object({ name: t.String({ minLength: 1 }) });
+	export type ProfileBody = typeof ProfileBody.static;
+
+	export const PasswordChangeBody = t.Object({
+		current_password: t.String(),
+		new_password: t.String({ pattern: AuthModel.PasswordPattern.source }),
+	});
+	export type PasswordChangeBody = typeof PasswordChangeBody.static;
+
+	export const CreateUserBody = t.Object({
+		email: t.String({ format: "email" }),
+		name: t.String({ minLength: 1 }),
+		password: t.String({ pattern: AuthModel.PasswordPattern.source }),
+		is_admin: t.Optional(t.BooleanString()),
+	});
+	export type CreateUserBody = typeof CreateUserBody.static;
+
 	export const SettingsBody = t.Object({
 		shuffle: t.Boolean(),
 		repeat_mode: t.Union([

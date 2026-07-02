@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, count, eq, isNull, ne, sql } from "drizzle-orm";
 import { user_sessions, users } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import type { AuthModel } from "./model";
@@ -63,6 +63,141 @@ export abstract class Auth {
 		return { ...row, is_verified: row.is_verified === 1 };
 	}
 
+	static async verifyPassword(
+		db: DbLike,
+		id: number,
+		password: string,
+	): Promise<boolean> {
+		const rows = await db
+			.select({ password: users.password })
+			.from(users)
+			.where(eq(users.id, id))
+			.limit(1);
+		if (rows.length === 0) return false;
+		return Bun.password.verify(password, rows[0].password);
+	}
+
+	static async updateName(db: DbLike, id: number, name: string) {
+		await db.update(users).set({ name }).where(eq(users.id, id));
+	}
+
+	static async updatePassword(db: DbLike, id: number, passwordHash: string) {
+		await db
+			.update(users)
+			.set({ password: passwordHash })
+			.where(eq(users.id, id));
+	}
+
+	static async createUser(
+		db: DbLike,
+		options: {
+			email: string;
+			name: string;
+			password: string;
+			isAdmin: boolean;
+		},
+	) {
+		const hashedPassword = await Bun.password.hash(options.password);
+		const inserted = await db
+			.insert(users)
+			.values({
+				email: options.email.toLowerCase().trim(),
+				password: hashedPassword,
+				name: options.name,
+				is_admin: options.isAdmin,
+			})
+			.returning({ id: users.id });
+		if (inserted.length === 0) throw new Error("Failed to create user");
+		return { id: inserted[0].id };
+	}
+
+	static async setAdmin(db: DbLike, id: number, isAdmin: boolean) {
+		await db.update(users).set({ is_admin: isAdmin }).where(eq(users.id, id));
+	}
+
+	static async setActive(db: DbLike, id: number, isActive: boolean) {
+		await db.update(users).set({ is_active: isActive }).where(eq(users.id, id));
+		if (!isActive) {
+			await db
+				.update(user_sessions)
+				.set({ revoked_at: new Date() })
+				.where(
+					and(eq(user_sessions.user_id, id), isNull(user_sessions.revoked_at)),
+				);
+		}
+	}
+
+	static async activeAdminCount(db: DbLike): Promise<number> {
+		const rows = await db
+			.select({ count: count() })
+			.from(users)
+			.where(and(eq(users.is_admin, true), eq(users.is_active, true)));
+		return rows[0].count;
+	}
+
+	static async listUsers(db: DbLike) {
+		return db
+			.select({
+				id: users.id,
+				name: users.name,
+				email: users.email,
+				is_admin: users.is_admin,
+				is_active: users.is_active,
+			})
+			.from(users)
+			.orderBy(users.id);
+	}
+
+	static async listUserSessions(db: DbLike, userId: number) {
+		return db
+			.select({
+				id: user_sessions.id,
+				token_hash: user_sessions.token_hash,
+				ip_address: user_sessions.ip_address,
+				user_agent: user_sessions.user_agent,
+				created_at: user_sessions.created_at,
+				last_active_at: user_sessions.last_active_at,
+			})
+			.from(user_sessions)
+			.where(
+				and(
+					eq(user_sessions.user_id, userId),
+					isNull(user_sessions.revoked_at),
+				),
+			)
+			.orderBy(user_sessions.last_active_at);
+	}
+
+	static async revokeSessionById(
+		db: DbLike,
+		userId: number,
+		sessionId: number,
+	) {
+		await db
+			.update(user_sessions)
+			.set({ revoked_at: new Date() })
+			.where(
+				and(eq(user_sessions.id, sessionId), eq(user_sessions.user_id, userId)),
+			);
+	}
+
+	static async revokeOtherSessions(
+		db: DbLike,
+		userId: number,
+		keepTokenHash: string,
+	) {
+		await db
+			.update(user_sessions)
+			.set({ revoked_at: new Date() })
+			.where(
+				and(
+					eq(user_sessions.user_id, userId),
+					ne(user_sessions.token_hash, keepTokenHash),
+					isNull(user_sessions.revoked_at),
+				),
+			);
+	}
+
 	static async signUp(db: DbLike, body: AuthModel.signUpBody) {
 		const count = await Auth.userCount(db);
 		if (count > 0) throw new Error("Registration is closed");
@@ -92,6 +227,7 @@ export abstract class Auth {
 				name: users.name,
 				is_verified: sql<number>`(${users.verified_at} IS NOT NULL)`,
 				password: users.password,
+				is_active: users.is_active,
 			})
 			.from(users)
 			.where(eq(users.email, email.toLowerCase().trim()))
@@ -102,6 +238,7 @@ export abstract class Auth {
 
 		const valid = await Bun.password.verify(password, user.password);
 		if (!valid) throw new Error("Invalid email or password");
+		if (!user.is_active) throw new Error("Invalid email or password");
 
 		return {
 			id: user.id,

@@ -12,7 +12,7 @@ export namespace AuthModel {
 	}
 
 	// min 8, requires upper + lower + digit + special
-	const PasswordPattern =
+	export const PasswordPattern =
 		/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
 
 	export const signInBody = t.Object({ email: Email, password: t.String() });

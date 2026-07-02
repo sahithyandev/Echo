@@ -12,6 +12,7 @@ export const users = sqliteTable("users", {
 	email: text("email").notNull().unique(),
 	password: text("password").notNull(),
 	is_admin: integer("is_admin", { mode: "boolean" }).default(false).notNull(),
+	is_active: integer("is_active", { mode: "boolean" }).default(true).notNull(),
 	shuffle: integer("shuffle", { mode: "boolean" }).default(false).notNull(),
 	repeat_mode: text("repeat_mode").default("off").notNull(),
 	playback_track_id: integer("playback_track_id").references(() => tracks.id),

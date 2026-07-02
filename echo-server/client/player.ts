@@ -54,7 +54,7 @@ function renderPlaybackModes(): void {
 
 async function loadPlaybackModes(): Promise<void> {
 	try {
-		const res = await fetch("/settings");
+		const res = await fetch("/playback/settings");
 		if (!res.ok) return;
 		const data = await res.json();
 		shuffle = Boolean(data.shuffle);
@@ -73,7 +73,7 @@ async function loadPlaybackModes(): Promise<void> {
 }
 
 function savePlaybackModes(): void {
-	fetch("/settings", {
+	fetch("/playback/settings", {
 		method: "PUT",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ shuffle, repeat_mode: repeatMode }),
