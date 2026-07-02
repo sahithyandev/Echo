@@ -1,24 +1,8 @@
-import { eq, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
-import { listening, play_history, users } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import createAuthMiddleware from "../auth/middleware";
-
-const settingsBody = t.Object({
-	shuffle: t.Boolean(),
-	repeat_mode: t.Union([t.Literal("off"), t.Literal("all"), t.Literal("one")]),
-});
-
-const playbackBody = t.Object({
-	track_id: t.Nullable(t.Integer()),
-	position_seconds: t.Nullable(t.Integer()),
-	playing: t.Boolean(),
-});
-
-const heartbeatBody = t.Object({
-	track_id: t.Integer(),
-	seconds: t.Number({ minimum: 0, maximum: 15 }),
-});
+import { SettingsModel } from "./model";
+import { SettingsService } from "./service";
 
 export default function createSettingsModule(db: DbLike) {
 	const authMiddleware = createAuthMiddleware(db);
@@ -28,18 +12,7 @@ export default function createSettingsModule(db: DbLike) {
 			"/settings",
 			async ({ currentUser, status }) => {
 				if (!currentUser) return status(401);
-				const rows = await db
-					.select({
-						shuffle: users.shuffle,
-						repeat_mode: users.repeat_mode,
-						playback_track_id: users.playback_track_id,
-						playback_position_seconds: users.playback_position_seconds,
-						playback_playing: users.playback_playing,
-					})
-					.from(users)
-					.where(eq(users.id, currentUser.id))
-					.limit(1);
-				return rows[0];
+				return SettingsService.getSettings(db, currentUser.id);
 			},
 			{ currentUser: true },
 		)
@@ -47,34 +20,25 @@ export default function createSettingsModule(db: DbLike) {
 			"/settings",
 			async ({ currentUser, status, body }) => {
 				if (!currentUser) return status(401);
-				await db.update(users).set(body).where(eq(users.id, currentUser.id));
+				await SettingsService.updateSettings(db, currentUser.id, body);
 				return body;
 			},
-			{ currentUser: true, body: settingsBody },
+			{ currentUser: true, body: SettingsModel.SettingsBody },
 		)
 		.put(
 			"/settings/playback",
 			async ({ currentUser, status, body }) => {
 				if (!currentUser) return status(401);
-				await db
-					.update(users)
-					.set({
-						playback_track_id: body.track_id,
-						playback_position_seconds: body.position_seconds,
-						playback_playing: body.playing,
-					})
-					.where(eq(users.id, currentUser.id));
+				await SettingsService.updatePlayback(db, currentUser.id, body);
 				return body;
 			},
-			{ currentUser: true, body: playbackBody },
+			{ currentUser: true, body: SettingsModel.PlaybackBody },
 		)
 		.post(
 			"/history",
 			async ({ currentUser, status, body }) => {
 				if (!currentUser) return status(401);
-				await db
-					.insert(play_history)
-					.values({ user_id: currentUser.id, track_id: body.track_id });
+				await SettingsService.recordHistory(db, currentUser.id, body.track_id);
 				return status(204);
 			},
 			{ currentUser: true, body: t.Object({ track_id: t.Integer() }) },
@@ -84,20 +48,9 @@ export default function createSettingsModule(db: DbLike) {
 			async ({ currentUser, status, body }) => {
 				if (!currentUser) return status(401);
 				if (body.seconds <= 0) return status(204);
-				await db
-					.insert(listening)
-					.values({
-						user_id: currentUser.id,
-						track_id: body.track_id,
-						seconds: Math.round(body.seconds),
-						day: new Date().toISOString().slice(0, 10),
-					})
-					.onConflictDoUpdate({
-						target: [listening.day, listening.user_id, listening.track_id],
-						set: { seconds: sql`${listening.seconds} + excluded.seconds` },
-					});
+				await SettingsService.recordHeartbeat(db, currentUser.id, body);
 				return status(204);
 			},
-			{ currentUser: true, body: heartbeatBody },
+			{ currentUser: true, body: SettingsModel.HeartbeatBody },
 		);
 }
