@@ -52,6 +52,8 @@ export default function createLibraryModule(db: DbLike) {
 				if (!track) return new Response("Not found", { status: 404 });
 
 				const file = Bun.file(track.file_path);
+				if (!(await file.exists())) return new Response("Not found", { status: 404 });
+
 				const size = file.size;
 				const rangeHeader = request.headers.get("Range");
 
