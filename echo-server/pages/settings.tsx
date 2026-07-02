@@ -46,6 +46,7 @@ const OK_MESSAGES: Record<string, string> = {
 	"user-created": "User created.",
 	"user-updated": "User updated.",
 	rescan: "Library rescan started.",
+	dirs: "Directories updated.",
 };
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -235,9 +236,41 @@ export function SettingsPage({
 								<p class="font-semibold">{stats.users}</p>
 							</div>
 						</div>
-						<p class="text-xs text-muted">
-							Music dir: {stats.musicDir} · Data dir: {stats.dataDir}
-						</p>
+						<form
+							class="flex flex-col gap-3"
+							method="post"
+							action="/settings/admin/dirs"
+						>
+							<div class="flex flex-col gap-1.5">
+								<label for="music_dir" class={labelClass}>
+									Music directory
+								</label>
+								<input
+									id="music_dir"
+									name="music_dir"
+									type="text"
+									required
+									value={stats.musicDir}
+									class={inputClass}
+								/>
+							</div>
+							<div class="flex flex-col gap-1.5">
+								<label for="data_dir" class={labelClass}>
+									Data directory
+								</label>
+								<input
+									id="data_dir"
+									name="data_dir"
+									type="text"
+									required
+									value={stats.dataDir}
+									class={inputClass}
+								/>
+							</div>
+							<button type="submit" class={`${primaryButtonClass} self-start`}>
+								Save directories
+							</button>
+						</form>
 
 						<form method="post" action="/settings/admin/rescan">
 							<button

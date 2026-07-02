@@ -2,16 +2,15 @@ import { Html } from "@elysiajs/html";
 import { Elysia } from "elysia";
 import type { DbLike } from "../../db/types";
 import { LibraryPage } from "../../pages/library";
-import { getEnvVar } from "../../utils/env";
 import { unused } from "../../utils/misc";
 import createAuthMiddleware from "../auth/middleware";
 import { Auth } from "../auth/service";
+import { SettingsService } from "../settings/service";
 import { LibraryService } from "./service";
 
 unused(Html);
 
 export default function createLibraryModule(db: DbLike) {
-	const artDir = `${getEnvVar("DATA_DIR")}/art`;
 	const authMiddleware = createAuthMiddleware(db);
 	return new Elysia()
 		.use(authMiddleware)
@@ -27,8 +26,9 @@ export default function createLibraryModule(db: DbLike) {
 			},
 			{ currentUser: true },
 		)
-		.get("/art/:albumId", ({ params }) => {
-			const file = Bun.file(`${artDir}/${params.albumId}.jpg`);
+		.get("/art/:albumId", async ({ params }) => {
+			const { dataDir } = await SettingsService.getDirs(db);
+			const file = Bun.file(`${dataDir}/art/${params.albumId}.jpg`);
 			return new Response(file, { headers: { "Content-Type": "image/jpeg" } });
 		})
 		.get(

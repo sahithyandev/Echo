@@ -1,6 +1,8 @@
+import { homedir } from "node:os";
 import { count, eq, sql } from "drizzle-orm";
 import {
 	albums,
+	app_settings,
 	artists,
 	listening,
 	play_history,
@@ -9,9 +11,37 @@ import {
 	users,
 } from "../../db/schema";
 import type { DbLike } from "../../db/types";
+import { getEnvVar } from "../../utils/env";
 import type { SettingsModel } from "./model";
 
+let dirsCache: { musicDir: string; dataDir: string } | undefined;
+
 export abstract class SettingsService {
+	static async getDirs(db: DbLike) {
+		if (dirsCache) return dirsCache;
+		const [row] = await db
+			.select()
+			.from(app_settings)
+			.where(eq(app_settings.id, 1))
+			.limit(1);
+		dirsCache = {
+			musicDir: row?.music_dir || `${homedir()}/Music`,
+			dataDir: row?.data_dir || getEnvVar("DATA_DIR"),
+		};
+		return dirsCache;
+	}
+
+	static async setDirs(db: DbLike, musicDir: string, dataDir: string) {
+		await db
+			.insert(app_settings)
+			.values({ id: 1, music_dir: musicDir, data_dir: dataDir })
+			.onConflictDoUpdate({
+				target: app_settings.id,
+				set: { music_dir: musicDir, data_dir: dataDir },
+			});
+		dirsCache = { musicDir, dataDir };
+	}
+
 	static async getStats(db: DbLike) {
 		const [[t], [al], [ar], [u]] = await Promise.all([
 			db.select({ count: count() }).from(tracks),

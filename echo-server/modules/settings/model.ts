@@ -19,6 +19,12 @@ export namespace SettingsModel {
 	});
 	export type CreateUserBody = typeof CreateUserBody.static;
 
+	export const DirsBody = t.Object({
+		music_dir: t.String({ minLength: 1 }),
+		data_dir: t.String({ minLength: 1 }),
+	});
+	export type DirsBody = typeof DirsBody.static;
+
 	export const SettingsBody = t.Object({
 		shuffle: t.Boolean(),
 		repeat_mode: t.Union([

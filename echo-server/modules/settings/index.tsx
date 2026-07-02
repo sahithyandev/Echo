@@ -1,9 +1,7 @@
-import { homedir } from "node:os";
 import { Html } from "@elysiajs/html";
 import { Elysia, t } from "elysia";
 import type { DbLike } from "../../db/types";
 import { SettingsPage } from "../../pages/settings";
-import { getEnvVar } from "../../utils/env";
 import { unused } from "../../utils/misc";
 import createAuthMiddleware from "../auth/middleware";
 import { Auth } from "../auth/service";
@@ -28,12 +26,13 @@ export default function createSettingsModule(db: DbLike) {
 					(cookie as Record<string, { value?: string }>).session?.value ?? "",
 				);
 
-				const [users, stats] = user.is_admin
+				const [users, stats, dirs] = user.is_admin
 					? await Promise.all([
 							Auth.listUsers(db),
 							SettingsService.getStats(db),
+							SettingsService.getDirs(db),
 						])
-					: [undefined, undefined];
+					: [undefined, undefined, undefined];
 
 				return (
 					<SettingsPage
@@ -42,10 +41,11 @@ export default function createSettingsModule(db: DbLike) {
 						currentTokenHash={currentTokenHash}
 						users={users}
 						stats={
-							stats && {
+							stats &&
+							dirs && {
 								...stats,
-								musicDir: `${homedir()}/Music`,
-								dataDir: getEnvVar("DATA_DIR"),
+								musicDir: dirs.musicDir,
+								dataDir: dirs.dataDir,
 							}
 						}
 						ok={typeof query.ok === "string" ? query.ok : undefined}
@@ -176,14 +176,29 @@ export default function createSettingsModule(db: DbLike) {
 				if (!currentUser) return redirect("/auth/login");
 				const user = await Auth.findUserById(db, currentUser.id);
 				if (!user.is_admin) return status(403);
-				const musicDir = `${homedir()}/Music`;
-				const artDir = `${getEnvVar("DATA_DIR")}/art`;
+				const { musicDir, dataDir } = await SettingsService.getDirs(db);
+				const artDir = `${dataDir}/art`;
 				LibraryService.scanMusicFolder(db, musicDir, artDir).then((n) =>
 					console.log(`Rescanned ${n} tracks from ${musicDir}`),
 				);
 				return redirect("/settings?ok=rescan");
 			},
 			{ currentUser: true },
+		)
+		.post(
+			"/settings/admin/dirs",
+			async ({ currentUser, redirect, status, body }) => {
+				if (!currentUser) return redirect("/auth/login");
+				const user = await Auth.findUserById(db, currentUser.id);
+				if (!user.is_admin) return status(403);
+				await SettingsService.setDirs(db, body.music_dir, body.data_dir);
+				const artDir = `${body.data_dir}/art`;
+				LibraryService.scanMusicFolder(db, body.music_dir, artDir).then((n) =>
+					console.log(`Rescanned ${n} tracks from ${body.music_dir}`),
+				);
+				return redirect("/settings?ok=dirs");
+			},
+			{ currentUser: true, body: SettingsModel.DirsBody },
 		)
 		.get(
 			"/playback/settings",

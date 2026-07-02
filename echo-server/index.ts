@@ -1,7 +1,7 @@
-import { homedir } from "node:os";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import { client } from "./db/client";
 import { LibraryService } from "./modules/library/service";
+import { SettingsService } from "./modules/settings/service";
 import { createApp } from "./utils/create-app";
 import { getEnvVar } from "./utils/env";
 
@@ -15,8 +15,7 @@ const NODE_ENV = getEnvVar("NODE_ENV");
 		console.log(result);
 	}
 
-	const musicDir = `${homedir()}/Music`;
-	const dataDir = getEnvVar("DATA_DIR");
+	const { musicDir, dataDir } = await SettingsService.getDirs(client);
 	const artDir = `${dataDir}/art`;
 	LibraryService.scanMusicFolder(client, musicDir, artDir).then((n) =>
 		console.log(`Scanned ${n} tracks from ${musicDir}`),
