@@ -32,6 +32,19 @@ export default function createLibraryModule(db: DbLike) {
 			return new Response(file, { headers: { "Content-Type": "image/jpeg" } });
 		})
 		.get(
+			"/track/:id",
+			async ({ currentUser, redirect, params }) => {
+				if (!currentUser) return redirect("/auth/login");
+				const track = await LibraryService.findTrackEntryById(
+					db,
+					Number(params.id),
+				);
+				if (!track) return new Response("Not found", { status: 404 });
+				return track;
+			},
+			{ currentUser: true },
+		)
+		.get(
 			"/track/:id/stream",
 			async ({ currentUser, redirect, params, request }) => {
 				if (!currentUser) return redirect("/auth/login");

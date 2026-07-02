@@ -137,14 +137,14 @@ function resumeOnNextInteraction(): void {
 	document.addEventListener("keydown", resume, { once: true });
 }
 
-function restorePlayback(
+function showRestoredTrack(
 	trackId: number,
+	title: string,
+	artist: string,
+	art: string,
 	positionSeconds: number,
 	playing: boolean,
 ): void {
-	const row = playlist().find((r) => r.dataset.trackId === String(trackId));
-	if (!row) return;
-	const { title = "Unknown", artist = "", art = "" } = row.dataset;
 	audio.src = `/track/${trackId}/stream`;
 	audio.dataset.trackId = String(trackId);
 	resetListenTracking(String(trackId));
@@ -174,7 +174,36 @@ function restorePlayback(
 	currentIndex = playlist().findIndex(
 		(r) => r.dataset.trackId === String(trackId),
 	);
-	row.classList.add("playing");
+}
+
+async function restorePlayback(
+	trackId: number,
+	positionSeconds: number,
+	playing: boolean,
+): Promise<void> {
+	const row = playlist().find((r) => r.dataset.trackId === String(trackId));
+	if (row) {
+		const { title = "Unknown", artist = "", art = "" } = row.dataset;
+		showRestoredTrack(trackId, title, artist, art, positionSeconds, playing);
+		row.classList.add("playing");
+		return;
+	}
+	// Track isn't on this page (e.g. an album/artist page not containing it) — fetch its metadata.
+	try {
+		const res = await fetch(`/track/${trackId}`);
+		if (!res.ok) return;
+		const track = await res.json();
+		showRestoredTrack(
+			trackId,
+			track.title ?? "Unknown",
+			track.artists?.map((a: { name: string }) => a.name).join(", ") ?? "",
+			track.album?.cover_path ?? "",
+			positionSeconds,
+			playing,
+		);
+	} catch {
+		// keep player hidden if metadata can't be loaded
+	}
 }
 
 loadPlaybackModes();
