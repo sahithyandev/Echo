@@ -13,3 +13,13 @@ export function formatDuration(s: number | null) {
 	const sec = s % 60;
 	return `${m}:${String(sec).padStart(2, "0")}`;
 }
+
+/**
+ * Format seconds into human-friendly hours/minutes format, e.g. "3h 12m".
+ */
+export function formatHours(s: number | null) {
+	if (!s) return "0m";
+	const h = Math.floor(s / 3600);
+	const m = Math.floor((s % 3600) / 60);
+	return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}

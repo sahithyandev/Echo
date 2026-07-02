@@ -3,6 +3,7 @@ import {
 	primaryKey,
 	sqliteTable,
 	text,
+	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
@@ -82,6 +83,27 @@ export const play_history = sqliteTable("play_history", {
 		.$defaultFn(() => new Date())
 		.notNull(),
 });
+
+export const listening = sqliteTable(
+	"listening",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		user_id: integer("user_id")
+			.notNull()
+			.references(() => users.id),
+		track_id: integer("track_id")
+			.notNull()
+			.references(() => tracks.id),
+		seconds: integer("seconds").notNull(),
+		day: text("day").notNull(),
+		created_at: integer("created_at", { mode: "timestamp" })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(t) => [
+		uniqueIndex("listening_day_user_track").on(t.day, t.user_id, t.track_id),
+	],
+);
 
 export const album_artists = sqliteTable(
 	"album_artists",

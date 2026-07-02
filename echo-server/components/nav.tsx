@@ -3,13 +3,14 @@ import { unused } from "../utils/misc";
 
 unused(Html);
 
-type Tab = "home" | "library" | "albums" | "artists";
+type Tab = "home" | "library" | "albums" | "artists" | "analytics";
 
 const tabs: { tab: Tab; href: string; label: string }[] = [
 	{ tab: "home", href: "/", label: "Home" },
 	{ tab: "library", href: "/library", label: "Library" },
 	{ tab: "albums", href: "/albums", label: "Albums" },
 	{ tab: "artists", href: "/artists", label: "Artists" },
+	{ tab: "analytics", href: "/analytics", label: "Analytics" },
 ];
 
 export function Nav({ active }: { active: Tab }) {

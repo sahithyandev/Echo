@@ -4,6 +4,7 @@ import tailwind from "bun-plugin-tailwind";
 import { Elysia } from "elysia";
 import type { DbLike } from "../db/types";
 import createAlbumModule from "../modules/album";
+import createAnalyticsModule from "../modules/analytics";
 import createArtistModule from "../modules/artist";
 import createAuthModule from "../modules/auth";
 import createAuthMiddleware from "../modules/auth/middleware";
@@ -71,7 +72,8 @@ export async function createApp(db: DbLike) {
 		.use(createAlbumModule(db))
 		.use(createArtistModule(db))
 		.use(createSearchModule(db))
-		.use(createSettingsModule(db));
+		.use(createSettingsModule(db))
+		.use(createAnalyticsModule(db));
 }
 
 export type App = Awaited<ReturnType<typeof createApp>>;

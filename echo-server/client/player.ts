@@ -93,6 +93,44 @@ function savePlaybackPosition(): void {
 	});
 }
 
+let listenTrackId: string | null = null;
+let listenAnchor = 0;
+let listenAccrued = 0;
+
+function sendHeartbeat(
+	trackId: string,
+	seconds: number,
+	beacon: boolean,
+): void {
+	const body = JSON.stringify({ track_id: Number(trackId), seconds });
+	if (beacon && navigator.sendBeacon) {
+		navigator.sendBeacon(
+			"/playback/heartbeat",
+			new Blob([body], { type: "application/json" }),
+		);
+		return;
+	}
+	fetch("/playback/heartbeat", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body,
+	});
+}
+
+/** Report accrued listening time for the current track, then reset the accrual. */
+function flushListening(beacon = false): void {
+	if (listenAccrued <= 0 || !listenTrackId) return;
+	sendHeartbeat(listenTrackId, listenAccrued, beacon);
+	listenAccrued = 0;
+}
+
+function resetListenTracking(trackId: string): void {
+	flushListening();
+	listenTrackId = trackId;
+	listenAnchor = 0;
+	listenAccrued = 0;
+}
+
 function resumeOnNextInteraction(): void {
 	const resume = () => audio.play();
 	document.addEventListener("pointerdown", resume, { once: true });
@@ -109,6 +147,7 @@ function restorePlayback(
 	const { title = "Unknown", artist = "", art = "" } = row.dataset;
 	audio.src = `/track/${trackId}/stream`;
 	audio.dataset.trackId = String(trackId);
+	resetListenTracking(String(trackId));
 	audio.addEventListener(
 		"loadedmetadata",
 		() => {
@@ -179,6 +218,7 @@ function playTrack(
 	if (audio.dataset.trackId !== id) {
 		audio.src = `/track/${id}/stream`;
 		audio.dataset.trackId = id;
+		resetListenTracking(id);
 		fetch("/history", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -282,16 +322,30 @@ audio.addEventListener("pause", () => {
 	iconPause.classList.add("hidden");
 	cancelAnimationFrame(rafId);
 	savePlaybackPosition();
+	flushListening();
 });
 
 let lastSavedAt = 0;
 audio.addEventListener("timeupdate", () => {
+	// Accrue only real forward playback: seeks produce large jumps, pauses produce 0 delta.
+	const delta = audio.currentTime - listenAnchor;
+	listenAnchor = audio.currentTime;
+	if (!audio.paused && delta > 0 && delta < 1.5) {
+		listenAccrued += delta;
+		if (listenAccrued >= 7.5) flushListening();
+	}
+
 	if (audio.currentTime - lastSavedAt < 5) return;
 	lastSavedAt = audio.currentTime;
 	savePlaybackPosition();
 });
 
-window.addEventListener("beforeunload", savePlaybackPosition);
+audio.addEventListener("ended", () => flushListening());
+
+window.addEventListener("beforeunload", () => {
+	savePlaybackPosition();
+	flushListening(true);
+});
 
 seekBar.addEventListener("mousedown", () => {
 	seeking = true;
