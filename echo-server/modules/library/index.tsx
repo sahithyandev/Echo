@@ -6,7 +6,7 @@ import { unused } from "../../utils/misc";
 import createAuthMiddleware from "../auth/middleware";
 import { Auth } from "../auth/service";
 import { SettingsService } from "../settings/service";
-import { LibraryService } from "./service";
+import { buildRangeResponse, LibraryService } from "./service";
 
 unused(Html);
 
@@ -52,39 +52,10 @@ export default function createLibraryModule(db: DbLike) {
 				if (!track) return new Response("Not found", { status: 404 });
 
 				const file = Bun.file(track.file_path);
-				if (!(await file.exists())) return new Response("Not found", { status: 404 });
+				if (!(await file.exists()))
+					return new Response("Not found", { status: 404 });
 
-				const size = file.size;
-				const rangeHeader = request.headers.get("Range");
-
-				if (rangeHeader) {
-					const match = rangeHeader.match(/bytes=(\d*)-(\d*)/);
-					if (match) {
-						// A suffix range ("bytes=-500") has no start; it means the last N bytes.
-						const start = match[1]
-							? Number.parseInt(match[1], 10)
-							: size - Number.parseInt(match[2], 10);
-						const end =
-							match[1] && match[2] ? Number.parseInt(match[2], 10) : size - 1;
-						return new Response(file.slice(start, end + 1), {
-							status: 206,
-							headers: {
-								"Content-Range": `bytes ${start}-${end}/${size}`,
-								"Accept-Ranges": "bytes",
-								"Content-Length": String(end - start + 1),
-								"Content-Type": file.type || "audio/mpeg",
-							},
-						});
-					}
-				}
-
-				return new Response(file, {
-					headers: {
-						"Accept-Ranges": "bytes",
-						"Content-Length": String(size),
-						"Content-Type": file.type || "audio/mpeg",
-					},
-				});
+				return buildRangeResponse(file, request.headers.get("Range"));
 			},
 			{ currentUser: true },
 		);

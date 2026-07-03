@@ -15,6 +15,7 @@ export const users = sqliteTable("users", {
 	is_active: integer("is_active", { mode: "boolean" }).default(true).notNull(),
 	shuffle: integer("shuffle", { mode: "boolean" }).default(false).notNull(),
 	repeat_mode: text("repeat_mode").default("off").notNull(),
+	subsonic_password: text("subsonic_password"),
 	verified_at: integer("verified_at", { mode: "timestamp" }),
 	created_at: integer("created_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())

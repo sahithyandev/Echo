@@ -97,6 +97,43 @@ export abstract class SettingsService {
 			.values({ user_id: userId, track_id: trackId });
 	}
 
+	static async getSubsonicPassword(db: DbLike, userId: number) {
+		const [row] = await db
+			.select({ subsonic_password: users.subsonic_password })
+			.from(users)
+			.where(eq(users.id, userId))
+			.limit(1);
+		return row?.subsonic_password ?? null;
+	}
+
+	static async setSubsonicPassword(
+		db: DbLike,
+		userId: number,
+		password: string | null,
+	) {
+		await db
+			.update(users)
+			.set({ subsonic_password: password })
+			.where(eq(users.id, userId));
+	}
+
+	/** Records a completed play (Subsonic scrobble submission=true): history + today's listening time. */
+	static async scrobbleSubmission(db: DbLike, userId: number, trackId: number) {
+		const [[track]] = await Promise.all([
+			db
+				.select({ duration_seconds: tracks.duration_seconds })
+				.from(tracks)
+				.where(eq(tracks.id, trackId))
+				.limit(1),
+			SettingsService.recordHistory(db, userId, trackId),
+		]);
+		await SettingsService.syncPlayback(db, userId, {
+			track_id: trackId,
+			seconds: track?.duration_seconds ?? 0,
+			playing: false,
+		});
+	}
+
 	static async syncPlayback(
 		db: DbLike,
 		userId: number,

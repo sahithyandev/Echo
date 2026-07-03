@@ -35,6 +35,11 @@ export namespace SettingsModel {
 	});
 	export type SettingsBody = typeof SettingsBody.static;
 
+	export const SubsonicPasswordBody = t.Object({
+		subsonic_password: t.String(),
+	});
+	export type SubsonicPasswordBody = typeof SubsonicPasswordBody.static;
+
 	export const PlaybackSyncBody = t.Object({
 		track_id: t.Nullable(t.Integer()),
 		seconds: t.Number({ minimum: 0, maximum: 15 }),

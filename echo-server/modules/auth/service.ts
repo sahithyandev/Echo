@@ -4,6 +4,10 @@ import { user_sessions, users } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import type { AuthModel } from "./model";
 
+function generateStreamingKey(): string {
+	return crypto.randomUUID().replace(/-/g, "");
+}
+
 export abstract class Auth {
 	static hashToken(token: string): string {
 		return createHash("sha256").update(token).digest("hex");
@@ -105,6 +109,7 @@ export abstract class Auth {
 				password: hashedPassword,
 				name: options.name,
 				is_admin: options.isAdmin,
+				subsonic_password: generateStreamingKey(),
 			})
 			.returning({ id: users.id });
 		if (inserted.length === 0) throw new Error("Failed to create user");
@@ -210,6 +215,7 @@ export abstract class Auth {
 				password: hashedPassword,
 				name: body.email.split("@")[0],
 				is_admin: true,
+				subsonic_password: generateStreamingKey(),
 			})
 			.returning({ id: users.id });
 		if (inserted.length === 0) throw new Error("Failed to create user");

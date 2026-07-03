@@ -33,6 +33,10 @@ export default function createSettingsModule(db: DbLike) {
 							SettingsService.getDirs(db),
 						])
 					: [undefined, undefined, undefined];
+				const subsonicPassword = await SettingsService.getSubsonicPassword(
+					db,
+					currentUser.id,
+				);
 
 				return (
 					<SettingsPage
@@ -48,6 +52,7 @@ export default function createSettingsModule(db: DbLike) {
 								dataDir: dirs.dataDir,
 							}
 						}
+						subsonicPassword={subsonicPassword}
 						ok={typeof query.ok === "string" ? query.ok : undefined}
 						error={typeof query.error === "string" ? query.error : undefined}
 					/>
@@ -83,6 +88,19 @@ export default function createSettingsModule(db: DbLike) {
 				}
 			},
 			{ currentUser: true, body: SettingsModel.PasswordChangeBody },
+		)
+		.post(
+			"/settings/subsonic",
+			async ({ currentUser, redirect, body }) => {
+				if (!currentUser) return redirect("/auth/login");
+				await SettingsService.setSubsonicPassword(
+					db,
+					currentUser.id,
+					body.subsonic_password || null,
+				);
+				return redirect("/settings?ok=subsonic");
+			},
+			{ currentUser: true, body: SettingsModel.SubsonicPasswordBody },
 		)
 		.post(
 			"/settings/sessions/:id/revoke",

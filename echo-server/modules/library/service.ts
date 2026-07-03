@@ -137,6 +137,45 @@ function hydrateTracks(rows: TrackRow[]): TrackEntry[] {
 	return [...trackMap.values()];
 }
 
+/** Serves a file with HTTP range support, used by both the web player and Subsonic `stream`/`download`. */
+export function buildRangeResponse(
+	file: ReturnType<typeof Bun.file>,
+	rangeHeader: string | null,
+): Response {
+	const size = file.size;
+
+	if (rangeHeader) {
+		const match = rangeHeader.match(/bytes=(\d*)-(\d*)/);
+		if (match) {
+			// A suffix range ("bytes=-500") has no start; it means the last N bytes.
+			const start = match[1]
+				? Number.parseInt(match[1], 10)
+				: size - Number.parseInt(match[2], 10);
+			const end =
+				match[1] && match[2] ? Number.parseInt(match[2], 10) : size - 1;
+			return new Response(file.slice(start, end + 1), {
+				status: 206,
+				headers: {
+					"Content-Range": `bytes ${start}-${end}/${size}`,
+					"Accept-Ranges": "bytes",
+					"Content-Length": String(end - start + 1),
+					"Content-Type": file.type || "audio/mpeg",
+				},
+			});
+		}
+	}
+
+	return new Response(file, {
+		headers: {
+			"Accept-Ranges": "bytes",
+			"Content-Length": String(size),
+			"Content-Type": file.type || "audio/mpeg",
+		},
+	});
+}
+
+export const scanState = { scanning: false, count: 0 };
+
 export abstract class LibraryService {
 	static async listTracks(client: DbLike): Promise<TrackEntry[]> {
 		const rows = await client
@@ -243,6 +282,23 @@ export abstract class LibraryService {
 			.filter((t) => t !== undefined);
 	}
 
+	/** Full song rows (file-level fields included) for one album, ordered by track number. Used by the Subsonic module. */
+	static async listAlbumTracks(client: DbLike, albumId: number) {
+		return client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				track_number: tracks.track_number,
+				year: tracks.year,
+				duration_seconds: tracks.duration_seconds,
+				file_path: tracks.file_path,
+				album_id: tracks.album_id,
+			})
+			.from(tracks)
+			.where(eq(tracks.album_id, albumId))
+			.orderBy(tracks.track_number, tracks.title);
+	}
+
 	static async findTrackById(client: DbLike, id: number) {
 		const rows = await client
 			.select({ file_path: tracks.file_path })
@@ -280,10 +336,25 @@ export abstract class LibraryService {
 		dir: string,
 		artDir: string,
 	): Promise<number> {
+		scanState.scanning = true;
+		scanState.count = 0;
+		try {
+			return await LibraryService.runScan(client, dir, artDir);
+		} finally {
+			scanState.scanning = false;
+		}
+	}
+
+	private static async runScan(
+		client: DbLike,
+		dir: string,
+		artDir: string,
+	): Promise<number> {
 		const glob = new Bun.Glob("**/*.{mp3,flac,m4a,aac,ogg,wav}");
 		let skipped = 0;
 		let processed = 0;
 		for await (const file of glob.scan({ cwd: dir, absolute: true })) {
+			scanState.count++;
 			try {
 				const stat = await Bun.file(file).stat();
 				const mtime = Math.floor(stat.mtimeMs);

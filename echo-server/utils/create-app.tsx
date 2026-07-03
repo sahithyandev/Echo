@@ -13,6 +13,7 @@ import createHomeModule from "../modules/home";
 import createLibraryModule from "../modules/library";
 import createSearchModule from "../modules/search";
 import createSettingsModule from "../modules/settings";
+import createSubsonicModule from "../modules/subsonic";
 import { unused } from "./misc";
 
 unused(Html);
@@ -87,7 +88,8 @@ export async function createApp(db: DbLike) {
 		.use(createArtistModule(db))
 		.use(createSearchModule(db))
 		.use(createSettingsModule(db))
-		.use(createAnalyticsModule(db));
+		.use(createAnalyticsModule(db))
+		.use(createSubsonicModule(db));
 }
 
 export type App = Awaited<ReturnType<typeof createApp>>;

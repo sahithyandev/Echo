@@ -40,6 +40,32 @@ async function loadPage(
 }
 
 document.addEventListener("click", (e) => {
+	if (!(e.target instanceof Element)) return;
+	if (!e.target.closest("#generate-subsonic-key")) return;
+	const input = document.getElementById(
+		"subsonic_password",
+	) as HTMLInputElement | null;
+	if (input) input.value = crypto.randomUUID().replace(/-/g, "");
+});
+
+document.addEventListener("click", (e) => {
+	if (!(e.target instanceof Element)) return;
+	const button = e.target.closest("#copy-subsonic-key");
+	if (!(button instanceof HTMLButtonElement)) return;
+	const input = document.getElementById(
+		"subsonic_password",
+	) as HTMLInputElement | null;
+	if (!input?.value) return;
+	navigator.clipboard.writeText(input.value).then(() => {
+		const original = button.textContent;
+		button.textContent = "Copied!";
+		setTimeout(() => {
+			button.textContent = original;
+		}, 1500);
+	});
+});
+
+document.addEventListener("click", (e) => {
 	if (e.defaultPrevented || e.button !== 0) return;
 	if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 	const a = (e.target as Element).closest("a");

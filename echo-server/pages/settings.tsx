@@ -47,6 +47,7 @@ const OK_MESSAGES: Record<string, string> = {
 	"user-updated": "User updated.",
 	rescan: "Library rescan started.",
 	dirs: "Directories updated.",
+	subsonic: "Subsonic access updated.",
 };
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -89,6 +90,7 @@ export function SettingsPage({
 	currentTokenHash,
 	users,
 	stats,
+	subsonicPassword,
 	ok,
 	error,
 }: {
@@ -97,6 +99,7 @@ export function SettingsPage({
 	currentTokenHash: string;
 	users?: AdminUser[];
 	stats?: Stats;
+	subsonicPassword: string | null;
 	ok?: string;
 	error?: string;
 }) {
@@ -212,6 +215,56 @@ export function SettingsPage({
 					<form method="post" action="/settings/sessions/revoke-others">
 						<button type="submit" class={`${secondaryButtonClass} self-start`}>
 							Sign out other sessions
+						</button>
+					</form>
+				</Card>
+
+				<Card title="Streaming access">
+					<p class="text-xs text-muted">
+						An app-specific key for any Subsonic or OpenSubsonic client (DSub,
+						Substreamer, Symfonium, Feishin, Amperfy, ...) to stream from this
+						server. Use your email as the username. This is separate from your
+						login password, so a leaked client never exposes your account.
+					</p>
+					<form
+						class="flex flex-col gap-3"
+						method="post"
+						action="/settings/subsonic"
+					>
+						<div class="flex flex-col gap-1.5">
+							<label for="subsonic_password" class={labelClass}>
+								Streaming access key
+							</label>
+							<div class="flex gap-2">
+								<input
+									id="subsonic_password"
+									name="subsonic_password"
+									type="text"
+									placeholder={subsonicPassword ? "" : "Not set"}
+									value={subsonicPassword ?? ""}
+									class={`${inputClass} flex-1`}
+								/>
+								<button
+									type="button"
+									id="copy-subsonic-key"
+									class={secondaryButtonClass}
+								>
+									Copy
+								</button>
+								<button
+									type="button"
+									id="generate-subsonic-key"
+									class={secondaryButtonClass}
+								>
+									Generate
+								</button>
+							</div>
+							<span class="text-xs text-subtle">
+								Leave blank and save to disable streaming access.
+							</span>
+						</div>
+						<button type="submit" class={`${primaryButtonClass} self-start`}>
+							Save
 						</button>
 					</form>
 				</Card>
