@@ -48,6 +48,12 @@ export async function createApp(db: DbLike) {
 		buildAsset("/nav.js", base("../client/nav.ts"), {
 			target: "browser",
 		}),
+		buildAsset("/upload.js", base("../client/upload.ts"), {
+			target: "browser",
+		}),
+		buildAsset("/upload-metadata.js", base("../client/upload-metadata.ts"), {
+			target: "browser",
+		}),
 	]);
 
 	const assetPlugin = new Elysia();

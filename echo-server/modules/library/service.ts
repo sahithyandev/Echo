@@ -11,6 +11,8 @@ import {
 } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 
+export const AUDIO_EXTENSIONS = ["mp3", "flac", "m4a", "aac", "ogg", "wav"];
+
 async function getTrackMeta(filePath: string) {
 	const raw =
 		await Bun.$`ffprobe -v quiet -print_format json -show_format ${filePath}`.json();
@@ -345,91 +347,128 @@ export abstract class LibraryService {
 		}
 	}
 
-	private static async runScan(
+	/** Scans only the given files (e.g. freshly uploaded tracks) instead of walking the whole library. */
+	static async scanFiles(
 		client: DbLike,
-		dir: string,
+		filePaths: string[],
 		artDir: string,
 	): Promise<number> {
-		const glob = new Bun.Glob("**/*.{mp3,flac,m4a,aac,ogg,wav}");
-		let skipped = 0;
-		let processed = 0;
-		for await (const file of glob.scan({ cwd: dir, absolute: true })) {
-			scanState.count++;
-			try {
-				const stat = await Bun.file(file).stat();
-				const mtime = Math.floor(stat.mtimeMs);
+		scanState.scanning = true;
+		scanState.count = 0;
+		try {
+			let processed = 0;
+			for (const file of filePaths) {
+				scanState.count++;
+				if (
+					(await LibraryService.processFile(client, file, artDir)) ===
+					"processed"
+				)
+					processed++;
+			}
+			console.log(
+				`Targeted scan complete: ${processed}/${filePaths.length} processed`,
+			);
+			return processed;
+		} finally {
+			scanState.scanning = false;
+		}
+	}
 
-				const existing = await client
-					.select({ file_mtime: tracks.file_mtime })
-					.from(tracks)
-					.where(eq(tracks.file_path, file));
+	private static async processFile(
+		client: DbLike,
+		file: string,
+		artDir: string,
+	): Promise<"processed" | "unchanged" | "error"> {
+		try {
+			const stat = await Bun.file(file).stat();
+			const mtime = Math.floor(stat.mtimeMs);
 
-				if (existing.length > 0 && existing[0].file_mtime === mtime) {
-					skipped++;
-					continue;
-				}
+			const existing = await client
+				.select({ file_mtime: tracks.file_mtime })
+				.from(tracks)
+				.where(eq(tracks.file_path, file));
 
-				const [meta, fingerprint] = await Promise.all([
-					getTrackMeta(file),
-					fingerprintFile(file).catch(() => null),
-				]);
+			if (existing.length > 0 && existing[0].file_mtime === mtime) {
+				return "unchanged";
+			}
 
-				const artistIds = await Promise.all(
-					meta.artists.map((name) => upsertArtist(client, name)),
-				);
+			const [meta, fingerprint] = await Promise.all([
+				getTrackMeta(file),
+				fingerprintFile(file).catch(() => null),
+			]);
 
-				const albumId = meta.album
-					? await upsertAlbum(client, meta.album, meta.year, meta.genre)
-					: null;
+			const artistIds = await Promise.all(
+				meta.artists.map((name) => upsertArtist(client, name)),
+			);
 
-				if (albumId !== null) {
-					extractAlbumArt(client, albumId, file, artDir).catch(() => null);
-				}
+			const albumId = meta.album
+				? await upsertAlbum(client, meta.album, meta.year, meta.genre)
+				: null;
 
-				const [track] = await client
-					.insert(tracks)
-					.values({
+			if (albumId !== null) {
+				extractAlbumArt(client, albumId, file, artDir).catch(() => null);
+			}
+
+			const [track] = await client
+				.insert(tracks)
+				.values({
+					title: meta.title,
+					album_id: albumId,
+					track_number: meta.track_number,
+					year: meta.year,
+					duration_seconds: meta.duration_seconds,
+					file_path: file,
+					file_mtime: mtime,
+					fingerprint,
+				})
+				.onConflictDoUpdate({
+					target: tracks.file_path,
+					set: {
 						title: meta.title,
 						album_id: albumId,
 						track_number: meta.track_number,
 						year: meta.year,
 						duration_seconds: meta.duration_seconds,
-						file_path: file,
 						file_mtime: mtime,
 						fingerprint,
-					})
-					.onConflictDoUpdate({
-						target: tracks.file_path,
-						set: {
-							title: meta.title,
-							album_id: albumId,
-							track_number: meta.track_number,
-							year: meta.year,
-							duration_seconds: meta.duration_seconds,
-							file_mtime: mtime,
-							fingerprint,
-						},
-					})
-					.returning({ id: tracks.id });
+					},
+				})
+				.returning({ id: tracks.id });
 
-				for (const artistId of artistIds) {
+			for (const artistId of artistIds) {
+				await client
+					.insert(track_artists)
+					.values({ track_id: track.id, artist_id: artistId })
+					.onConflictDoNothing();
+
+				if (albumId !== null) {
 					await client
-						.insert(track_artists)
-						.values({ track_id: track.id, artist_id: artistId })
+						.insert(album_artists)
+						.values({ album_id: albumId, artist_id: artistId })
 						.onConflictDoNothing();
-
-					if (albumId !== null) {
-						await client
-							.insert(album_artists)
-							.values({ album_id: albumId, artist_id: artistId })
-							.onConflictDoNothing();
-					}
 				}
-
-				processed++;
-			} catch (err) {
-				console.warn(`Skipped ${file}:`, err);
 			}
+
+			return "processed";
+		} catch (err) {
+			console.warn(`Skipped ${file}:`, err);
+			return "error";
+		}
+	}
+
+	private static async runScan(
+		client: DbLike,
+		dir: string,
+		artDir: string,
+	): Promise<number> {
+		const glob = new Bun.Glob(`**/*.{${AUDIO_EXTENSIONS.join(",")}}`);
+		let skipped = 0;
+		let processed = 0;
+		for await (const file of glob.scan({ cwd: dir, absolute: true })) {
+			scanState.count++;
+			const result = await LibraryService.processFile(client, file, artDir);
+			if (result === "processed") processed++;
+			else if (result === "unchanged") skipped++;
 		}
 		console.log(
 			`Library scan complete: ${processed} processed, ${skipped} unchanged`,

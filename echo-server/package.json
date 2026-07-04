@@ -15,6 +15,7 @@
 		"drizzle-orm": "^1.0.0-rc.4",
 		"elysia": "latest",
 		"logixlysia": "^6.6.0",
+		"music-metadata": "^11.13.0",
 		"tailwindcss": "4"
 	},
 	"devDependencies": {
