@@ -55,11 +55,14 @@ describe("POST /auth/sign-up", () => {
 		expect(res.headers.get("location")).toContain("/auth/login?error=1");
 	});
 
-	it("rejects weak password with 422", async () => {
+	it("rejects weak password by redirecting to login with a weak_password error", async () => {
 		const res = await app.handle(
 			signUpRequest({ email: "user@example.com", password: "weak" }),
 		);
-		expect(res.status).toBe(422);
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe(
+			"/auth/login?error=weak_password",
+		);
 	});
 });
 

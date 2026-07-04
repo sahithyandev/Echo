@@ -9,11 +9,17 @@ export function LoginPage({
 	error,
 }: {
 	register: boolean;
-	error?: boolean;
+	error?: "weak_password" | "invalid_credentials";
 }) {
 	const action = register ? "/auth/sign-up" : "/auth/sign-in";
 	const heading = register ? "Create admin account" : "Sign in";
 	const submit = register ? "Create account" : "Sign in";
+	const errorMessage =
+		error === "weak_password"
+			? "Password must be 8+ characters with upper & lower case and a number."
+			: error === "invalid_credentials"
+				? "Invalid email or password. Please try again."
+				: undefined;
 
 	return (
 		<Layout title="Echo — Login">
@@ -25,10 +31,8 @@ export function LoginPage({
 				<div class="w-full max-w-xs bg-surface border border-border rounded-xl p-6 shadow-sm flex flex-col gap-5">
 					<p class="text-sm font-semibold text-foreground">{heading}</p>
 
-					{error && (
-						<p class="text-xs text-red-400 -mt-1">
-							Invalid email or password. Please try again.
-						</p>
+					{errorMessage && (
+						<p class="text-xs text-red-400 -mt-1">{errorMessage}</p>
 					)}
 
 					<form class="flex flex-col gap-4" method="post" action={action}>
@@ -61,7 +65,7 @@ export function LoginPage({
 							/>
 							{register && (
 								<span class="text-xs text-subtle">
-									8+ chars, upper &amp; lower case, number, special character
+									8+ chars, upper &amp; lower case, number
 								</span>
 							)}
 						</div>

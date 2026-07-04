@@ -11,9 +11,8 @@ export namespace AuthModel {
 		return JWT_DATA_CHECKER.Check(obj);
 	}
 
-	// min 8, requires upper + lower + digit + special
-	export const PasswordPattern =
-		/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
+	// min 8, requires upper + lower + digit
+	export const PasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 	export const signInBody = t.Object({ email: Email, password: t.String() });
 	export type signInBody = typeof signInBody.static;

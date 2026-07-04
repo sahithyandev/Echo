@@ -37,8 +37,8 @@ describe("signUpBody password pattern", () => {
 		expect(valid("Password!!")).toBe(false);
 	});
 
-	it("rejects no special character", () => {
-		expect(valid("Passw0rd1")).toBe(false);
+	it("accepts a password without a special character", () => {
+		expect(valid("Passw0rd1")).toBe(true);
 	});
 
 	it("rejects too short", () => {

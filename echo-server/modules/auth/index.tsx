@@ -24,6 +24,11 @@ export default function createAuthModule(dbClient: DbLike) {
 		.decorate("db", dbClient)
 		.use(jwtInstance)
 		.use(authMiddleware)
+		.onError(({ code, path, redirect }) => {
+			if (code === "VALIDATION" && path !== "/auth/validate") {
+				return redirect("/auth/login?error=weak_password");
+			}
+		})
 		.get(
 			"/login",
 			async ({ currentUser, redirect, query, db }) => {
@@ -31,7 +36,18 @@ export default function createAuthModule(dbClient: DbLike) {
 				const usersCount = await Auth.userCount(db);
 
 				const register = usersCount === 0;
-				return <LoginPage register={register} error={!!query.error} />;
+				return (
+					<LoginPage
+						register={register}
+						error={
+							query.error === "weak_password"
+								? "weak_password"
+								: query.error
+									? "invalid_credentials"
+									: undefined
+						}
+					/>
+				);
 			},
 			{ currentUser: true },
 		)
