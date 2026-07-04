@@ -140,7 +140,7 @@ async function coverArtHandler(
 	// Some Subsonic clients (e.g. Submariner) don't handle a non-image response to
 	// getCoverArt gracefully, so fall back to a placeholder image instead of a 404.
 	const placeholder = Bun.file(
-		`${import.meta.dir}/../../public/apple-touch-icon.png`,
+		`${import.meta.dir}/../../public/no-album-art.png`,
 	);
 	return new Response(placeholder, {
 		headers: { "Content-Type": "image/png" },
