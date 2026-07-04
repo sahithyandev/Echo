@@ -207,6 +207,37 @@ export function LibraryPage({
 								data-art={t.album?.cover_path ?? ""}
 							>
 								<div class="relative aspect-square overflow-hidden rounded-md bg-surface mb-2">
+									{isAdmin && (
+										<form
+											method="post"
+											action={`/track/${t.id}/delete`}
+											class="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+											onclick="event.stopPropagation()"
+											onsubmit={`return confirm(${JSON.stringify(`Delete "${t.title}"? This removes the file from disk.`)})`}
+										>
+											<button
+												type="submit"
+												title="Delete track"
+												aria-label="Delete track"
+												class="flex items-center justify-center w-6 h-6 rounded-md bg-background/80 text-muted hover:text-red-400 hover:bg-background"
+											>
+												<svg
+													width="14"
+													height="14"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="2"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													aria-hidden="true"
+												>
+													<polyline points="3,6 5,6 21,6" />
+													<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+												</svg>
+											</button>
+										</form>
+									)}
 									{t.album?.cover_path ? (
 										<img
 											src={t.album.cover_path}

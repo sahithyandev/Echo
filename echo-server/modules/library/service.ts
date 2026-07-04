@@ -1,13 +1,15 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, unlink } from "node:fs/promises";
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { fingerprintFile } from "../../bindings/chromaprint";
 import {
 	album_artists,
 	albums,
 	artists,
+	listening,
 	play_history,
 	track_artists,
 	tracks,
+	user_playback_state,
 } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 
@@ -307,6 +309,24 @@ export abstract class LibraryService {
 			.from(tracks)
 			.where(eq(tracks.id, id));
 		return rows[0] ?? null;
+	}
+
+	/** Deletes a track's DB rows (and any references to it) and its file on disk. */
+	static async deleteTrack(client: DbLike, id: number): Promise<boolean> {
+		const track = await LibraryService.findTrackById(client, id);
+		if (!track) return false;
+
+		await client.delete(track_artists).where(eq(track_artists.track_id, id));
+		await client.delete(play_history).where(eq(play_history.track_id, id));
+		await client.delete(listening).where(eq(listening.track_id, id));
+		await client
+			.update(user_playback_state)
+			.set({ track_id: null })
+			.where(eq(user_playback_state.track_id, id));
+		await client.delete(tracks).where(eq(tracks.id, id));
+
+		await unlink(track.file_path).catch(() => null);
+		return true;
 	}
 
 	/** Full track entry (with artists/album) for a single id, e.g. "continue listening". */

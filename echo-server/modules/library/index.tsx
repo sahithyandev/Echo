@@ -39,6 +39,17 @@ export default function createLibraryModule(db: DbLike) {
 			{ currentUser: true },
 		)
 		.post(
+			"/track/:id/delete",
+			async ({ currentUser, redirect, status, params }) => {
+				if (!currentUser) return redirect("/auth/login");
+				const user = await Auth.findUserById(db, currentUser.id);
+				if (!user.is_admin) return status(403);
+				await LibraryService.deleteTrack(db, Number(params.id));
+				return redirect("/library");
+			},
+			{ currentUser: true },
+		)
+		.post(
 			"/library/upload",
 			async ({ currentUser, redirect, status, body }) => {
 				if (!currentUser) return redirect("/auth/login");
