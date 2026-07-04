@@ -1,5 +1,6 @@
 import { Html } from "@elysiajs/html";
 import { AlbumArt } from "../components/album-art";
+import { Flash } from "../components/flash";
 import { formatDuration, unused } from "../utils/misc";
 import { Layout } from "./layout";
 
@@ -49,16 +50,11 @@ export function AlbumPage({
 	return (
 		<Layout title={`Echo — ${album.title}`} active="albums">
 			<main class="flex-1 flex flex-col p-6 gap-6">
-				{ok && (
-					<p class="text-xs text-accent bg-accent/10 border border-accent/30 rounded-md px-3 py-2">
-						{OK_MESSAGES[ok] ?? "Saved."}
-					</p>
-				)}
-				{error && (
-					<p class="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-md px-3 py-2">
-						{ERROR_MESSAGES[error] ?? "Something went wrong."}
-					</p>
-				)}
+				<Flash variant="ok" message={ok && (OK_MESSAGES[ok] ?? "Saved.")} />
+				<Flash
+					variant="error"
+					message={error && (ERROR_MESSAGES[error] ?? "Something went wrong.")}
+				/>
 				<div class="flex items-center gap-4">
 					<AlbumArt size={56} src={album.cover_path} />
 					<div>

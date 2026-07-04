@@ -1,4 +1,5 @@
 import { Html } from "@elysiajs/html";
+import { Flash } from "../components/flash";
 import { unused } from "../utils/misc";
 import { Layout } from "./layout";
 
@@ -164,16 +165,11 @@ export function LibraryPage({
 					</dialog>
 				)}
 
-				{ok && (
-					<p class="text-xs text-accent bg-accent/10 border border-accent/30 rounded-md px-3 py-2">
-						{OK_MESSAGES[ok] ?? "Saved."}
-					</p>
-				)}
-				{error && (
-					<p class="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-md px-3 py-2">
-						{ERROR_MESSAGES[error] ?? "Something went wrong."}
-					</p>
-				)}
+				<Flash variant="ok" message={ok && (OK_MESSAGES[ok] ?? "Saved.")} />
+				<Flash
+					variant="error"
+					message={error && (ERROR_MESSAGES[error] ?? "Something went wrong.")}
+				/>
 
 				{tracks.length === 0 ? (
 					<div class="flex-1 flex flex-col items-center justify-center gap-3 text-center">

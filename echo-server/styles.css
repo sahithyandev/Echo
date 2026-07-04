@@ -160,6 +160,24 @@ tr.playing .track-bars span:nth-child(3) {
 	}
 }
 
+/* Flash toast */
+[data-flash] {
+	font-size: 1rem;
+	animation: flash-in 0.2s ease-out;
+}
+
+[data-flash].flash-out {
+	opacity: 0;
+	transform: translateY(1.5rem);
+}
+
+@keyframes flash-in {
+	from {
+		opacity: 0;
+		transform: translateY(1.5rem);
+	}
+}
+
 /* Seek bar */
 .seek-bar {
 	-webkit-appearance: none;

@@ -232,6 +232,7 @@ export function Layout({
 				<script src="/search.js" defer />
 				<script src="/nav.js" defer />
 				<script src="/upload.js" defer />
+				<script src="/flash.js" defer />
 			</body>
 		</html>
 	);
