@@ -28,12 +28,23 @@ function authChallenge(): Response {
 	});
 }
 
+/** Some clients (e.g. Amperfy, Castafiore) POST params as a form body instead of a query string. */
+function mergedQuery(ctx: { query: Query; body: unknown }): Query {
+	if (!ctx.body || typeof ctx.body !== "object") return ctx.query;
+	return { ...(ctx.body as Query), ...ctx.query };
+}
+
 async function dispatch(
 	db: DbLike,
-	ctx: { params: { method: string }; query: Query; request: Request },
+	ctx: {
+		params: { method: string };
+		query: Query;
+		body: unknown;
+		request: Request;
+	},
 ) {
 	const method = stripView(ctx.params.method);
-	const q = ctx.query;
+	const q = mergedQuery(ctx);
 	try {
 		const user = await resolveSubsonicUser(
 			db,

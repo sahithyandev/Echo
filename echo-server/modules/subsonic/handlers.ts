@@ -355,6 +355,9 @@ async function scrobble(db: DbLike, user: SubsonicUser, query: Query) {
 	const { type, id } = requireId(query);
 	if (type !== "tr")
 		throw new SubsonicError(SubsonicErrorCode.notFound, "Not found");
+	console.log(
+		`[subsonic] scrobble user=${user.name} track=${id} submission=${str(query, "submission") ?? "(unset)"}`,
+	);
 	if (str(query, "submission") === "false") {
 		await SettingsService.syncPlayback(db, user.id, {
 			track_id: id,
