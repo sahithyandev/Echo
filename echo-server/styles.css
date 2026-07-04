@@ -190,6 +190,11 @@ tr.playing .track-bars span:nth-child(3) {
 	opacity: 1;
 }
 
+/* Inline track rename: swap the title text for the edit form in place */
+.track-rename[open] > summary {
+	display: none;
+}
+
 .wordmark-gradient {
 	background: linear-gradient(
 		145deg,

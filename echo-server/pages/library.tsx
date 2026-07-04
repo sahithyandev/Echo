@@ -14,11 +14,13 @@ type Track = {
 
 const OK_MESSAGES: Record<string, string> = {
 	upload: "Files uploaded. Rescanning library.",
+	rename: "Track renamed.",
 };
 
 const ERROR_MESSAGES: Record<string, string> = {
 	upload:
 		"No files were uploaded. Check the file types (mp3, flac, m4a, aac, ogg, wav) and that they don't already exist.",
+	rename: "Couldn't rename track.",
 };
 
 export function LibraryPage({
@@ -283,9 +285,55 @@ export function LibraryPage({
 										</div>
 									</div>
 								</div>
-								<p class="text-xs font-medium truncate track-title">
-									{t.title}
-								</p>
+								{isAdmin ? (
+									<details
+										class="track-rename"
+										onclick="event.stopPropagation()"
+									>
+										<summary class="flex items-center gap-1 text-xs font-medium truncate track-title list-none cursor-pointer">
+											<span class="truncate">{t.title}</span>
+											<svg
+												width="11"
+												height="11"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="shrink-0 text-muted opacity-0 group-hover:opacity-70"
+												aria-hidden="true"
+											>
+												<path d="M12 20h9" />
+												<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+											</svg>
+										</summary>
+										<form
+											method="post"
+											action={`/track/${t.id}/rename`}
+											class="flex gap-1 mt-1"
+										>
+											<input type="hidden" name="return" value="/library" />
+											<input
+												name="title"
+												value={t.title}
+												required
+												autofocus
+												class="w-0 flex-1 min-w-0 rounded border border-border bg-background px-1.5 py-0.5 text-xs"
+											/>
+											<button
+												type="submit"
+												class="shrink-0 rounded bg-accent text-accent-foreground text-xs px-2"
+											>
+												Save
+											</button>
+										</form>
+									</details>
+								) : (
+									<p class="text-xs font-medium truncate track-title">
+										{t.title}
+									</p>
+								)}
 								<p class="text-xs text-muted truncate">
 									{t.artists.length ? (
 										t.artists.map((a, i) => (

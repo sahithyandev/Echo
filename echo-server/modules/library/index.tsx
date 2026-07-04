@@ -50,6 +50,28 @@ export default function createLibraryModule(db: DbLike) {
 			{ currentUser: true },
 		)
 		.post(
+			"/track/:id/rename",
+			async ({ currentUser, redirect, status, params, body }) => {
+				if (!currentUser) return redirect("/auth/login");
+				const user = await Auth.findUserById(db, currentUser.id);
+				if (!user.is_admin) return status(403);
+				const returnTo = body.return ?? "/library";
+				try {
+					await LibraryService.renameTrack(db, Number(params.id), body.title);
+					return redirect(`${returnTo}?ok=rename`);
+				} catch {
+					return redirect(`${returnTo}?error=rename`);
+				}
+			},
+			{
+				currentUser: true,
+				body: t.Object({
+					title: t.String({ minLength: 1 }),
+					return: t.Optional(t.String()),
+				}),
+			},
+		)
+		.post(
 			"/library/upload",
 			async ({ currentUser, redirect, status, body }) => {
 				if (!currentUser) return redirect("/auth/login");

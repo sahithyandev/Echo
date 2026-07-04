@@ -1,4 +1,4 @@
-import { mkdir, unlink } from "node:fs/promises";
+import { mkdir, rename, unlink } from "node:fs/promises";
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { fingerprintFile } from "../../bindings/chromaprint";
 import {
@@ -34,6 +34,26 @@ async function getTrackMeta(filePath: string) {
 		genre: tags.genre ?? tags.GENRE ?? null,
 		duration_seconds: duration > 0 ? Math.round(duration) : null,
 	};
+}
+
+/** Rewrites an audio file's tags in place (remux with `-codec copy`, no re-encode). */
+async function writeTags(
+	filePath: string,
+	tags: Record<string, string>,
+): Promise<void> {
+	const ext = filePath.slice(filePath.lastIndexOf("."));
+	const tmpPath = `${filePath}.tagtmp${ext}`;
+	const metadataArgs = Object.entries(tags).flatMap(([key, value]) => [
+		"-metadata",
+		`${key}=${value}`,
+	]);
+	const result =
+		await Bun.$`ffmpeg -y -i ${filePath} -map 0 -codec copy ${metadataArgs} ${tmpPath}`.quiet();
+	if (result.exitCode !== 0) {
+		await unlink(tmpPath).catch(() => null);
+		throw new Error(`ffmpeg exited ${result.exitCode}: ${result.stderr}`);
+	}
+	await rename(tmpPath, filePath);
 }
 
 async function upsertArtist(client: DbLike, name: string): Promise<number> {
@@ -309,6 +329,38 @@ export abstract class LibraryService {
 			.from(tracks)
 			.where(eq(tracks.id, id));
 		return rows[0] ?? null;
+	}
+
+	static async renameTrack(client: DbLike, id: number, title: string) {
+		await client.update(tracks).set({ title }).where(eq(tracks.id, id));
+		void LibraryService.syncTrackTags(client, id);
+	}
+
+	/** Writes a track's current title/album/artists (from the DB) back into its file's tags. */
+	static async syncTrackTags(client: DbLike, id: number): Promise<void> {
+		const [track, entry] = await Promise.all([
+			LibraryService.findTrackById(client, id),
+			LibraryService.findTrackEntryById(client, id),
+		]);
+		if (!track || !entry) return;
+
+		const fileTags: Record<string, string> = { title: entry.title };
+		if (entry.album) fileTags.album = entry.album.title;
+		if (entry.artists.length)
+			fileTags.artist = entry.artists.map((a) => a.name).join(", ");
+
+		try {
+			await writeTags(track.file_path, fileTags);
+		} catch (err) {
+			console.warn(`Failed to write tags for track ${id}:`, err);
+		}
+	}
+
+	/** Background tag sync for multiple tracks (e.g. after an album/artist rename or merge). */
+	static async syncTracksTags(client: DbLike, ids: number[]): Promise<void> {
+		for (const id of ids) {
+			await LibraryService.syncTrackTags(client, id);
+		}
 	}
 
 	/** Deletes a track's DB rows (and any references to it) and its file on disk. */

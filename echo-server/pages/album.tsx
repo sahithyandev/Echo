@@ -21,28 +21,97 @@ type Album = {
 
 type Artist = { id: number; name: string };
 
+const OK_MESSAGES: Record<string, string> = {
+	rename: "Album renamed.",
+	merge: "Album merged into the existing album with that title.",
+};
+
+const ERROR_MESSAGES: Record<string, string> = {
+	rename: "Couldn't rename album.",
+};
+
 export function AlbumPage({
 	album,
 	tracks,
 	artists,
+	isAdmin,
+	ok,
+	error,
 }: {
 	album: Album;
 	tracks: Track[];
 	artists: Artist[];
+	isAdmin: boolean;
+	ok?: string;
+	error?: string;
 }) {
 	const artistNames = artists.map((a) => a.name).join(", ");
 	return (
 		<Layout title={`Echo — ${album.title}`} active="albums">
 			<main class="flex-1 flex flex-col p-6 gap-6">
+				{ok && (
+					<p class="text-xs text-accent bg-accent/10 border border-accent/30 rounded-md px-3 py-2">
+						{OK_MESSAGES[ok] ?? "Saved."}
+					</p>
+				)}
+				{error && (
+					<p class="text-xs text-red-400 bg-red-400/10 border border-red-400/30 rounded-md px-3 py-2">
+						{ERROR_MESSAGES[error] ?? "Something went wrong."}
+					</p>
+				)}
 				<div class="flex items-center gap-4">
 					<AlbumArt size={56} src={album.cover_path} />
 					<div>
 						<p class="text-xs text-accent font-medium uppercase tracking-wide mb-0.5">
 							Album
 						</p>
-						<h1 class="text-2xl font-bold tracking-tight font-display">
-							{album.title}
-						</h1>
+						<div class="flex items-center gap-2">
+							<h1 class="text-2xl font-bold tracking-tight font-display">
+								{album.title}
+							</h1>
+							{isAdmin && (
+								<details class="relative">
+									<summary
+										title="Rename album"
+										aria-label="Rename album"
+										class="flex items-center justify-center w-6 h-6 rounded-md text-muted hover:text-foreground hover:bg-surface list-none cursor-pointer"
+									>
+										<svg
+											width="14"
+											height="14"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											aria-hidden="true"
+										>
+											<path d="M12 20h9" />
+											<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+										</svg>
+									</summary>
+									<form
+										method="post"
+										action={`/album/${album.id}/rename`}
+										class="absolute top-8 left-0 z-20 flex gap-1 bg-surface border border-border rounded-md p-1.5 shadow-lg"
+									>
+										<input
+											name="title"
+											value={album.title}
+											required
+											class="w-48 rounded border border-border bg-background px-1.5 py-1 text-xs"
+										/>
+										<button
+											type="submit"
+											class="rounded bg-accent text-accent-foreground text-xs px-2"
+										>
+											Save
+										</button>
+									</form>
+								</details>
+							)}
+						</div>
 						<p class="text-xs text-muted mt-1">
 							{artists.map((a, i) => (
 								<>
@@ -67,6 +136,7 @@ export function AlbumPage({
 							<th class="pb-2 pr-4 font-medium w-8">#</th>
 							<th class="pb-2 font-medium">Title</th>
 							<th class="pb-2 font-medium text-right">Duration</th>
+							{isAdmin && <th class="pb-2 pl-2 font-medium w-8" />}
 						</tr>
 					</thead>
 					<tbody>
@@ -101,6 +171,58 @@ export function AlbumPage({
 								<td class="py-3 text-muted text-right tabular-nums">
 									{formatDuration(t.duration_seconds)}
 								</td>
+								{isAdmin && (
+									<td class="py-3 pl-2 text-right">
+										<details
+											class="relative inline-block"
+											onclick="event.stopPropagation()"
+										>
+											<summary
+												title="Rename track"
+												aria-label="Rename track"
+												class="flex items-center justify-center w-6 h-6 rounded-md text-muted hover:text-foreground hover:bg-background list-none cursor-pointer"
+											>
+												<svg
+													width="14"
+													height="14"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="2"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													aria-hidden="true"
+												>
+													<path d="M12 20h9" />
+													<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+												</svg>
+											</summary>
+											<form
+												method="post"
+												action={`/track/${t.id}/rename`}
+												class="absolute top-7 right-0 z-20 flex gap-1 bg-surface border border-border rounded-md p-1.5 shadow-lg"
+											>
+												<input
+													type="hidden"
+													name="return"
+													value={`/album/${album.id}`}
+												/>
+												<input
+													name="title"
+													value={t.title}
+													required
+													class="w-32 rounded border border-border bg-background px-1.5 py-1 text-xs"
+												/>
+												<button
+													type="submit"
+													class="rounded bg-accent text-accent-foreground text-xs px-2"
+												>
+													Save
+												</button>
+											</form>
+										</details>
+									</td>
+								)}
 							</tr>
 						))}
 					</tbody>
