@@ -1,6 +1,16 @@
 const content = document.getElementById("page-content") as HTMLElement;
 
 function swapNav(doc: Document): void {
+	const newHeader = doc.querySelector("header");
+	const liveHeader = document.querySelector("header");
+	if (!liveHeader && newHeader) {
+		document.body.prepend(newHeader);
+		return;
+	}
+	if (liveHeader && !newHeader) {
+		liveHeader.remove();
+		return;
+	}
 	const newLinks = doc.querySelectorAll<HTMLAnchorElement>("header nav a");
 	const liveLinks =
 		document.querySelectorAll<HTMLAnchorElement>("header nav a");
