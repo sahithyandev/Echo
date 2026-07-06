@@ -14,7 +14,7 @@ Echo is a personal music library and streaming application.
   - `components/` — Shared JSX components (e.g. `album-art.tsx`)
   - `db/` — Drizzle ORM with libsql (SQLite file `echo.db`); schema: `users`, `user_sessions`, `tracks`, `albums`, `artists`, `album_artists`, `track_artists`
   - `modules/auth/` — sign-up, sign-in, JWT-based session auth with revocation support
-  - `modules/library/` — `LibraryService`: scans `~/Music` on startup, upserts tracks/albums/artists using `ffprobe` for metadata and chromaprint for fingerprinting
+  - `modules/library/` — `LibraryService`: scans `~/Music` on startup, upserts tracks/albums/artists using `ffprobe` for metadata and chromaprint for fingerprinting (fingerprinting and duplicate detection are skipped if `fpcalc` isn't installed, gated by `FPCALC_AVAILABLE`)
   - `pages/` — JSX pages rendered server-side via `@elysiajs/html`; Tailwind 4 for styling; includes `library.tsx`, `album.tsx`, `artist.tsx`, `login.tsx`
   - `public/` — static assets served at `/`
   - `utils/` — `jwt.ts`, `env.ts`, `request-info.ts`, `create-app.tsx`, `misc.ts`
@@ -27,7 +27,7 @@ Echo is a personal music library and streaming application.
 - Biome for linting/formatting (`bun run lint`, `bun run lint:fix`)
 - `bun test` for tests (integration + unit tests exist for auth module and utils)
 - `ffprobe` (from ffmpeg) for reading audio metadata tags
-- `chromaprint` (via FFI) for generating audio fingerprints (capped at 30s)
+- `chromaprint` (via FFI, and `fpcalc` CLI) for generating audio fingerprints (capped at 30s); optional, enables duplicate track detection in settings
 
 ## Context
 

@@ -1,5 +1,6 @@
 import { Html } from "@elysiajs/html";
 import { Elysia, t } from "elysia";
+import { FPCALC_AVAILABLE } from "../../bindings/chromaprint";
 import type { DbLike } from "../../db/types";
 import { SettingsPage } from "../../pages/settings";
 import { unused } from "../../utils/misc";
@@ -26,13 +27,16 @@ export default function createSettingsModule(db: DbLike) {
 					(cookie as Record<string, { value?: string }>).session?.value ?? "",
 				);
 
-				const [users, stats, dirs] = user.is_admin
+				const [users, stats, dirs, duplicates] = user.is_admin
 					? await Promise.all([
 							Auth.listUsers(db),
 							SettingsService.getStats(db),
 							SettingsService.getDirs(db),
+							FPCALC_AVAILABLE
+								? LibraryService.listDuplicateTracks(db)
+								: undefined,
 						])
-					: [undefined, undefined, undefined];
+					: [undefined, undefined, undefined, undefined];
 				const subsonicPassword = await SettingsService.getSubsonicPassword(
 					db,
 					currentUser.id,
@@ -53,6 +57,8 @@ export default function createSettingsModule(db: DbLike) {
 							}
 						}
 						subsonicPassword={subsonicPassword}
+						fpcalcAvailable={FPCALC_AVAILABLE}
+						duplicates={duplicates}
 						ok={typeof query.ok === "string" ? query.ok : undefined}
 						error={typeof query.error === "string" ? query.error : undefined}
 					/>

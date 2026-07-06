@@ -8,7 +8,7 @@ My own music library and streaming setup.
 
 | Prereq.     | Version | Notes                                         |
 | ----------- | ------- | --------------------------------------------- |
-| chromaprint | ≥ 1.0   | Required in prod. `brew install chromaprint`. |
+| chromaprint | ≥ 1.0   | Optional; enables duplicate track detection. `brew install chromaprint`. |
 | ffprobe     | any     | Part of ffmpeg. `brew install ffmpeg`.        |
 | bun         | v1.3.14 | Required in dev.                              |
 

@@ -1,6 +1,6 @@
 import { mkdir, rename, unlink } from "node:fs/promises";
-import { desc, eq, inArray, sql } from "drizzle-orm";
-import { fingerprintFile } from "../../bindings/chromaprint";
+import { desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { FPCALC_AVAILABLE, fingerprintFile } from "../../bindings/chromaprint";
 import {
 	album_artists,
 	albums,
@@ -121,6 +121,19 @@ export type TrackEntry = {
 	duration_seconds: number | null;
 	artists: { id: number; name: string }[];
 	album: { id: number; title: string; cover_path: string | null } | null;
+};
+
+export type DuplicateGroup = {
+	fingerprint: string;
+	tracks: {
+		id: number;
+		title: string;
+		duration_seconds: number | null;
+		file_path: string;
+		album: string | null;
+		artists: string[];
+		fingerprint: string;
+	}[];
 };
 
 type TrackRow = {
@@ -405,6 +418,65 @@ export abstract class LibraryService {
 		return hydrateTracks(rows)[0] ?? null;
 	}
 
+	/** Tracks sharing an exact fingerprint, grouped for side-by-side comparison. */
+	static async listDuplicateTracks(client: DbLike): Promise<DuplicateGroup[]> {
+		const dupeFingerprints = await client
+			.select({ fingerprint: tracks.fingerprint })
+			.from(tracks)
+			.where(isNotNull(tracks.fingerprint))
+			.groupBy(tracks.fingerprint)
+			.having(sql`count(*) > 1`);
+		if (dupeFingerprints.length === 0) return [];
+
+		const fingerprints = dupeFingerprints.map((d) => d.fingerprint as string);
+		const rows = await client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				duration_seconds: tracks.duration_seconds,
+				file_path: tracks.file_path,
+				fingerprint: tracks.fingerprint,
+				artist_name: artists.name,
+				album_title: albums.title,
+			})
+			.from(tracks)
+			.leftJoin(track_artists, eq(track_artists.track_id, tracks.id))
+			.leftJoin(artists, eq(artists.id, track_artists.artist_id))
+			.leftJoin(albums, eq(albums.id, tracks.album_id))
+			.where(inArray(tracks.fingerprint, fingerprints));
+
+		const trackMap = new Map<number, DuplicateGroup["tracks"][number]>();
+		for (const row of rows) {
+			let track = trackMap.get(row.id);
+			if (!track) {
+				track = {
+					id: row.id,
+					title: row.title,
+					duration_seconds: row.duration_seconds,
+					file_path: row.file_path,
+					album: row.album_title,
+					artists: [],
+					fingerprint: row.fingerprint as string,
+				};
+				trackMap.set(row.id, track);
+			}
+			if (row.artist_name) track.artists.push(row.artist_name);
+		}
+
+		const groups = new Map<string, DuplicateGroup["tracks"]>();
+		for (const track of trackMap.values()) {
+			const list = groups.get(track.fingerprint) ?? [];
+			list.push(track);
+			groups.set(track.fingerprint, list);
+		}
+		return fingerprints
+			.map((fingerprint) => ({
+				fingerprint,
+				tracks: groups.get(fingerprint) ?? [],
+			}))
+			.filter((g) => g.tracks.length > 1);
+	}
+
 	static async scanMusicFolder(
 		client: DbLike,
 		dir: string,
@@ -466,7 +538,7 @@ export abstract class LibraryService {
 
 			const [meta, fingerprint] = await Promise.all([
 				getTrackMeta(file),
-				fingerprintFile(file).catch(() => null),
+				FPCALC_AVAILABLE ? fingerprintFile(file).catch(() => null) : null,
 			]);
 
 			const artistIds = await Promise.all(

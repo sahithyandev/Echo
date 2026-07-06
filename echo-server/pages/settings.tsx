@@ -39,6 +39,18 @@ type Stats = {
 	dataDir: string;
 };
 
+type DuplicateGroup = {
+	fingerprint: string;
+	tracks: {
+		id: number;
+		title: string;
+		duration_seconds: number | null;
+		file_path: string;
+		album: string | null;
+		artists: string[];
+	}[];
+};
+
 const OK_MESSAGES: Record<string, string> = {
 	profile: "Display name updated.",
 	password: "Password changed.",
@@ -85,6 +97,13 @@ function formatDate(d: Date) {
 	return new Date(d).toLocaleString();
 }
 
+function formatDuration(seconds: number | null) {
+	if (!seconds) return "--:--";
+	const m = Math.floor(seconds / 60);
+	const s = Math.floor(seconds % 60);
+	return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export function SettingsPage({
 	user,
 	sessions,
@@ -92,6 +111,8 @@ export function SettingsPage({
 	users,
 	stats,
 	subsonicPassword,
+	fpcalcAvailable,
+	duplicates,
 	ok,
 	error,
 }: {
@@ -101,6 +122,8 @@ export function SettingsPage({
 	users?: AdminUser[];
 	stats?: Stats;
 	subsonicPassword: string | null;
+	fpcalcAvailable?: boolean;
+	duplicates?: DuplicateGroup[];
 	ok?: string;
 	error?: string;
 }) {
@@ -429,6 +452,40 @@ export function SettingsPage({
 								Create user
 							</button>
 						</form>
+					</Card>
+				)}
+
+				{user.is_admin && (
+					<Card title="Duplicate tracks">
+						{!fpcalcAvailable ? (
+							<p class="text-xs text-muted">
+								fpcalc is required to detect duplicate tracks but it is not found in the server.
+							</p>
+						) : duplicates && duplicates.length > 0 ? (
+							<div class="flex flex-col gap-4">
+								{duplicates.map((group) => (
+									<div class="grid grid-cols-2 gap-3 border-b border-border/60 pb-4 last:border-0 last:pb-0">
+										{group.tracks.map((t) => (
+											<div class="bg-background border border-border rounded-md p-3 text-sm flex flex-col gap-1 min-w-0">
+												<p class="font-medium truncate">{t.title}</p>
+												<p class="text-xs text-muted truncate">
+													{t.artists.join(", ") || "Unknown artist"}
+													{t.album ? ` · ${t.album}` : ""}
+												</p>
+												<p class="text-xs text-subtle">
+													{formatDuration(t.duration_seconds)}
+												</p>
+												<p class="text-xs text-subtle truncate">
+													{t.file_path}
+												</p>
+											</div>
+										))}
+									</div>
+								))}
+							</div>
+						) : (
+							<p class="text-xs text-muted">No duplicate tracks found.</p>
+						)}
 					</Card>
 				)}
 			</main>

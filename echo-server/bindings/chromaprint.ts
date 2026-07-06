@@ -39,6 +39,8 @@ const { symbols: ffi } = dlopen(LIB, {
 // CHROMAPRINT_ALGORITHM_TEST2 — the default, same as fpcalc
 const ALGORITHM = 1;
 
+export const FPCALC_AVAILABLE = Bun.which("fpcalc") !== null;
+
 const MAX_SECONDS = 30;
 
 /**
