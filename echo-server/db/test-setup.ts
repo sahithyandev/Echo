@@ -8,7 +8,7 @@ const result = Bun.spawnSync(
 	[path.join(serverRoot, "node_modules/.bin/drizzle-kit"), "push"],
 	{
 		cwd: serverRoot,
-		env: { ...process.env, DATABASE_URL: templateDb },
+		env: { ...process.env, ECHO_DATABASE_URL: templateDb },
 		stdout: "ignore",
 		stderr: "pipe",
 	},
