@@ -1,0 +1,20 @@
+services:
+  echo:
+    image: ghcr.io/sahithyandev/echo:latest
+    build: ./echo-server
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      ECHO_JWT_SECRET: ${ECHO_JWT_SECRET:?set a strong secret, e.g. openssl rand -hex 32}
+    volumes:
+      - ./music:/music
+      - echo-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+volumes:
+  echo-data:
