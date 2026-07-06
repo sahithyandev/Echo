@@ -1,6 +1,5 @@
 import { Html, html } from "@elysiajs/html";
 import staticPlugin from "@elysiajs/static";
-import tailwind from "bun-plugin-tailwind";
 import { Elysia } from "elysia";
 import logixlysia from "logixlysia";
 import type { DbLike } from "../db/types";
@@ -35,8 +34,14 @@ async function buildAsset(
 	return { route, content: await build.outputs[0].text() };
 }
 
-/** Runtime bundling for dev, so edits under client/ and styles.css are picked up without a build step. */
-function loadDevAssets(base: (p: string) => string) {
+/**
+ * Runtime bundling for dev, so edits under client/ and styles.css are picked
+ * up without a build step. bun-plugin-tailwind is a devDependency, so it's
+ * imported lazily here — a top-level import would make production (which
+ * never calls this function) require it too, and it isn't installed there.
+ */
+async function loadDevAssets(base: (p: string) => string) {
+	const { default: tailwind } = await import("bun-plugin-tailwind");
 	return Promise.all([
 		buildAsset("/global.css", base("../styles.css"), { plugins: [tailwind] }),
 		buildAsset("/player.js", base("../client/player.ts"), {
