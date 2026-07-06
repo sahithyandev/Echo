@@ -1,5 +1,5 @@
-import { migrate } from "drizzle-orm/libsql/migrator";
 import { client } from "./db/client";
+import { runMigrations } from "./db/migrate";
 import { LibraryService } from "./modules/library/service";
 import { SettingsService } from "./modules/settings/service";
 import { createApp } from "./utils/create-app";
@@ -9,7 +9,7 @@ const NODE_ENV = getEnvVar("NODE_ENV");
 
 (async () => {
 	if (NODE_ENV === "production") {
-		await migrate(client, { migrationsFolder: "./db/migrations" });
+		await runMigrations(client);
 	} else if (NODE_ENV === "development") {
 		const result = await Bun.$`bunx drizzle-kit push`.text();
 		console.log(result);
