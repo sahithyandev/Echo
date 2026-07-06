@@ -89,6 +89,7 @@ export async function createApp(db: DbLike) {
 		.use(html())
 		.use(assetPlugin)
 		.use(await staticPlugin({ prefix: "/" }))
+		.get("/health", () => "ok")
 		.use(authMiddleware)
 		.use(createHomeModule(db))
 		.use(createLibraryModule(db))
