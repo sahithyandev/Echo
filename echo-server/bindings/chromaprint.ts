@@ -5,7 +5,12 @@ const LIB =
 		? "/opt/homebrew/lib/libchromaprint.dylib"
 		: "/usr/local/lib/libchromaprint.dylib";
 
-const { symbols: ffi } = dlopen(LIB, {
+// CHROMAPRINT_ALGORITHM_TEST2 — the default, same as fpcalc
+const ALGORITHM = 1;
+
+let ffi: ReturnType<typeof dlopen<typeof ffiSymbols>>["symbols"] | undefined;
+
+const ffiSymbols = {
 	chromaprint_new: {
 		args: [FFIType.i32],
 		returns: FFIType.ptr,
@@ -34,10 +39,18 @@ const { symbols: ffi } = dlopen(LIB, {
 		args: [FFIType.ptr],
 		returns: FFIType.void,
 	},
-});
+} as const;
 
-// CHROMAPRINT_ALGORITHM_TEST2 — the default, same as fpcalc
-const ALGORITHM = 1;
+/**
+ * Lazily dlopen's libchromaprint on first use. Deferred (rather than a
+ * top-level dlopen) so importing this module for FPCALC_AVAILABLE/
+ * fingerprintFile — the only paths the running server actually uses — works
+ * on platforms without the mac-only .dylib, e.g. Linux containers.
+ */
+function getFfi() {
+	if (!ffi) ffi = dlopen(LIB, ffiSymbols).symbols;
+	return ffi;
+}
 
 export const FPCALC_AVAILABLE = Bun.which("fpcalc") !== null;
 
@@ -52,6 +65,7 @@ export function computeFingerprint(
 	sampleRate: number,
 	channels: number,
 ): string {
+	const ffi = getFfi();
 	const maxSamples = sampleRate * channels * MAX_SECONDS;
 	const limited =
 		samples.length > maxSamples ? samples.subarray(0, maxSamples) : samples;
