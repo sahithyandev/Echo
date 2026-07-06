@@ -14,6 +14,7 @@ import createLibraryModule from "../modules/library";
 import createSearchModule from "../modules/search";
 import createSettingsModule from "../modules/settings";
 import createSubsonicModule from "../modules/subsonic";
+import { getEnvVar } from "./env";
 import { unused } from "./misc";
 
 unused(Html);
@@ -34,10 +35,9 @@ async function buildAsset(
 	return { route, content: await build.outputs[0].text() };
 }
 
-export async function createApp(db: DbLike) {
-	const base = (p: string) => new URL(p, import.meta.url).pathname;
-
-	const assets = await Promise.all([
+/** Runtime bundling for dev, so edits under client/ and styles.css are picked up without a build step. */
+function loadDevAssets(base: (p: string) => string) {
+	return Promise.all([
 		buildAsset("/global.css", base("../styles.css"), { plugins: [tailwind] }),
 		buildAsset("/player.js", base("../client/player.ts"), {
 			target: "browser",
@@ -58,6 +58,48 @@ export async function createApp(db: DbLike) {
 			target: "browser",
 		}),
 	]);
+}
+
+/**
+ * Reads assets prebuilt by scripts/build-client.ts (dist/) as embedded text
+ * imports, so `bun build --compile` bakes them into the standalone binary.
+ */
+async function loadProdAssets() {
+	const [
+		globalCss,
+		playerJs,
+		searchJs,
+		navJs,
+		uploadJs,
+		uploadMetadataJs,
+		flashJs,
+	] = await Promise.all([
+		import("../dist/global.css", { with: { type: "text" } }),
+		import("../dist/player.js", { with: { type: "text" } }),
+		import("../dist/search.js", { with: { type: "text" } }),
+		import("../dist/nav.js", { with: { type: "text" } }),
+		import("../dist/upload.js", { with: { type: "text" } }),
+		import("../dist/upload-metadata.js", { with: { type: "text" } }),
+		import("../dist/flash.js", { with: { type: "text" } }),
+	]);
+	return [
+		{ route: "/global.css", content: globalCss.default },
+		{ route: "/player.js", content: playerJs.default },
+		{ route: "/search.js", content: searchJs.default },
+		{ route: "/nav.js", content: navJs.default },
+		{ route: "/upload.js", content: uploadJs.default },
+		{ route: "/upload-metadata.js", content: uploadMetadataJs.default },
+		{ route: "/flash.js", content: flashJs.default },
+	];
+}
+
+export async function createApp(db: DbLike) {
+	const base = (p: string) => new URL(p, import.meta.url).pathname;
+
+	const assets =
+		getEnvVar("NODE_ENV") === "production"
+			? await loadProdAssets()
+			: await loadDevAssets(base);
 
 	const assetPlugin = new Elysia();
 	for (const { route, content } of assets) {

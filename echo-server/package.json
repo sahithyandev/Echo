@@ -3,6 +3,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bun run --watch index.ts",
+		"build:client": "bun run scripts/build-client.ts",
 		"test": "bun test",
 		"lint": "biome check",
 		"lint:fix": "biome check --write"
