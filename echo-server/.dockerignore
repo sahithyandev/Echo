@@ -1,0 +1,11 @@
+node_modules
+dist
+db/migrations.generated.ts
+*.db
+**/*.test.ts
+**/*.test.tsx
+db/test-*.ts
+.git
+coverage
+.DS_Store
+*.log
