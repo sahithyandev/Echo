@@ -1,4 +1,3 @@
-import { homedir } from "node:os";
 import { count, eq, sql } from "drizzle-orm";
 import {
 	albums,
@@ -25,8 +24,8 @@ export abstract class SettingsService {
 			.where(eq(app_settings.id, 1))
 			.limit(1);
 		dirsCache = {
-			musicDir: row?.music_dir || `${homedir()}/Music`,
-			dataDir: row?.data_dir || getEnvVar("DATA_DIR"),
+			musicDir: row?.music_dir || getEnvVar("ECHO_MUSIC_DIR"),
+			dataDir: row?.data_dir || getEnvVar("ECHO_DATA_DIR"),
 		};
 		return dirsCache;
 	}

@@ -21,13 +21,13 @@ describe("getEnvVar", () => {
 		expect(() => getEnvVar(KEY)).toThrow(`${KEY} is not set`);
 	});
 
-	it("returns built-in default for DATABASE_URL", () => {
-		const original = process.env.DATABASE_URL;
-		delete process.env.DATABASE_URL;
+	it("returns built-in default for ECHO_DATABASE_URL", () => {
+		const original = process.env.ECHO_DATABASE_URL;
+		delete process.env.ECHO_DATABASE_URL;
 		try {
-			expect(getEnvVar("DATABASE_URL")).toMatch(/echo\.db$/);
+			expect(getEnvVar("ECHO_DATABASE_URL")).toMatch(/echo\.db$/);
 		} finally {
-			if (original !== undefined) process.env.DATABASE_URL = original;
+			if (original !== undefined) process.env.ECHO_DATABASE_URL = original;
 		}
 	});
 });

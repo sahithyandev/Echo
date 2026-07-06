@@ -1,9 +1,12 @@
 import { homedir } from "node:os";
 
 const DEFAULT_VALUES = {
-	DATABASE_URL: new URL("../echo.db", import.meta.url).pathname,
+	ECHO_DATABASE_URL: new URL("../echo.db", import.meta.url).pathname,
 	NODE_ENV: "development",
-	DATA_DIR: `${homedir()}/.echo`,
+	ECHO_DATA_DIR: `${homedir()}/.echo`,
+	ECHO_MUSIC_DIR: `${homedir()}/Music`,
+	ECHO_PORT: "3000",
+	ECHO_HOST: "localhost",
 } as const;
 
 type DEFINED_DEFAULT_VALUE_KEY = keyof typeof DEFAULT_VALUES;
