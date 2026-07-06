@@ -459,7 +459,8 @@ export function SettingsPage({
 					<Card title="Duplicate tracks">
 						{!fpcalcAvailable ? (
 							<p class="text-xs text-muted">
-								fpcalc is required to detect duplicate tracks but it is not found in the server.
+								fpcalc is required to detect duplicate tracks but it is not
+								found in the server.
 							</p>
 						) : duplicates && duplicates.length > 0 ? (
 							<div class="flex flex-col gap-4">

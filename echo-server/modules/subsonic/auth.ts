@@ -69,7 +69,7 @@ export async function resolveSubsonicUser(
 		.where(or(eq(users.email, u.toLowerCase().trim()), eq(users.name, u)))
 		.limit(1);
 
-	if (!user || !user.is_active || !user.subsonic_password) {
+	if (!user?.is_active || !user.subsonic_password) {
 		throw new SubsonicError(
 			SubsonicErrorCode.wrongCredentials,
 			"Wrong username or password",

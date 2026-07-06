@@ -60,9 +60,7 @@ describe("POST /auth/sign-up", () => {
 			signUpRequest({ email: "user@example.com", password: "weak" }),
 		);
 		expect(res.status).toBe(302);
-		expect(res.headers.get("location")).toBe(
-			"/auth/login?error=weak_password",
-		);
+		expect(res.headers.get("location")).toBe("/auth/login?error=weak_password");
 	});
 });
 

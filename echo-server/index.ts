@@ -21,7 +21,10 @@ const NODE_ENV = getEnvVar("NODE_ENV");
 		console.log(`Scanned ${n} tracks from ${musicDir}`),
 	);
 
-	const app = (await createApp(client)).listen(3000);
+	const app = (await createApp(client)).listen({
+		port: Number(getEnvVar("ECHO_PORT")),
+		hostname: getEnvVar("ECHO_HOST"),
+	});
 
 	console.log(
 		`Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
