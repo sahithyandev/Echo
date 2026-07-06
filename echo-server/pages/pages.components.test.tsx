@@ -254,10 +254,10 @@ describe("LoginPage", () => {
 		expect(html).toContain('action="/auth/sign-up"');
 	});
 
-	it("shows error message when error=true", () => {
+	it("shows error message when error=invalid_credentials", () => {
 		const html = Html.createElement(LoginPage, {
 			register: false,
-			error: true,
+			error: "invalid_credentials",
 		}) as string;
 		expect(html).toContain("Invalid email or password");
 	});
