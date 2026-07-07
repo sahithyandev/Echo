@@ -18,7 +18,7 @@ Elysia (Bun) HTTP server at the repo root; entry point `index.ts`, dev: `bun run
 - `modules/library/` — `LibraryService`: scans `~/Music` on startup, upserts tracks/albums/artists using `ffprobe` for metadata and chromaprint for fingerprinting (fingerprinting and duplicate detection are skipped if `fpcalc` isn't installed, gated by `FPCALC_AVAILABLE`)
 - `pages/` — JSX pages rendered server-side via `@elysiajs/html`; Tailwind 4 for styling; includes `library.tsx`, `album.tsx`, `artist.tsx`, `login.tsx`
 - `public/` — static assets served at `/`
-- `scripts/` — `build-client.ts` (emits `dist/` client JS/CSS, embedded in prod instead of the dev-only runtime `Bun.build`), `build-migrations.ts` (see above), `build-binary.ts` (compiles + stages a standalone binary for one target: `linux-x64 | linux-arm64 | darwin-x64 | darwin-arm64 | windows-x64` — see `package.json`'s `build:binary`)
+- `scripts/` — `build-client.ts` (emits `dist/` client JS/CSS, embedded in prod instead of the dev-only runtime `Bun.build`), `build-migrations.ts` (see above), `build-binary.ts` (compiles + stages a standalone binary for one target: `linux-x64 | linux-arm64 | darwin-x64 | darwin-arm64` — see `package.json`'s `build:binary`)
 - `utils/` — `jwt.ts`, `env.ts`, `request-info.ts`, `create-app.tsx`, `misc.ts`
 - `Dockerfile` / `docker-compose.yml` — multi-stage image, non-root user, healthcheck on `/health`
 - `.github/workflows/ci.yml` — lint + test on push/PR, plus a 5-target binary build matrix (one matching-architecture runner per target, since `@libsql`'s native addon is platform-specific)

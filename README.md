@@ -6,11 +6,11 @@ My own music library and streaming setup.
 
 ### Prerequisites
 
-| Prereq.     | Version | Notes                                         |
-| ----------- | ------- | --------------------------------------------- |
+| Prereq.     | Version | Notes                                                                    |
+| ----------- | ------- | ------------------------------------------------------------------------ |
 | chromaprint | ≥ 1.0   | Optional; enables duplicate track detection. `brew install chromaprint`. |
-| ffprobe     | any     | Part of ffmpeg. `brew install ffmpeg`.        |
-| bun         | v1.3.14 | Required in dev.                              |
+| ffprobe     | any     | Part of ffmpeg. `brew install ffmpeg`.                                   |
+| bun         | v1.3.14 | Required in dev.                                                         |
 
 ### Folder Structure
 
@@ -59,8 +59,11 @@ album art) persists in the `echo-data` volume.
 ### Standalone binary
 
 ```sh
-bun run build:binary -- <target>   # linux-x64 | linux-arm64 | darwin-x64 | darwin-arm64 | windows-x64
+bun run build:binary -- <target>   # linux-x64 | linux-arm64 | darwin-x64 | darwin-arm64
 ```
+
+Windows isn't a supported target for now; untested and not a priority for a
+self-hosted app that's meant to run on a home server/NAS.
 
 Produces `dist-binaries/<target>/` containing the binary, the platform's
 native `@libsql` addon, and `public/` — copy the whole folder to the target

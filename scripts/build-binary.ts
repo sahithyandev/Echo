@@ -15,11 +15,6 @@ const TARGETS = {
 		libsql: "darwin-arm64",
 		exe: "echo",
 	},
-	"windows-x64": {
-		bun: "bun-windows-x64",
-		libsql: "win32-x64-msvc",
-		exe: "echo.exe",
-	},
 } as const;
 
 type Target = keyof typeof TARGETS;

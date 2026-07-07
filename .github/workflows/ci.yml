@@ -35,8 +35,6 @@ jobs:
             os: macos-13
           - target: darwin-arm64
             os: macos-14
-          - target: windows-x64
-            os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
