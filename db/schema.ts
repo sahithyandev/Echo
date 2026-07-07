@@ -28,7 +28,7 @@ export const user_sessions = sqliteTable("user_sessions", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	user_id: integer("user_id")
 		.notNull()
-		.references(() => users.id),
+		.references(() => users.id, { onDelete: "cascade" }),
 	token_hash: text("token_hash").notNull(),
 	ip_address: text("ip_address"),
 	user_agent: text("user_agent"),
@@ -57,7 +57,9 @@ export const albums = sqliteTable("albums", {
 export const tracks = sqliteTable("tracks", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	title: text("title").notNull(),
-	album_id: integer("album_id").references(() => albums.id),
+	album_id: integer("album_id").references(() => albums.id, {
+		onDelete: "set null",
+	}),
 	track_number: integer("track_number"),
 	year: integer("year"),
 	duration_seconds: integer("duration_seconds"),
@@ -67,7 +69,9 @@ export const tracks = sqliteTable("tracks", {
 	added_at: integer("added_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())
 		.notNull(),
-	added_by: integer("added_by").references(() => users.id),
+	added_by: integer("added_by").references(() => users.id, {
+		onDelete: "set null",
+	}),
 });
 
 export const app_settings = sqliteTable(
@@ -83,8 +87,10 @@ export const app_settings = sqliteTable(
 export const user_playback_state = sqliteTable("user_playback_state", {
 	user_id: integer("user_id")
 		.primaryKey()
-		.references(() => users.id),
-	track_id: integer("track_id").references(() => tracks.id),
+		.references(() => users.id, { onDelete: "cascade" }),
+	track_id: integer("track_id").references(() => tracks.id, {
+		onDelete: "cascade",
+	}),
 	position_seconds: integer("position_seconds"),
 	playing: integer("playing", { mode: "boolean" }).default(false).notNull(),
 });
@@ -93,10 +99,10 @@ export const play_history = sqliteTable("play_history", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
 	user_id: integer("user_id")
 		.notNull()
-		.references(() => users.id),
+		.references(() => users.id, { onDelete: "cascade" }),
 	track_id: integer("track_id")
 		.notNull()
-		.references(() => tracks.id),
+		.references(() => tracks.id, { onDelete: "cascade" }),
 	played_at: integer("played_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())
 		.notNull(),
@@ -108,10 +114,10 @@ export const listening = sqliteTable(
 		id: integer("id").primaryKey({ autoIncrement: true }),
 		user_id: integer("user_id")
 			.notNull()
-			.references(() => users.id),
+			.references(() => users.id, { onDelete: "cascade" }),
 		track_id: integer("track_id")
 			.notNull()
-			.references(() => tracks.id),
+			.references(() => tracks.id, { onDelete: "cascade" }),
 		seconds: integer("seconds").notNull(),
 		day: text("day").notNull(),
 		created_at: integer("created_at", { mode: "timestamp" })
@@ -128,10 +134,10 @@ export const album_artists = sqliteTable(
 	{
 		album_id: integer("album_id")
 			.notNull()
-			.references(() => albums.id),
+			.references(() => albums.id, { onDelete: "cascade" }),
 		artist_id: integer("artist_id")
 			.notNull()
-			.references(() => artists.id),
+			.references(() => artists.id, { onDelete: "cascade" }),
 	},
 	(t) => [primaryKey({ columns: [t.album_id, t.artist_id] })],
 );
@@ -141,10 +147,10 @@ export const track_artists = sqliteTable(
 	{
 		track_id: integer("track_id")
 			.notNull()
-			.references(() => tracks.id),
+			.references(() => tracks.id, { onDelete: "cascade" }),
 		artist_id: integer("artist_id")
 			.notNull()
-			.references(() => artists.id),
+			.references(() => artists.id, { onDelete: "cascade" }),
 	},
 	(t) => [primaryKey({ columns: [t.track_id, t.artist_id] })],
 );
