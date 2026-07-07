@@ -74,12 +74,48 @@ Config is all environment variables (`ECHO_PORT`, `ECHO_HOST`,
 `ECHO_DATABASE_URL`, `ECHO_DATA_DIR`, `ECHO_MUSIC_DIR`, `ECHO_JWT_SECRET`),
 mirroring the Docker setup — no separate bare-metal config format.
 
+### Bare metal (systemd)
+
+Copy a `dist-binaries/<target>/` build to `/opt/echo`, set `ECHO_*` vars in
+`/etc/echo/echo.env` (see `.env.example`), then install `echo.service`:
+
+```sh
+sudo cp echo.service /etc/systemd/system/
+sudo systemctl enable --now echo
+```
+
+### Upgrading
+
+- **Docker:** `docker compose pull && docker compose up -d` — migrations run
+  idempotently on boot.
+- **Binary/systemd:** replace the binary, `sudo systemctl restart echo`.
+
+### Backup
+
+The SQLite file (`echo.db` in the `echo-data` volume, or wherever
+`ECHO_DATABASE_URL` points) is the entire database. Copy it while the server
+is stopped, or use `sqlite3 echo.db ".backup backup.db"` for a live,
+WAL-safe copy.
+
+### Reverse proxy (Caddy example)
+
+```
+music.example.com {
+	reverse_proxy localhost:3000
+}
+```
+
+Caddy handles TLS automatically; any reverse proxy that forwards to `:3000`
+(or `ECHO_PORT`) works the same way.
+
 ### CI
 
 `.github/workflows/ci.yml` runs lint + tests on every push/PR, plus a matrix
-build of all 5 binary targets (each on a matching-architecture runner, since
+build of all 4 binary targets (each on a matching-architecture runner, since
 the `@libsql` native addon is platform-specific) to catch cross-target
-breakage early.
+breakage early. `.github/workflows/release.yml` publishes a multi-arch
+(`linux/amd64,linux/arm64`) image to GHCR and attaches all 4 binaries to the
+GitHub Release on every `v*` tag push.
 
 ### Commits
 
