@@ -1,9 +1,11 @@
 import { CString, dlopen, FFIType, type Pointer, ptr, read } from "bun:ffi";
 
 const LIB =
-	process.arch === "arm64"
-		? "/opt/homebrew/lib/libchromaprint.dylib"
-		: "/usr/local/lib/libchromaprint.dylib";
+	process.platform === "darwin"
+		? process.arch === "arm64"
+			? "/opt/homebrew/lib/libchromaprint.dylib"
+			: "/usr/local/lib/libchromaprint.dylib"
+		: "libchromaprint.so.1";
 
 // CHROMAPRINT_ALGORITHM_TEST2 — the default, same as fpcalc
 const ALGORITHM = 1;
