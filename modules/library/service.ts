@@ -1,5 +1,5 @@
 import { mkdir, rename, unlink } from "node:fs/promises";
-import { desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { FPCALC_AVAILABLE, fingerprintFile } from "../../bindings/chromaprint";
 import {
 	album_artists,
@@ -106,7 +106,12 @@ async function upsertAlbum(
 	const existing = await client
 		.select({ id: albums.id })
 		.from(albums)
-		.where(eq(albums.title, title));
+		.where(
+			and(
+				eq(albums.title, title),
+				year === null ? isNull(albums.year) : eq(albums.year, year),
+			),
+		);
 	if (existing.length > 0) return existing[0].id;
 	const [row] = await client
 		.insert(albums)

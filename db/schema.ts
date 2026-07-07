@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
 	check,
+	index,
 	integer,
 	primaryKey,
 	sqliteTable,
@@ -8,21 +9,34 @@ import {
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-export const users = sqliteTable("users", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	name: text("name").notNull(),
-	email: text("email").notNull().unique(),
-	password: text("password").notNull(),
-	is_admin: integer("is_admin", { mode: "boolean" }).default(false).notNull(),
-	is_active: integer("is_active", { mode: "boolean" }).default(true).notNull(),
-	shuffle: integer("shuffle", { mode: "boolean" }).default(false).notNull(),
-	repeat_mode: text("repeat_mode").default("off").notNull(),
-	subsonic_password: text("subsonic_password"),
-	verified_at: integer("verified_at", { mode: "timestamp" }),
-	created_at: integer("created_at", { mode: "timestamp" })
-		.$defaultFn(() => new Date())
-		.notNull(),
-});
+export const users = sqliteTable(
+	"users",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		name: text("name").notNull(),
+		email: text("email").notNull().unique(),
+		password: text("password").notNull(),
+		is_admin: integer("is_admin", { mode: "boolean" })
+			.default(false)
+			.notNull(),
+		is_active: integer("is_active", { mode: "boolean" })
+			.default(true)
+			.notNull(),
+		shuffle: integer("shuffle", { mode: "boolean" }).default(false).notNull(),
+		repeat_mode: text("repeat_mode").default("off").notNull(),
+		subsonic_password: text("subsonic_password"),
+		verified_at: integer("verified_at", { mode: "timestamp" }),
+		created_at: integer("created_at", { mode: "timestamp" })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(t) => [
+		check(
+			"users_repeat_mode_valid",
+			sql`${t.repeat_mode} IN ('off', 'one', 'all')`,
+		),
+	],
+);
 
 export const user_sessions = sqliteTable("user_sessions", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
@@ -139,7 +153,10 @@ export const album_artists = sqliteTable(
 			.notNull()
 			.references(() => artists.id, { onDelete: "cascade" }),
 	},
-	(t) => [primaryKey({ columns: [t.album_id, t.artist_id] })],
+	(t) => [
+		primaryKey({ columns: [t.album_id, t.artist_id] }),
+		index("album_artists_artist_id").on(t.artist_id),
+	],
 );
 
 export const track_artists = sqliteTable(
@@ -152,5 +169,8 @@ export const track_artists = sqliteTable(
 			.notNull()
 			.references(() => artists.id, { onDelete: "cascade" }),
 	},
-	(t) => [primaryKey({ columns: [t.track_id, t.artist_id] })],
+	(t) => [
+		primaryKey({ columns: [t.track_id, t.artist_id] }),
+		index("track_artists_artist_id").on(t.artist_id),
+	],
 );

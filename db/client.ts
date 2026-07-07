@@ -1,5 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
+import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 import { getEnvVar } from "../utils/env";
 
@@ -24,3 +25,7 @@ mkdirSync(dirname(dbUrl.replace(/^file:/, "")), { recursive: true });
 export const client = drizzle(
 	dbUrl.startsWith("file:") ? dbUrl : `file:${dbUrl}`,
 );
+
+// SQLite disables FK enforcement per-connection by default; without this,
+// every .references()/onDelete in schema.ts is silently unenforced.
+await client.run(sql`PRAGMA foreign_keys = ON`);
