@@ -1,4 +1,6 @@
+import { sql } from "drizzle-orm";
 import {
+	check,
 	integer,
 	primaryKey,
 	sqliteTable,
@@ -68,11 +70,15 @@ export const tracks = sqliteTable("tracks", {
 	added_by: integer("added_by").references(() => users.id),
 });
 
-export const app_settings = sqliteTable("app_settings", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	music_dir: text("music_dir"),
-	data_dir: text("data_dir"),
-});
+export const app_settings = sqliteTable(
+	"app_settings",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		music_dir: text("music_dir"),
+		data_dir: text("data_dir"),
+	},
+	(t) => [check("app_settings_singleton", sql`${t.id} = 1`)],
+);
 
 export const user_playback_state = sqliteTable("user_playback_state", {
 	user_id: integer("user_id")
