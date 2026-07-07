@@ -11,7 +11,8 @@ import { homedir } from "node:os";
 // in the shell that ran the build, ignoring it at runtime entirely.
 const DEFAULT_VALUES = {
 	ECHO_DATABASE_URL:
-		process.env.NODE_ENV === "production"
+		// biome-ignore lint/complexity/useLiteralKeys: wouldn't work on compilation
+		process.env["NODE_ENV"] === "production"
 			? `${homedir()}/.echo/echo.db`
 			: new URL("../echo.db", import.meta.url).pathname,
 	NODE_ENV: "development",
