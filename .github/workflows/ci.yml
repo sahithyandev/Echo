@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: echo-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run test
+
+  build-binary:
+    defaults:
+      run:
+        working-directory: echo-server
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # @libsql/client's native addon is a platform-specific
+          # optionalDependency — `bun install` only fetches the one
+          # matching the current host, so each target builds on a
+          # same-architecture runner rather than cross-compiling the
+          # native addon too.
+          - target: linux-x64
+            os: ubuntu-latest
+          - target: linux-arm64
+            os: ubuntu-24.04-arm
+          - target: darwin-x64
+            os: macos-13
+          - target: darwin-arm64
+            os: macos-14
+          - target: windows-x64
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build:binary -- ${{ matrix.target }}
