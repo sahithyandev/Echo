@@ -15,6 +15,7 @@
 # production
 /build
 /dist
+/dist-binaries
 /db/migrations.generated.ts
 
 # misc
