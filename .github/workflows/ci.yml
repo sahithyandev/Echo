@@ -11,11 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - run: sudo apt-get update && sudo apt-get install -y libchromaprint-dev libchromaprint-tools ffmpeg
       - run: bun install --frozen-lockfile
       - run: bun run lint
       - run: bun run test
 
   build-binary:
+    needs: test
     strategy:
       fail-fast: false
       matrix:
