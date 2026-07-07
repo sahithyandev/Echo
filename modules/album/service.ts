@@ -1,5 +1,5 @@
 import { unlink } from "node:fs/promises";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { album_artists, albums, artists, tracks } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import { LibraryService } from "../library/service";
@@ -76,6 +76,19 @@ export abstract class AlbumService {
 			.orderBy(tracks.track_number);
 	}
 
+	static async getUnalbumedTracks(client: DbLike) {
+		return client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				duration_seconds: tracks.duration_seconds,
+				track_number: tracks.track_number,
+			})
+			.from(tracks)
+			.where(isNull(tracks.album_id))
+			.orderBy(tracks.title);
+	}
+
 	static async getAlbumArtists(
 		client: DbLike,
 		albumId: number,
@@ -122,6 +135,16 @@ export abstract class AlbumService {
 			}
 			if (row.artist_name) album.artists.push(row.artist_name);
 		}
-		return Array.from(byId.values());
+		const result = Array.from(byId.values());
+
+		const [unalbumed] = await client
+			.select({ id: tracks.id })
+			.from(tracks)
+			.where(isNull(tracks.album_id))
+			.limit(1);
+		if (unalbumed) {
+			result.push({ id: 0, title: "No Album", cover_path: null, artists: [] });
+		}
+		return result;
 	}
 }

@@ -27,11 +27,22 @@ export default function createAlbumModule(db: DbLike) {
 			async ({ currentUser, redirect, params, query }) => {
 				if (!currentUser) return redirect("/auth/login");
 				const albumId = Number(params.id);
+				const isNoAlbum = albumId === 0;
 				const [user, album, tracks, artists] = await Promise.all([
 					Auth.findUserById(db, currentUser.id),
-					AlbumService.findAlbum(db, albumId),
-					AlbumService.getAlbumTracks(db, albumId),
-					AlbumService.getAlbumArtists(db, albumId),
+					isNoAlbum
+						? {
+								id: 0,
+								title: "No Album",
+								year: null,
+								genre: null,
+								cover_path: null,
+							}
+						: AlbumService.findAlbum(db, albumId),
+					isNoAlbum
+						? AlbumService.getUnalbumedTracks(db)
+						: AlbumService.getAlbumTracks(db, albumId),
+					isNoAlbum ? [] : AlbumService.getAlbumArtists(db, albumId),
 				]);
 				if (!album) return redirect("/library");
 				return (

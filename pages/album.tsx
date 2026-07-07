@@ -65,7 +65,7 @@ export function AlbumPage({
 							<h1 class="text-2xl font-bold tracking-tight font-display">
 								{album.title}
 							</h1>
-							{isAdmin && (
+							{isAdmin && album.id !== 0 && (
 								<details class="relative">
 									<summary
 										title="Rename album"
