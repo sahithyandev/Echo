@@ -15,6 +15,7 @@ import createSettingsModule from "../modules/settings";
 import createSubsonicModule from "../modules/subsonic";
 import { getEnvVar } from "./env";
 import { unused } from "./misc";
+import { VERSION } from "./version";
 
 unused(Html);
 
@@ -136,7 +137,7 @@ export async function createApp(db: DbLike) {
 		.use(html())
 		.use(assetPlugin)
 		.use(await staticPlugin({ prefix: "/" }))
-		.get("/health", () => "ok")
+		.get("/health", () => ({ status: "ok", version: VERSION }))
 		.use(authMiddleware)
 		.use(createHomeModule(db))
 		.use(createLibraryModule(db))

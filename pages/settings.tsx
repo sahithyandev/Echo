@@ -1,6 +1,7 @@
 import { Html } from "@elysiajs/html";
 import { Flash } from "../components/flash";
 import { unused } from "../utils/misc";
+import { VERSION } from "../utils/version";
 import { Layout } from "./layout";
 
 unused(Html);
@@ -489,6 +490,7 @@ export function SettingsPage({
 						)}
 					</Card>
 				)}
+				<p class="text-xs text-subtle text-center">Echo v{VERSION}</p>
 			</main>
 		</Layout>
 	);
