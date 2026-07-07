@@ -15,31 +15,28 @@ My own music library and streaming setup.
 ### Folder Structure
 
 ```
-Echo/
-└── echo-server/        # Elysia HTTP server (Bun)
-    ├── index.ts        # Entry point; runs migrations + music scan on startup
-    ├── bindings/       # Native bindings (chromaprint for audio fingerprinting)
-    ├── components/     # Shared JSX components (e.g. album art)
-    ├── db/             # Drizzle ORM + libsql (SQLite file `echo.db`)
-    ├── modules/
-    │   ├── auth/       # Sign-up, sign-in, JWT session management with revocation
-    │   └── library/    # Music library: scan, upsert tracks/albums/artists
-    ├── pages/          # JSX pages (HTML via @elysiajs/html); Tailwind 4
-    ├── public/         # Static assets (favicons)
-    └── utils/          # JWT, env, request-info, create-app, misc
+Echo/                  # Elysia HTTP server (Bun)
+├── index.ts           # Entry point; runs migrations + music scan on startup
+├── bindings/          # Native bindings (chromaprint for audio fingerprinting)
+├── components/        # Shared JSX components (e.g. album art)
+├── db/                # Drizzle ORM + libsql (SQLite file `echo.db`)
+├── modules/
+│   ├── auth/          # Sign-up, sign-in, JWT session management with revocation
+│   └── library/       # Music library: scan, upsert tracks/albums/artists
+├── pages/             # JSX pages (HTML via @elysiajs/html); Tailwind 4
+├── public/            # Static assets (favicons)
+└── utils/             # JWT, env, request-info, create-app, misc
 ```
 
 ### Running the server
 
 ```sh
-cd echo-server
 bun run dev   # watch mode on port 3000
 ```
 
 ### Testing
 
 ```sh
-cd echo-server
 bun test
 ```
 
@@ -62,14 +59,13 @@ album art) persists in the `echo-data` volume.
 ### Standalone binary
 
 ```sh
-cd echo-server
 bun run build:binary -- <target>   # linux-x64 | linux-arm64 | darwin-x64 | darwin-arm64 | windows-x64
 ```
 
 Produces `dist-binaries/<target>/` containing the binary, the platform's
 native `@libsql` addon, and `public/` — copy the whole folder to the target
 machine and run it. Set `ECHO_JWT_SECRET` and `NODE_ENV=production`; every
-other `ECHO_*` var has a sane default (see `echo-server/utils/env.ts`).
+other `ECHO_*` var has a sane default (see `utils/env.ts`).
 
 Config is all environment variables (`ECHO_PORT`, `ECHO_HOST`,
 `ECHO_DATABASE_URL`, `ECHO_DATA_DIR`, `ECHO_MUSIC_DIR`, `ECHO_JWT_SECRET`),

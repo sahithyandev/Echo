@@ -8,9 +8,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: echo-server
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -19,9 +16,6 @@ jobs:
       - run: bun run test
 
   build-binary:
-    defaults:
-      run:
-        working-directory: echo-server
     strategy:
       fail-fast: false
       matrix:
