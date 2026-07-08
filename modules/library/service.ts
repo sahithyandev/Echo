@@ -523,6 +523,33 @@ export abstract class LibraryService {
 		}
 	}
 
+	/**
+	 * True if `filePath`'s audio content matches a track already in the library
+	 * or one already seen earlier in `seen` (e.g. within the same upload batch).
+	 * No-ops (returns false) when fpcalc isn't installed, matching the rest of
+	 * the app's optional-fingerprinting behavior.
+	 */
+	static async isDuplicateContent(
+		client: DbLike,
+		filePath: string,
+		seen: Set<string>,
+	): Promise<boolean> {
+		if (!FPCALC_AVAILABLE) return false;
+		const fingerprint = await fingerprintFile(filePath).catch(() => null);
+		if (!fingerprint) return false;
+		if (seen.has(fingerprint)) return true;
+
+		const existing = await client
+			.select({ id: tracks.id })
+			.from(tracks)
+			.where(eq(tracks.fingerprint, fingerprint))
+			.limit(1);
+		if (existing.length > 0) return true;
+
+		seen.add(fingerprint);
+		return false;
+	}
+
 	private static async processFile(
 		client: DbLike,
 		file: string,

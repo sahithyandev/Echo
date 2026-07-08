@@ -1,3 +1,4 @@
+import { unlink } from "node:fs/promises";
 import { Html } from "@elysiajs/html";
 import { Elysia, t } from "elysia";
 import type { DbLike } from "../../db/types";
@@ -80,6 +81,7 @@ export default function createLibraryModule(db: DbLike) {
 
 				const { musicDir, dataDir } = await SettingsService.getDirs(db);
 				const uploadedPaths: string[] = [];
+				const seenFingerprints = new Set<string>();
 				for (const file of body.files) {
 					const name = file.name.replace(/^.*[/\\]/, "");
 					if (
@@ -91,6 +93,12 @@ export default function createLibraryModule(db: DbLike) {
 					const dest = `${musicDir}/${name}`;
 					if (await Bun.file(dest).exists()) continue;
 					await Bun.write(dest, file);
+					if (
+						await LibraryService.isDuplicateContent(db, dest, seenFingerprints)
+					) {
+						await unlink(dest);
+						continue;
+					}
 					uploadedPaths.push(dest);
 				}
 
