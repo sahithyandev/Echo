@@ -89,6 +89,7 @@ After=network.target
 
 [Service]
 Type=simple
+WorkingDirectory=${install_dir}
 ExecStart=${install_dir}/echo
 Restart=on-failure
 EnvironmentFile=/etc/echo/echo.env
