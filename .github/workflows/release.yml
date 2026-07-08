@@ -2,10 +2,35 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+    paths: ["VERSION.txt"]
 
 jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+      created: ${{ steps.tag.outputs.created }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: tag
+        run: |
+          v="v$(cat VERSION.txt)"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "$v" >/dev/null 2>&1; then
+            echo "$v already exists, skipping release"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git tag "$v"
+          git push origin "$v"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
   docker:
+    needs: tag
+    if: needs.tag.outputs.created == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -24,7 +49,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=semver,pattern={{version}}
+            type=raw,value=${{ needs.tag.outputs.version }}
             type=raw,value=latest
       - uses: docker/build-push-action@v6
         with:
@@ -35,6 +60,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   binaries:
+    needs: tag
+    if: needs.tag.outputs.created == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -61,4 +88,5 @@ jobs:
       - run: tar -czf echo-${{ matrix.target }}.tar.gz -C dist-binaries/${{ matrix.target }} .
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.tag.outputs.version }}
           files: echo-${{ matrix.target }}.tar.gz
