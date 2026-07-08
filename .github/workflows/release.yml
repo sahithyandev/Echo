@@ -86,7 +86,17 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run build:binary -- ${{ matrix.target }}
       - run: tar -czf echo-${{ matrix.target }}.tar.gz -C dist-binaries/${{ matrix.target }} .
+      # Extract this version's section from CHANGELOG.md (between its heading
+      # and the next `## `). Falls back to auto-generated notes if empty.
+      - id: notes
+        run: |
+          awk -v v="## ${{ needs.tag.outputs.version }}" '
+            $0==v {f=1; next} f && /^## / {exit} f {print}
+          ' CHANGELOG.md > notes.md
+          [ -s notes.md ] && echo "have=true" >> "$GITHUB_OUTPUT" || echo "have=false" >> "$GITHUB_OUTPUT"
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.tag.outputs.version }}
           files: echo-${{ matrix.target }}.tar.gz
+          body_path: ${{ steps.notes.outputs.have == 'true' && 'notes.md' || '' }}
+          generate_release_notes: ${{ steps.notes.outputs.have != 'true' }}
