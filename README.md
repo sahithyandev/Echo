@@ -59,6 +59,9 @@ sudo systemctl enable --now echo
 
 **Upgrade:** replace the binary, `sudo systemctl restart echo`.
 
+If you are running the binary directly, kill the old process (`pkill echo`
+or Ctrl-C its terminal) before replacing the binary and starting it again.
+
 ### Reverse proxy (Caddy example)
 
 ```
