@@ -106,4 +106,43 @@ EOF
 	fi
 fi
 
+proxy_choice="no"
+if [ "$(uname -s)" = "Linux" ] && command -v sudo >/dev/null 2>&1; then
+	proxy_choice="$(ask "Set up a reverse proxy [nginx/caddy/no]" "no")"
+fi
+
+if [ "$proxy_choice" = "nginx" ] || [ "$proxy_choice" = "caddy" ]; then
+	domain="$(ask "Domain name pointing to this server" "")"
+	if [ -z "$domain" ]; then
+		echo "No domain given, skipping reverse proxy setup."
+	elif [ "$proxy_choice" = "nginx" ]; then
+		sudo tee /etc/nginx/sites-available/echo.conf >/dev/null <<EOF
+server {
+	listen 80;
+	server_name ${domain};
+
+	location / {
+		proxy_pass http://127.0.0.1:${port};
+		proxy_set_header Host \$host;
+		proxy_set_header X-Real-IP \$remote_addr;
+		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto \$scheme;
+	}
+}
+EOF
+		sudo ln -sf /etc/nginx/sites-available/echo.conf /etc/nginx/sites-enabled/echo.conf
+		sudo nginx -t && sudo systemctl reload nginx
+		echo "nginx is proxying ${domain} -> 127.0.0.1:${port}. Run 'sudo certbot --nginx -d ${domain}' for HTTPS."
+	else
+		sudo tee -a /etc/caddy/Caddyfile >/dev/null <<EOF
+
+${domain} {
+	reverse_proxy 127.0.0.1:${port}
+}
+EOF
+		sudo systemctl reload caddy
+		echo "caddy is proxying ${domain} -> 127.0.0.1:${port} with automatic HTTPS."
+	fi
+fi
+
 echo "First account you create becomes the admin."
