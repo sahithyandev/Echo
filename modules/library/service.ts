@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdir, rename, unlink } from "node:fs/promises";
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { FPCALC_AVAILABLE, fingerprintFile } from "../../bindings/chromaprint";
@@ -524,29 +525,64 @@ export abstract class LibraryService {
 	}
 
 	/**
-	 * True if `filePath`'s audio content matches a track already in the library
-	 * or one already seen earlier in `seen` (e.g. within the same upload batch).
-	 * No-ops (returns false) when fpcalc isn't installed, matching the rest of
-	 * the app's optional-fingerprinting behavior.
+	 * True if `filePath`'s content matches a track already in the library or
+	 * one already seen earlier in `seen` (e.g. within the same upload batch).
+	 * Prefers audio-fingerprint matching (catches re-encodes of the same
+	 * track); falls back to a byte-for-byte SHA1 comparison when fpcalc isn't
+	 * installed or couldn't fingerprint this file.
 	 */
 	static async isDuplicateContent(
 		client: DbLike,
 		filePath: string,
 		seen: Set<string>,
 	): Promise<boolean> {
-		if (!FPCALC_AVAILABLE) return false;
-		const fingerprint = await fingerprintFile(filePath).catch(() => null);
-		if (!fingerprint) return false;
-		if (seen.has(fingerprint)) return true;
+		const fingerprint = FPCALC_AVAILABLE
+			? await fingerprintFile(filePath).catch(() => null)
+			: null;
+		if (fingerprint) {
+			const key = `fp:${fingerprint}`;
+			if (seen.has(key)) return true;
+			const existing = await client
+				.select({ id: tracks.id })
+				.from(tracks)
+				.where(eq(tracks.fingerprint, fingerprint))
+				.limit(1);
+			if (existing.length > 0) return true;
+			seen.add(key);
+			return false;
+		}
 
-		const existing = await client
-			.select({ id: tracks.id })
-			.from(tracks)
-			.where(eq(tracks.fingerprint, fingerprint))
-			.limit(1);
-		if (existing.length > 0) return true;
+		return LibraryService.isDuplicateContentBySha1(client, filePath, seen);
+	}
 
-		seen.add(fingerprint);
+	private static async isDuplicateContentBySha1(
+		client: DbLike,
+		filePath: string,
+		seen: Set<string>,
+	): Promise<boolean> {
+		const size = (await Bun.file(filePath).stat()).size;
+		const hash = createHash("sha1")
+			.update(await Bun.file(filePath).bytes())
+			.digest("hex");
+		const key = `sha1:${hash}`;
+		if (seen.has(key)) return true;
+
+		const existingPaths = await client
+			.select({ file_path: tracks.file_path })
+			.from(tracks);
+		for (const { file_path } of existingPaths) {
+			if (file_path === filePath) continue;
+			const stat = await Bun.file(file_path)
+				.stat()
+				.catch(() => null);
+			if (!stat || stat.size !== size) continue;
+			const otherHash = createHash("sha1")
+				.update(await Bun.file(file_path).bytes())
+				.digest("hex");
+			if (otherHash === hash) return true;
+		}
+
+		seen.add(key);
 		return false;
 	}
 
