@@ -546,56 +546,60 @@ export abstract class LibraryService {
 				FPCALC_AVAILABLE ? fingerprintFile(file).catch(() => null) : null,
 			]);
 
-			const artistIds = await Promise.all(
-				meta.artists.map((name) => upsertArtist(client, name)),
-			);
+			const albumId = await client.transaction(async (tx) => {
+				const artistIds = await Promise.all(
+					meta.artists.map((name) => upsertArtist(tx, name)),
+				);
 
-			const albumId = meta.album
-				? await upsertAlbum(client, meta.album, meta.year, meta.genre)
-				: null;
+				const albumId = meta.album
+					? await upsertAlbum(tx, meta.album, meta.year, meta.genre)
+					: null;
 
-			if (albumId !== null) {
-				extractAlbumArt(client, albumId, file, artDir).catch(() => null);
-			}
-
-			const [track] = await client
-				.insert(tracks)
-				.values({
-					title: meta.title,
-					album_id: albumId,
-					track_number: meta.track_number,
-					year: meta.year,
-					duration_seconds: meta.duration_seconds,
-					file_path: file,
-					file_mtime: mtime,
-					fingerprint,
-				})
-				.onConflictDoUpdate({
-					target: tracks.file_path,
-					set: {
+				const [track] = await tx
+					.insert(tracks)
+					.values({
 						title: meta.title,
 						album_id: albumId,
 						track_number: meta.track_number,
 						year: meta.year,
 						duration_seconds: meta.duration_seconds,
+						file_path: file,
 						file_mtime: mtime,
 						fingerprint,
-					},
-				})
-				.returning({ id: tracks.id });
+					})
+					.onConflictDoUpdate({
+						target: tracks.file_path,
+						set: {
+							title: meta.title,
+							album_id: albumId,
+							track_number: meta.track_number,
+							year: meta.year,
+							duration_seconds: meta.duration_seconds,
+							file_mtime: mtime,
+							fingerprint,
+						},
+					})
+					.returning({ id: tracks.id });
 
-			for (const artistId of artistIds) {
-				await client
-					.insert(track_artists)
-					.values({ track_id: track.id, artist_id: artistId })
-					.onConflictDoNothing();
-
-				if (albumId !== null) {
-					await client
-						.insert(album_artists)
-						.values({ album_id: albumId, artist_id: artistId })
+				for (const artistId of artistIds) {
+					await tx
+						.insert(track_artists)
+						.values({ track_id: track.id, artist_id: artistId })
 						.onConflictDoNothing();
+
+					if (albumId !== null) {
+						await tx
+							.insert(album_artists)
+							.values({ album_id: albumId, artist_id: artistId })
+							.onConflictDoNothing();
+					}
 				}
+
+				return albumId;
+			});
+
+			if (albumId !== null) {
+				extractAlbumArt(client, albumId, file, artDir).catch(() => null);
 			}
 
 			return "processed";

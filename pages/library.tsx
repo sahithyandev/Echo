@@ -136,6 +136,16 @@ export function LibraryPage({
 								id="upload-file-list"
 								class="flex flex-col gap-2 max-h-40 overflow-y-auto empty:hidden"
 							/>
+							<div id="upload-progress" class="hidden flex-col gap-1">
+								<div class="h-1.5 rounded-full bg-background overflow-hidden">
+									<div
+										id="upload-progress-bar"
+										class="h-full bg-accent transition-all"
+										style="width:0%"
+									/>
+								</div>
+								<p id="upload-progress-text" class="text-xs text-muted" />
+							</div>
 							<input
 								id="upload-files"
 								name="files"

@@ -93,14 +93,14 @@ export default function createLibraryModule(db: DbLike) {
 					await Bun.write(dest, file);
 					uploadedPaths.push(dest);
 				}
-				if (uploadedPaths.length === 0)
-					return redirect("/library?error=upload");
 
-				const artDir = `${dataDir}/art`;
-				LibraryService.scanFiles(db, uploadedPaths, artDir).then((n) =>
-					console.log(`Scanned ${n} newly uploaded tracks`),
-				);
-				return redirect("/library?ok=upload");
+				if (uploadedPaths.length > 0) {
+					const artDir = `${dataDir}/art`;
+					LibraryService.scanFiles(db, uploadedPaths, artDir).then((n) =>
+						console.log(`Scanned ${n} newly uploaded tracks`),
+					);
+				}
+				return { uploaded: uploadedPaths.length };
 			},
 			{
 				currentUser: true,
