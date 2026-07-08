@@ -19,7 +19,9 @@ const DEFAULT_VALUES = {
 	ECHO_DATA_DIR: `${homedir()}/.echo`,
 	ECHO_MUSIC_DIR: `${homedir()}/Music`,
 	ECHO_PORT: "3000",
-	ECHO_HOST: "localhost",
+	// Literal IP, not "localhost" — some hosts resolve that to ::1 only,
+	// which leaves 127.0.0.1 (and reverse proxies pointed at it) refused.
+	ECHO_HOST: "127.0.0.1",
 } as const;
 
 type DEFINED_DEFAULT_VALUE_KEY = keyof typeof DEFAULT_VALUES;
