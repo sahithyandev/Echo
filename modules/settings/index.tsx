@@ -27,7 +27,7 @@ export default function createSettingsModule(db: DbLike) {
 					(cookie as Record<string, { value?: string }>).session?.value ?? "",
 				);
 
-				const [users, stats, dirs, duplicates] = user.is_admin
+				const [users, stats, dirs, duplicates, signupConfig] = user.is_admin
 					? await Promise.all([
 							Auth.listUsers(db),
 							SettingsService.getStats(db),
@@ -35,8 +35,9 @@ export default function createSettingsModule(db: DbLike) {
 							FPCALC_AVAILABLE
 								? LibraryService.listDuplicateTracks(db)
 								: undefined,
+							Auth.signupMode(db),
 						])
-					: [undefined, undefined, undefined, undefined];
+					: [undefined, undefined, undefined, undefined, undefined];
 				const subsonicPassword = await SettingsService.getSubsonicPassword(
 					db,
 					currentUser.id,
@@ -57,6 +58,7 @@ export default function createSettingsModule(db: DbLike) {
 							}
 						}
 						subsonicPassword={subsonicPassword}
+						signupConfig={signupConfig}
 						fpcalcAvailable={FPCALC_AVAILABLE}
 						duplicates={duplicates}
 						ok={typeof query.ok === "string" ? query.ok : undefined}
@@ -130,24 +132,20 @@ export default function createSettingsModule(db: DbLike) {
 			{ currentUser: true },
 		)
 		.post(
-			"/settings/admin/users",
+			"/settings/admin/signups",
 			async ({ currentUser, redirect, status, body }) => {
 				if (!currentUser) return redirect("/auth/login");
 				const user = await Auth.findUserById(db, currentUser.id);
 				if (!user.is_admin) return status(403);
-				try {
-					await Auth.createUser(db, {
-						email: body.email,
-						name: body.name,
-						password: body.password,
-						isAdmin: body.is_admin ?? false,
-					});
-					return redirect("/settings?ok=user-created");
-				} catch {
-					return redirect("/settings?error=user-create");
-				}
+				await SettingsService.setSignupConfig(
+					db,
+					body.mode,
+					body.allowed_emails,
+					currentUser.id,
+				);
+				return redirect("/settings?ok=signups");
 			},
-			{ currentUser: true, body: SettingsModel.CreateUserBody },
+			{ currentUser: true, body: SettingsModel.SignupConfigBody },
 		)
 		.post(
 			"/settings/admin/users/:id/admin",

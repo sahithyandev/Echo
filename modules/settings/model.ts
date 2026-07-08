@@ -11,13 +11,15 @@ export namespace SettingsModel {
 	});
 	export type PasswordChangeBody = typeof PasswordChangeBody.static;
 
-	export const CreateUserBody = t.Object({
-		email: t.String({ format: "email" }),
-		name: t.String({ minLength: 1 }),
-		password: t.String({ pattern: AuthModel.PasswordPattern.source }),
-		is_admin: t.Optional(t.BooleanString()),
+	export const SignupConfigBody = t.Object({
+		mode: t.Union([
+			t.Literal("closed"),
+			t.Literal("open"),
+			t.Literal("allowlist"),
+		]),
+		allowed_emails: t.Optional(t.String()),
 	});
-	export type CreateUserBody = typeof CreateUserBody.static;
+	export type SignupConfigBody = typeof SignupConfigBody.static;
 
 	export const DirsBody = t.Object({
 		music_dir: t.String({ minLength: 1 }),

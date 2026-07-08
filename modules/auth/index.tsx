@@ -34,11 +34,17 @@ export default function createAuthModule(dbClient: DbLike) {
 			async ({ currentUser, redirect, query, db }) => {
 				if (currentUser) return redirect("/library");
 				const usersCount = await Auth.userCount(db);
-
-				const register = usersCount === 0;
+				const isBootstrap = usersCount === 0;
+				const signupEnabled = isBootstrap
+					? true
+					: (await Auth.signupMode(db)).mode !== "closed";
+				const register =
+					isBootstrap || (signupEnabled && query.register !== undefined);
 				return (
 					<LoginPage
 						register={register}
+						isBootstrap={isBootstrap}
+						signupEnabled={signupEnabled}
 						error={
 							query.error === "weak_password"
 								? "weak_password"

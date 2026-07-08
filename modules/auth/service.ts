@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 import { and, count, eq, isNull, ne, sql } from "drizzle-orm";
-import { user_sessions, users } from "../../db/schema";
+import {
+	app_settings,
+	signup_allowed_emails,
+	user_sessions,
+	users,
+} from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import type { AuthModel } from "./model";
 
@@ -92,30 +97,6 @@ export abstract class Auth {
 			.where(eq(users.id, id));
 	}
 
-	static async createUser(
-		db: DbLike,
-		options: {
-			email: string;
-			name: string;
-			password: string;
-			isAdmin: boolean;
-		},
-	) {
-		const hashedPassword = await Bun.password.hash(options.password);
-		const inserted = await db
-			.insert(users)
-			.values({
-				email: options.email.toLowerCase().trim(),
-				password: hashedPassword,
-				name: options.name,
-				is_admin: options.isAdmin,
-				subsonic_password: generateStreamingKey(),
-			})
-			.returning({ id: users.id });
-		if (inserted.length === 0) throw new Error("Failed to create user");
-		return { id: inserted[0].id };
-	}
-
 	static async setAdmin(db: DbLike, id: number, isAdmin: boolean) {
 		await db.update(users).set({ is_admin: isAdmin }).where(eq(users.id, id));
 	}
@@ -203,18 +184,51 @@ export abstract class Auth {
 			);
 	}
 
+	/** Signup mode (app_settings.id=1) plus the allowed-email allowlist. */
+	static async signupMode(
+		db: DbLike,
+	): Promise<{ mode: "closed" | "open" | "allowlist"; emails: string[] }> {
+		const [[settings], allowed] = await Promise.all([
+			db
+				.select({ mode: app_settings.signup_mode })
+				.from(app_settings)
+				.where(eq(app_settings.id, 1))
+				.limit(1),
+			db
+				.select({ email: signup_allowed_emails.email })
+				.from(signup_allowed_emails),
+		]);
+		return {
+			mode: (settings?.mode ?? "closed") as "closed" | "open" | "allowlist",
+			emails: allowed.map((r) => r.email),
+		};
+	}
+
+	/** True when self-signup is available (open, allowlist, or bootstrap). */
+	static async signupsEnabled(db: DbLike): Promise<boolean> {
+		if ((await Auth.userCount(db)) === 0) return true;
+		return (await Auth.signupMode(db)).mode !== "closed";
+	}
+
 	static async signUp(db: DbLike, body: AuthModel.signUpBody) {
-		const count = await Auth.userCount(db);
-		if (count > 0) throw new Error("Registration is closed");
+		const email = body.email.toLowerCase().trim();
+		const isFirstUser = (await Auth.userCount(db)) === 0;
+
+		if (!isFirstUser) {
+			const { mode, emails } = await Auth.signupMode(db);
+			if (mode === "closed") throw new Error("Registration is closed");
+			if (mode === "allowlist" && !emails.includes(email))
+				throw new Error("Registration is closed");
+		}
 
 		const hashedPassword = await Bun.password.hash(body.password);
 		const inserted = await db
 			.insert(users)
 			.values({
-				email: body.email.toLowerCase().trim(),
+				email,
 				password: hashedPassword,
 				name: body.email.split("@")[0],
-				is_admin: true,
+				is_admin: isFirstUser,
 				subsonic_password: generateStreamingKey(),
 			})
 			.returning({ id: users.id });

@@ -6,13 +6,21 @@ unused(Html);
 
 export function LoginPage({
 	register,
+	isBootstrap,
+	signupEnabled,
 	error,
 }: {
 	register: boolean;
+	isBootstrap?: boolean;
+	signupEnabled?: boolean;
 	error?: "weak_password" | "invalid_credentials";
 }) {
 	const action = register ? "/auth/sign-up" : "/auth/sign-in";
-	const heading = register ? "Create admin account" : "Sign in";
+	const heading = register
+		? isBootstrap
+			? "Create admin account"
+			: "Create account"
+		: "Sign in";
 	const submit = register ? "Create account" : "Sign in";
 	const errorMessage =
 		error === "weak_password"
@@ -77,6 +85,17 @@ export function LoginPage({
 							{submit}
 						</button>
 					</form>
+
+					{!isBootstrap && signupEnabled && (
+						<a
+							href={register ? "/auth/login" : "/auth/login?register=1"}
+							class="text-xs text-muted hover:text-foreground text-center"
+						>
+							{register
+								? "Already have an account? Sign in"
+								: "Create an account"}
+						</a>
+					)}
 				</div>
 			</div>
 		</Layout>

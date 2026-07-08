@@ -1,10 +1,11 @@
-import { count, eq, sql } from "drizzle-orm";
+import { count, eq, inArray, not, sql } from "drizzle-orm";
 import {
 	albums,
 	app_settings,
 	artists,
 	listening,
 	play_history,
+	signup_allowed_emails,
 	tracks,
 	user_playback_state,
 	users,
@@ -39,6 +40,48 @@ export abstract class SettingsService {
 				set: { music_dir: musicDir, data_dir: dataDir },
 			});
 		dirsCache = { musicDir, dataDir };
+	}
+
+	static async setSignupConfig(
+		db: DbLike,
+		mode: "closed" | "open" | "allowlist",
+		emails: string | undefined,
+		addedBy: number,
+	) {
+		await db
+			.insert(app_settings)
+			.values({ id: 1, signup_mode: mode })
+			.onConflictDoUpdate({
+				target: app_settings.id,
+				set: { signup_mode: mode },
+			});
+
+		// Absent field (e.g. disabled textarea) leaves the allowlist untouched.
+		if (emails === undefined) return;
+
+		const wanted = [
+			...new Set(
+				emails
+					.split("\n")
+					.map((e) => e.trim().toLowerCase())
+					.filter(Boolean),
+			),
+		];
+
+		// Drop removed emails; insert new ones (onConflict keeps existing added_at).
+		await db
+			.delete(signup_allowed_emails)
+			.where(
+				wanted.length > 0
+					? not(inArray(signup_allowed_emails.email, wanted))
+					: sql`1 = 1`,
+			);
+		if (wanted.length > 0) {
+			await db
+				.insert(signup_allowed_emails)
+				.values(wanted.map((email) => ({ email, added_by: addedBy })))
+				.onConflictDoNothing();
+		}
 	}
 
 	static async getStats(db: DbLike) {

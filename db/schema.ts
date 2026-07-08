@@ -92,9 +92,21 @@ export const app_settings = sqliteTable(
 		id: integer("id").primaryKey({ autoIncrement: true }),
 		music_dir: text("music_dir"),
 		data_dir: text("data_dir"),
+		signup_mode: text("signup_mode").notNull().default("closed"),
 	},
 	(t) => [check("app_settings_singleton", sql`${t.id} = 1`)],
 );
+
+export const signup_allowed_emails = sqliteTable("signup_allowed_emails", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	email: text("email").notNull().unique(),
+	added_by: integer("added_by").references(() => users.id, {
+		onDelete: "set null",
+	}),
+	added_at: integer("added_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.notNull(),
+});
 
 export const user_playback_state = sqliteTable("user_playback_state", {
 	user_id: integer("user_id")

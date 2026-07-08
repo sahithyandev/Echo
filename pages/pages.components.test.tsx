@@ -249,7 +249,10 @@ describe("LoginPage", () => {
 	});
 
 	it("register mode: correct heading and action", () => {
-		const html = Html.createElement(LoginPage, { register: true }) as string;
+		const html = Html.createElement(LoginPage, {
+			register: true,
+			isBootstrap: true,
+		}) as string;
 		expect(html).toContain("Create admin account");
 		expect(html).toContain('action="/auth/sign-up"');
 	});

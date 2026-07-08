@@ -49,6 +49,15 @@ async function loadPage(
 	document.dispatchEvent(new CustomEvent("page:loaded"));
 }
 
+document.addEventListener("change", (e) => {
+	if (!(e.target instanceof HTMLSelectElement)) return;
+	if (e.target.id !== "signup_mode") return;
+	const emails = document.getElementById(
+		"allowed_emails",
+	) as HTMLTextAreaElement | null;
+	if (emails) emails.disabled = e.target.value !== "allowlist";
+});
+
 document.addEventListener("click", (e) => {
 	if (!(e.target instanceof Element)) return;
 	if (!e.target.closest("#generate-subsonic-key")) return;

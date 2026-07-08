@@ -57,16 +57,15 @@ const OK_MESSAGES: Record<string, string> = {
 	password: "Password changed.",
 	"session-revoked": "Session revoked.",
 	"sessions-revoked": "Other sessions signed out.",
-	"user-created": "User created.",
 	"user-updated": "User updated.",
 	rescan: "Library rescan started.",
 	dirs: "Directories updated.",
 	subsonic: "Subsonic access updated.",
+	signups: "Sign-up settings updated.",
 };
 
 const ERROR_MESSAGES: Record<string, string> = {
 	password: "Current password is incorrect, or new password is invalid.",
-	"user-create": "Could not create user (email may already be in use).",
 	self: "You cannot change your own admin/active status here.",
 	"last-admin": "Cannot remove the last active admin.",
 };
@@ -112,6 +111,7 @@ export function SettingsPage({
 	users,
 	stats,
 	subsonicPassword,
+	signupConfig,
 	fpcalcAvailable,
 	duplicates,
 	ok,
@@ -123,6 +123,7 @@ export function SettingsPage({
 	users?: AdminUser[];
 	stats?: Stats;
 	subsonicPassword: string | null;
+	signupConfig?: { mode: "closed" | "open" | "allowlist"; emails: string[] };
 	fpcalcAvailable?: boolean;
 	duplicates?: DuplicateGroup[];
 	ok?: string;
@@ -397,62 +398,58 @@ export function SettingsPage({
 							))}
 						</div>
 
-						<form
-							class="flex flex-col gap-3 border-t border-border pt-4"
-							method="post"
-							action="/settings/admin/users"
-						>
-							<p class="text-xs font-medium text-muted">Add user</p>
-							<div class="flex gap-3">
-								<div class="flex flex-col gap-1.5 flex-1">
-									<label for="new_user_name" class={labelClass}>
-										Name
+						{signupConfig ? (
+							<form
+								class="flex flex-col gap-3 border-t border-border pt-4"
+								method="post"
+								action="/settings/admin/signups"
+							>
+								<p class="text-xs font-medium text-muted">Sign-ups</p>
+								<div class="flex flex-col gap-1.5">
+									<label for="signup_mode" class={labelClass}>
+										Who can create an account
 									</label>
-									<input
-										id="new_user_name"
-										name="name"
-										type="text"
-										required
-										class={inputClass}
-									/>
+									<select id="signup_mode" name="mode" class={inputClass}>
+										<option
+											value="closed"
+											selected={signupConfig.mode === "closed"}
+										>
+											Disabled
+										</option>
+										<option
+											value="open"
+											selected={signupConfig.mode === "open"}
+										>
+											Anyone
+										</option>
+										<option
+											value="allowlist"
+											selected={signupConfig.mode === "allowlist"}
+										>
+											Specific emails
+										</option>
+									</select>
 								</div>
-								<div class="flex flex-col gap-1.5 flex-1">
-									<label for="new_user_email" class={labelClass}>
-										Email
+								<div class="flex flex-col gap-1.5">
+									<label for="allowed_emails" class={labelClass}>
+										Allowed emails (one per line)
 									</label>
-									<input
-										id="new_user_email"
-										name="email"
-										type="email"
-										required
-										class={inputClass}
-									/>
+									{/* biome-ignore format: textarea content is whitespace-sensitive */}
+									<textarea id="allowed_emails" name="allowed_emails" rows="4" class={`${inputClass} disabled:opacity-50`} disabled={signupConfig.mode !== "allowlist"}>{signupConfig.emails.join("\n")}</textarea>
+									<span class="text-xs text-subtle">
+										Used only when "Specific emails" is selected.
+									</span>
 								</div>
-							</div>
-							<div class="flex flex-col gap-1.5">
-								<label for="new_user_password" class={labelClass}>
-									Temporary password
-								</label>
-								<input
-									id="new_user_password"
-									name="password"
-									type="password"
-									autocomplete="new-password"
-									required
-									class={inputClass}
-								/>
-								<span class="text-xs text-subtle">
-									8+ chars, upper &amp; lower case, number, special character
-								</span>
-							</div>
-							<label class="flex items-center gap-2 text-sm">
-								<input type="checkbox" name="is_admin" value="true" />
-								Make admin
-							</label>
-							<button type="submit" class={`${primaryButtonClass} self-start`}>
-								Create user
-							</button>
-						</form>
+								<button
+									type="submit"
+									class={`${primaryButtonClass} self-start`}
+								>
+									Save sign-up settings
+								</button>
+							</form>
+						) : (
+							""
+						)}
 					</Card>
 				)}
 
