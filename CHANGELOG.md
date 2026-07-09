@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.2.0
+
+**Features**
+
+- Infinite scroll on the library page
+- Resize album art on-demand, with caching
+- Persist a SHA1 hash per track for duplicate detection
+- Add cache headers for album art and static assets
+- Add missing database indices
+
+**Bug Fixes**
+
+- Fix fonts not loading
+  Fonts are now self-hosted instead of fetched from a CDN.
+- Clamp start and end on range requests
+- Restrict request body size
+
+**Internal**
+
+- Enable WAL mode for SQLite
+- Throttle `last_active_at` writes
+- Batch certain database updates
+- Minify bundles on build
+- Consolidate asset definitions into a single location
+
 ## v0.1.2
 
 **Bug Fixes**
