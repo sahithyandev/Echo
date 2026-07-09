@@ -657,16 +657,26 @@ export abstract class LibraryService {
 					})
 					.returning({ id: tracks.id });
 
-				for (const artistId of artistIds) {
+				if (artistIds.length > 0) {
 					await tx
 						.insert(track_artists)
-						.values({ track_id: track.id, artist_id: artistId })
+						.values(
+							artistIds.map((artistId) => ({
+								track_id: track.id,
+								artist_id: artistId,
+							})),
+						)
 						.onConflictDoNothing();
 
 					if (albumId !== null) {
 						await tx
 							.insert(album_artists)
-							.values({ album_id: albumId, artist_id: artistId })
+							.values(
+								artistIds.map((artistId) => ({
+									album_id: albumId,
+									artist_id: artistId,
+								})),
+							)
 							.onConflictDoNothing();
 					}
 				}

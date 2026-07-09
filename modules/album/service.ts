@@ -29,21 +29,29 @@ export abstract class AlbumService {
 			return { merged: false, id };
 		}
 
-		await client
-			.update(tracks)
-			.set({ album_id: survivorId })
-			.where(eq(tracks.album_id, id));
-		for (const row of await client
-			.select({ artist_id: album_artists.artist_id })
-			.from(album_artists)
-			.where(eq(album_artists.album_id, id))) {
-			await client
-				.insert(album_artists)
-				.values({ album_id: survivorId, artist_id: row.artist_id })
-				.onConflictDoNothing();
-		}
-		await client.delete(album_artists).where(eq(album_artists.album_id, id));
-		await client.delete(albums).where(eq(albums.id, id));
+		await client.transaction(async (tx) => {
+			await tx
+				.update(tracks)
+				.set({ album_id: survivorId })
+				.where(eq(tracks.album_id, id));
+			const artistRows = await tx
+				.select({ artist_id: album_artists.artist_id })
+				.from(album_artists)
+				.where(eq(album_artists.album_id, id));
+			if (artistRows.length > 0) {
+				await tx
+					.insert(album_artists)
+					.values(
+						artistRows.map((row) => ({
+							album_id: survivorId,
+							artist_id: row.artist_id,
+						})),
+					)
+					.onConflictDoNothing();
+			}
+			await tx.delete(album_artists).where(eq(album_artists.album_id, id));
+			await tx.delete(albums).where(eq(albums.id, id));
+		});
 
 		const { dataDir } = await SettingsService.getDirs(client);
 		await unlink(`${dataDir}/art/${id}.jpg`).catch(() => null);

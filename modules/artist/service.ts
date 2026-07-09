@@ -38,24 +38,37 @@ export abstract class ArtistService {
 			.select({ track_id: track_artists.track_id })
 			.from(track_artists)
 			.where(eq(track_artists.artist_id, id));
-		for (const row of loserTracks) {
-			await client
-				.insert(track_artists)
-				.values({ track_id: row.track_id, artist_id: survivorId })
-				.onConflictDoNothing();
-		}
-		for (const row of await client
-			.select({ album_id: album_artists.album_id })
-			.from(album_artists)
-			.where(eq(album_artists.artist_id, id))) {
-			await client
-				.insert(album_artists)
-				.values({ album_id: row.album_id, artist_id: survivorId })
-				.onConflictDoNothing();
-		}
-		await client.delete(track_artists).where(eq(track_artists.artist_id, id));
-		await client.delete(album_artists).where(eq(album_artists.artist_id, id));
-		await client.delete(artists).where(eq(artists.id, id));
+		await client.transaction(async (tx) => {
+			if (loserTracks.length > 0) {
+				await tx
+					.insert(track_artists)
+					.values(
+						loserTracks.map((row) => ({
+							track_id: row.track_id,
+							artist_id: survivorId,
+						})),
+					)
+					.onConflictDoNothing();
+			}
+			const loserAlbums = await tx
+				.select({ album_id: album_artists.album_id })
+				.from(album_artists)
+				.where(eq(album_artists.artist_id, id));
+			if (loserAlbums.length > 0) {
+				await tx
+					.insert(album_artists)
+					.values(
+						loserAlbums.map((row) => ({
+							album_id: row.album_id,
+							artist_id: survivorId,
+						})),
+					)
+					.onConflictDoNothing();
+			}
+			await tx.delete(track_artists).where(eq(track_artists.artist_id, id));
+			await tx.delete(album_artists).where(eq(album_artists.artist_id, id));
+			await tx.delete(artists).where(eq(artists.id, id));
+		});
 		void LibraryService.syncTracksTags(
 			client,
 			loserTracks.map((r) => r.track_id),
