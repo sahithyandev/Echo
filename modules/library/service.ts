@@ -16,6 +16,12 @@ import type { DbLike } from "../../db/types";
 
 export const AUDIO_EXTENSIONS = ["mp3", "flac", "m4a", "aac", "ogg", "wav"];
 
+async function sha1File(filePath: string): Promise<string> {
+	return createHash("sha1")
+		.update(await Bun.file(filePath).bytes())
+		.digest("hex");
+}
+
 async function getTrackMeta(filePath: string) {
 	const raw =
 		await Bun.$`ffprobe -v quiet -print_format json -show_format ${filePath}`.json();
@@ -562,27 +568,16 @@ export abstract class LibraryService {
 		filePath: string,
 		seen: Set<string>,
 	): Promise<boolean> {
-		const size = (await Bun.file(filePath).stat()).size;
-		const hash = createHash("sha1")
-			.update(await Bun.file(filePath).bytes())
-			.digest("hex");
+		const hash = await sha1File(filePath);
 		const key = `sha1:${hash}`;
 		if (seen.has(key)) return true;
 
-		const existingPaths = await client
-			.select({ file_path: tracks.file_path })
-			.from(tracks);
-		for (const { file_path } of existingPaths) {
-			if (file_path === filePath) continue;
-			const stat = await Bun.file(file_path)
-				.stat()
-				.catch(() => null);
-			if (!stat || stat.size !== size) continue;
-			const otherHash = createHash("sha1")
-				.update(await Bun.file(file_path).bytes())
-				.digest("hex");
-			if (otherHash === hash) return true;
-		}
+		const existing = await client
+			.select({ id: tracks.id })
+			.from(tracks)
+			.where(eq(tracks.sha1, hash))
+			.limit(1);
+		if (existing.length > 0) return true;
 
 		seen.add(key);
 		return false;
@@ -598,17 +593,31 @@ export abstract class LibraryService {
 			const mtime = Math.floor(stat.mtimeMs);
 
 			const existing = await client
-				.select({ file_mtime: tracks.file_mtime })
+				.select({
+					id: tracks.id,
+					file_mtime: tracks.file_mtime,
+					sha1: tracks.sha1,
+				})
 				.from(tracks)
 				.where(eq(tracks.file_path, file));
 
 			if (existing.length > 0 && existing[0].file_mtime === mtime) {
+				if (existing[0].sha1 === null) {
+					const sha1 = await sha1File(file).catch(() => null);
+					if (sha1) {
+						await client
+							.update(tracks)
+							.set({ sha1 })
+							.where(eq(tracks.id, existing[0].id));
+					}
+				}
 				return "unchanged";
 			}
 
-			const [meta, fingerprint] = await Promise.all([
+			const [meta, fingerprint, sha1] = await Promise.all([
 				getTrackMeta(file),
 				FPCALC_AVAILABLE ? fingerprintFile(file).catch(() => null) : null,
+				sha1File(file).catch(() => null),
 			]);
 
 			const albumId = await client.transaction(async (tx) => {
@@ -631,6 +640,7 @@ export abstract class LibraryService {
 						file_path: file,
 						file_mtime: mtime,
 						fingerprint,
+						sha1,
 					})
 					.onConflictDoUpdate({
 						target: tracks.file_path,
@@ -642,6 +652,7 @@ export abstract class LibraryService {
 							duration_seconds: meta.duration_seconds,
 							file_mtime: mtime,
 							fingerprint,
+							sha1,
 						},
 					})
 					.returning({ id: tracks.id });
