@@ -21,6 +21,17 @@ piping it to `bash` if you'd rather not run a remote script blind.
 
 For manual control over each step, see below.
 
+### Upgrading
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sahithyandev/echo/main/upgrade.sh | bash
+```
+
+Detects an existing systemd or Docker install, asks which version to upgrade
+to, and restarts the service. Review `upgrade.sh` before piping it to `bash`
+if you'd rather not run a remote script blind, or upgrade manually as
+described below.
+
 ### Docker
 
 ```sh
