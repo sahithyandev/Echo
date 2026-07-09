@@ -77,12 +77,16 @@ describe("auth middleware currentUser resolution", () => {
 			.update(user_sessions)
 			.set({ last_active_at: new Date(Date.now() - 10 * 60 * 1000) });
 
+		let rejection: Promise<never>;
 		const failingDb = new Proxy(db, {
 			get(target, prop, receiver) {
 				if (prop === "update") {
 					return () => ({
 						set: () => ({
-							where: () => Promise.reject(new Error("boom")),
+							where: () => {
+								rejection = Promise.reject(new Error("boom"));
+								return rejection;
+							},
 						}),
 					});
 				}
@@ -100,7 +104,8 @@ describe("auth middleware currentUser resolution", () => {
 			}),
 		);
 		expect(res.status).toBe(200);
-		// Give the fire-and-forget update().catch() a tick to run before the test ends.
-		await new Promise((r) => setTimeout(r, 10));
+		// Wait on the same promise the middleware's fire-and-forget .catch()
+		// consumes, instead of racing it with an arbitrary timer.
+		await rejection!.catch(() => {});
 	});
 });
