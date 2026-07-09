@@ -9,7 +9,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: sudo apt-get update && sudo apt-get install -y libchromaprint-dev libchromaprint-tools ffmpeg
       - run: bun install --frozen-lockfile
@@ -37,7 +37,7 @@ jobs:
             os: macos-14
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run build:binary -- ${{ matrix.target }}
@@ -52,7 +52,7 @@ jobs:
       version: ${{ steps.tag.outputs.version }}
       created: ${{ steps.tag.outputs.created }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: tag
         run: |
           v="v$(cat VERSION.txt)"
@@ -74,7 +74,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
@@ -117,7 +117,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run build:binary -- ${{ matrix.target }}
