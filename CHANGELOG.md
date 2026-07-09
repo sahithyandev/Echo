@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.1
+
+**Bug Fixes**
+
+- Fix crash on startup when the configured music directory doesn't exist
+- Build the client before running tests
+  Fixes tests failing unintentionally due to stale or missing client assets.
+- Change asset cache header from `immutable` to `must-revalidate`
+- Use `type="module"` for client scripts
+
 ## v0.2.0
 
 **Features**
