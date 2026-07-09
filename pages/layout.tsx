@@ -22,11 +22,6 @@ export function Layout({
 				<title>{title}</title>
 				<link rel="stylesheet" href="/global.css" />
 				<meta name="theme-color" content="#0c0a09" />
-				<link rel="preconnect" href="https://api.fontshare.com" />
-				<link
-					href="https://api.fontshare.com/v2/css?f[]=clash-display@600,700&display=swap"
-					rel="stylesheet"
-				/>
 				<link
 					rel="apple-touch-icon"
 					sizes="180x180"
