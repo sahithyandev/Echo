@@ -137,10 +137,21 @@ export default function createLibraryModule(db: DbLike) {
 				body: t.Object({ files: t.Files({ minItems: 1 }) }),
 			},
 		)
-		.get("/art/:albumId", async ({ params }) => {
+		.get("/art/:albumId", async ({ params, headers }) => {
 			const { dataDir } = await SettingsService.getDirs(db);
 			const file = Bun.file(`${dataDir}/art/${params.albumId}.jpg`);
-			return new Response(file, { headers: { "Content-Type": "image/jpeg" } });
+			if (!(await file.exists())) return new Response("Not found", { status: 404 });
+
+			const etag = `"${file.lastModified.toString(36)}-${file.size.toString(36)}"`;
+			if (headers["if-none-match"] === etag) return new Response(null, { status: 304 });
+
+			return new Response(file, {
+				headers: {
+					"Content-Type": "image/jpeg",
+					"Cache-Control": "public, max-age=86400",
+					ETag: etag,
+				},
+			});
 		})
 		.get(
 			"/track/:id",
