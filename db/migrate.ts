@@ -21,9 +21,11 @@ export async function runMigrations(db: DbLike) {
 	);
 	const applied = new Set(appliedRows.map((row) => row.name));
 
+	let ranCount = 0;
 	for (const migration of migrations) {
 		if (applied.has(migration.name)) continue;
 
+		console.log(`Applying migration ${migration.name}...`);
 		for (const statement of migration.sql.split("--> statement-breakpoint")) {
 			const trimmed = statement.trim();
 			if (trimmed) await db.run(sql.raw(trimmed));
@@ -32,5 +34,12 @@ export async function runMigrations(db: DbLike) {
 		await db.run(
 			sql`INSERT INTO __drizzle_migrations (name, applied_at) VALUES (${migration.name}, ${new Date().toISOString()})`,
 		);
+		ranCount++;
 	}
+
+	console.log(
+		ranCount === 0
+			? `Migrations: database up to date (${applied.size} previously applied)`
+			: `Migrations: ${ranCount} applied, ${applied.size} already up to date`,
+	);
 }

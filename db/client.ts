@@ -27,10 +27,21 @@ if (!existsSync(dirname(dbPath))) {
 	);
 }
 
+console.log(
+	existsSync(dbPath)
+		? `Opening existing database at ${dbPath}`
+		: `Creating new database at ${dbPath}`,
+);
+
 export const client = drizzle(
 	dbUrl.startsWith("file:") ? dbUrl : `file:${dbUrl}`,
 );
 
 // SQLite disables FK enforcement per-connection by default; without this,
 // every .references()/onDelete in schema.ts is silently unenforced.
-await client.run(sql`PRAGMA foreign_keys = ON`);
+try {
+	await client.run(sql`PRAGMA foreign_keys = ON`);
+} catch (err) {
+	console.error(`Failed to open database at ${dbPath}:`, err);
+	throw err;
+}

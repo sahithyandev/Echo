@@ -60,7 +60,8 @@ export default function createLibraryModule(db: DbLike) {
 				try {
 					await LibraryService.renameTrack(db, Number(params.id), body.title);
 					return redirect(`${returnTo}?ok=rename`);
-				} catch {
+				} catch (err) {
+					console.error(`Rename failed for track ${params.id}:`, err);
 					return redirect(`${returnTo}?error=rename`);
 				}
 			},
@@ -80,6 +81,9 @@ export default function createLibraryModule(db: DbLike) {
 				if (!user.is_admin) return status(403);
 
 				const { musicDir, dataDir } = await SettingsService.getDirs(db);
+				console.log(
+					`Upload: received ${body.files.length} file(s) from user ${user.id}`,
+				);
 				const uploadedPaths: string[] = [];
 				const seenFingerprints = new Set<string>();
 				for (const file of body.files) {
@@ -88,25 +92,43 @@ export default function createLibraryModule(db: DbLike) {
 						!AUDIO_EXTENSIONS.some((ext) =>
 							name.toLowerCase().endsWith(`.${ext}`),
 						)
-					)
+					) {
+						console.warn(`Upload: skipping "${name}" — unsupported extension`);
 						continue;
+					}
 					const dest = `${musicDir}/${name}`;
-					if (await Bun.file(dest).exists()) continue;
-					await Bun.write(dest, file);
+					if (await Bun.file(dest).exists()) {
+						console.warn(
+							`Upload: skipping "${name}" — a file already exists at ${dest}`,
+						);
+						continue;
+					}
+					try {
+						await Bun.write(dest, file);
+					} catch (err) {
+						console.error(`Upload: failed writing "${name}" to ${dest}:`, err);
+						continue;
+					}
 					if (
 						await LibraryService.isDuplicateContent(db, dest, seenFingerprints)
 					) {
+						console.warn(
+							`Upload: skipping "${name}" — duplicate of an existing track`,
+						);
 						await unlink(dest);
 						continue;
 					}
 					uploadedPaths.push(dest);
 				}
 
+				console.log(
+					`Upload: accepted ${uploadedPaths.length}/${body.files.length} file(s)`,
+				);
 				if (uploadedPaths.length > 0) {
 					const artDir = `${dataDir}/art`;
-					LibraryService.scanFiles(db, uploadedPaths, artDir).then((n) =>
-						console.log(`Scanned ${n} newly uploaded tracks`),
-					);
+					LibraryService.scanFiles(db, uploadedPaths, artDir)
+						.then((n) => console.log(`Scanned ${n} newly uploaded tracks`))
+						.catch((err) => console.error("Upload: scan failed:", err));
 				}
 				return { uploaded: uploadedPaths.length };
 			},
