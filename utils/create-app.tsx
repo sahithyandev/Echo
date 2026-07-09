@@ -113,13 +113,20 @@ export async function createApp(db: DbLike) {
 		if (!ext) {
 			throw new Error("extension is expected to be not null");
 		}
-		assetPlugin.get(
-			route,
-			() =>
-				new Response(content, {
-					headers: { "content-type": `${contentTypes[ext]}; charset=utf-8` },
-				}),
-		);
+		const etag = `"${Bun.hash(content).toString(36)}"`;
+		assetPlugin.get(route, ({ headers, set }) => {
+			if (headers["if-none-match"] === etag) {
+				set.status = 304;
+				return null;
+			}
+			return new Response(content, {
+				headers: {
+					"content-type": `${contentTypes[ext]}; charset=utf-8`,
+					"cache-control": "public, max-age=31536000, immutable",
+					etag,
+				},
+			});
+		});
 	}
 
 	const authMiddleware = createAuthMiddleware(db);
