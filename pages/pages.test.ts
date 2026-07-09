@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from "bun:test";
+import { eq } from "drizzle-orm";
 import {
 	album_artists,
 	albums,
 	artists,
+	listening,
 	track_artists,
 	tracks,
 } from "../db/schema";
@@ -156,5 +158,133 @@ describe("GET /album/:id", () => {
 		const res = await authed("http://localhost/album/9999", token);
 		expect(res.status).toBe(302);
 		expect(res.headers.get("location")).toBe("/library");
+	});
+});
+
+describe("GET /artists", () => {
+	it("redirects to /login when unauthenticated", async () => {
+		const res = await app.handle(new Request("http://localhost/artists"));
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe("/auth/login");
+	});
+
+	it("returns 200 html when authenticated", async () => {
+		const token = await signUp();
+		const res = await authed("http://localhost/artists", token);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toContain("text/html");
+	});
+});
+
+describe("GET /albums", () => {
+	it("returns 200 html when authenticated", async () => {
+		const token = await signUp();
+		const res = await authed("http://localhost/albums", token);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toContain("text/html");
+	});
+});
+
+describe("POST /artist/:id/rename", () => {
+	it("redirects to /login when unauthenticated", async () => {
+		const res = await app.handle(
+			new Request("http://localhost/artist/1/rename", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ name: "New" }),
+			}),
+		);
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe("/auth/login");
+	});
+
+	it("renames the artist for an admin", async () => {
+		const token = await signUp();
+		const artistId = await seedArtist(db);
+		const res = await app.handle(
+			new Request(`http://localhost/artist/${artistId}/rename`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Cookie: `session=${token}`,
+				},
+				body: JSON.stringify({ name: "Renamed Artist" }),
+			}),
+		);
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe(`/artist/${artistId}?ok=rename`);
+	});
+});
+
+describe("POST /album/:id/rename", () => {
+	it("renames the album for an admin", async () => {
+		const token = await signUp();
+		const albumId = await seedAlbum(db);
+		const res = await app.handle(
+			new Request(`http://localhost/album/${albumId}/rename`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Cookie: `session=${token}`,
+				},
+				body: JSON.stringify({ title: "Renamed Album" }),
+			}),
+		);
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe(`/album/${albumId}?ok=rename`);
+	});
+});
+
+describe("GET /search", () => {
+	it("redirects to /login when unauthenticated", async () => {
+		const res = await app.handle(new Request("http://localhost/search?q=x"));
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe("/auth/login");
+	});
+
+	it("returns 200 html with results for a matching query", async () => {
+		const token = await signUp();
+		await seedAlbum(db);
+		const res = await authed("http://localhost/search?q=Test", token);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toContain("text/html");
+	});
+
+	it("returns 200 html for an empty query", async () => {
+		const token = await signUp();
+		const res = await authed("http://localhost/search", token);
+		expect(res.status).toBe(200);
+	});
+});
+
+describe("GET /analytics", () => {
+	it("redirects to /login when unauthenticated", async () => {
+		const res = await app.handle(new Request("http://localhost/analytics"));
+		expect(res.status).toBe(302);
+		expect(res.headers.get("location")).toBe("/auth/login");
+	});
+
+	it("returns 200 html when authenticated with no listening history", async () => {
+		const token = await signUp();
+		const res = await authed("http://localhost/analytics", token);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toContain("text/html");
+	});
+
+	it("returns 200 html when the user has listening history", async () => {
+		const token = await signUp();
+		const albumId = await seedAlbum(db);
+		const [track] = await db
+			.select()
+			.from(tracks)
+			.where(eq(tracks.album_id, albumId));
+		await db.insert(listening).values({
+			user_id: 1,
+			track_id: track.id,
+			seconds: 120,
+			day: "2024-01-01",
+		});
+		const res = await authed("http://localhost/analytics", token);
+		expect(res.status).toBe(200);
 	});
 });

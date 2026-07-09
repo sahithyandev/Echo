@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { albums, artists, track_artists, tracks } from "../../db/schema";
+import { eq } from "drizzle-orm";
+import {
+	album_artists,
+	albums,
+	artists,
+	track_artists,
+	tracks,
+} from "../../db/schema";
 import { makeTestDb } from "../../db/test-client";
 import type { DbLike } from "../../db/types";
 import { ArtistService } from "./service";
@@ -90,5 +97,52 @@ describe("ArtistService.listArtists", () => {
 		await seed(db);
 		const result = await ArtistService.listArtists(db);
 		expect(result.map((a) => a.name)).toEqual(["Artist A", "Artist B"]);
+	});
+});
+
+describe("ArtistService.renameArtist", () => {
+	it("renames an artist when no name collision exists", async () => {
+		const { artistA } = await seed(db);
+		const result = await ArtistService.renameArtist(db, artistA.id, "New Name");
+		expect(result).toEqual({ merged: false, id: artistA.id });
+		const updated = await ArtistService.findArtist(db, artistA.id);
+		expect(updated?.name).toBe("New Name");
+	});
+
+	it("merges into an existing artist with the same name", async () => {
+		const { artistA, artistB } = await seed(db);
+		const result = await ArtistService.renameArtist(db, artistA.id, "Artist B");
+		expect(result).toEqual({ merged: true, id: artistB.id });
+
+		const survivorTracks = await ArtistService.getArtistTracks(db, artistB.id);
+		expect(survivorTracks.map((t) => t.title).sort()).toEqual([
+			"Alpha",
+			"Beta",
+		]);
+
+		const gone = await ArtistService.findArtist(db, artistA.id);
+		expect(gone).toBeNull();
+	});
+
+	it("merges album associations without duplicating", async () => {
+		const { artistA, artistB } = await seed(db);
+		const [album] = await db
+			.insert(albums)
+			.values({ title: "Shared Album" })
+			.returning({ id: albums.id });
+		await db
+			.insert(album_artists)
+			.values({ album_id: album.id, artist_id: artistA.id });
+		await db
+			.insert(album_artists)
+			.values({ album_id: album.id, artist_id: artistB.id });
+
+		await ArtistService.renameArtist(db, artistA.id, "Artist B");
+
+		const links = await db
+			.select()
+			.from(album_artists)
+			.where(eq(album_artists.artist_id, artistB.id));
+		expect(links).toHaveLength(1);
 	});
 });

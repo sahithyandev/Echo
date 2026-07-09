@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { fail, ok, toXml } from "./respond";
+import { fail, ok, serialize, toXml } from "./respond";
 
 describe("subsonic respond", () => {
 	it("wraps a success payload in the standard envelope", () => {
@@ -47,5 +47,33 @@ describe("subsonic respond", () => {
 		const payload = ok({ song: { title: 'A & B "quoted" <tag>' } });
 		const xml = toXml(payload);
 		expect(xml).toContain("A &amp; B &quot;quoted&quot; &lt;tag&gt;");
+	});
+});
+
+describe("serialize", () => {
+	it("defaults to XML when no format is given", async () => {
+		const res = serialize(ok({}), undefined, undefined);
+		expect(res.headers.get("Content-Type")).toBe("application/xml");
+		expect(await res.text()).toContain("<subsonic-response");
+	});
+
+	it("serializes as JSON when f=json", async () => {
+		const res = serialize(ok({ ping: true }), "json", undefined);
+		expect(res.headers.get("Content-Type")).toBe("application/json");
+		const body = await res.json();
+		expect(body["subsonic-response"].ping).toBe(true);
+	});
+
+	it("serializes as JSONP wrapped in the callback name", async () => {
+		const res = serialize(ok({}), "jsonp", "myCallback");
+		expect(res.headers.get("Content-Type")).toBe("application/javascript");
+		const text = await res.text();
+		expect(text.startsWith("myCallback(")).toBe(true);
+	});
+
+	it("defaults the JSONP callback name when none is given", async () => {
+		const res = serialize(ok({}), "jsonp", undefined);
+		const text = await res.text();
+		expect(text.startsWith("callback(")).toBe(true);
 	});
 });

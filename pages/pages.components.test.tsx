@@ -8,6 +8,7 @@ import { HomePage } from "./home";
 import { LibraryPage } from "./library";
 import { LoginPage } from "./login";
 import { SearchResults } from "./search-results";
+import { SettingsPage } from "./settings";
 
 const album = {
 	id: 1,
@@ -211,6 +212,28 @@ describe("AlbumsPage", () => {
 		expect(html).toContain("My Album");
 		expect(html).toContain('href="/album/1"');
 	});
+
+	it("renders cover art image when cover_path is set", () => {
+		const html = Html.createElement(AlbumsPage, {
+			albums: [
+				{
+					id: 1,
+					title: "My Album",
+					cover_path: "/art/1",
+					artists: ["Artist A"],
+				},
+			],
+		}) as string;
+		expect(html).toContain("<img");
+		expect(html).toContain("/art/1");
+	});
+
+	it("shows an em dash when an album has no artists", () => {
+		const html = Html.createElement(AlbumsPage, {
+			albums: [{ id: 1, title: "My Album", cover_path: null, artists: [] }],
+		}) as string;
+		expect(html).toContain("—");
+	});
 });
 
 describe("ArtistsPage", () => {
@@ -316,6 +339,174 @@ describe("SearchResults", () => {
 		expect(html).toContain('data-title="Track C"');
 		expect(html).toContain('data-artist="Artist A"');
 		expect(html).toContain("Track C");
+	});
+});
+
+describe("SettingsPage", () => {
+	const user = {
+		id: 1,
+		name: "Alice",
+		email: "alice@example.com",
+		is_verified: true,
+		is_admin: true,
+	};
+	const baseProps = {
+		user,
+		sessions: [],
+		currentTokenHash: "hash1",
+		subsonicPassword: null,
+	};
+
+	it("renders admin controls for other users, including active/inactive toggles", () => {
+		const html = Html.createElement(SettingsPage, {
+			...baseProps,
+			users: [
+				user,
+				{
+					id: 2,
+					name: "Bob",
+					email: "bob@example.com",
+					is_admin: false,
+					is_active: true,
+				},
+				{
+					id: 3,
+					name: "Carol",
+					email: "carol@example.com",
+					is_admin: true,
+					is_active: false,
+				},
+			],
+			stats: {
+				tracks: 1,
+				albums: 1,
+				artists: 1,
+				users: 3,
+				musicDir: "/music",
+				dataDir: "/data",
+			},
+		}) as string;
+		expect(html).toContain("Bob");
+		expect(html).toContain("Promote");
+		expect(html).toContain("Deactivate");
+		expect(html).toContain("Demote");
+		expect(html).toContain("Activate");
+		expect(html).toContain("You");
+	});
+
+	it("omits the sign-up card when signupConfig is absent", () => {
+		const html = Html.createElement(SettingsPage, {
+			...baseProps,
+			users: [user],
+			stats: {
+				tracks: 0,
+				albums: 0,
+				artists: 0,
+				users: 1,
+				musicDir: "/music",
+				dataDir: "/data",
+			},
+		}) as string;
+		expect(html).not.toContain("Who can create an account");
+	});
+
+	it("shows the fpcalc-unavailable message", () => {
+		const html = Html.createElement(SettingsPage, {
+			...baseProps,
+			fpcalcAvailable: false,
+		}) as string;
+		expect(html).toContain("fpcalc is required");
+	});
+
+	it("shows duplicate track groups when present", () => {
+		const html = Html.createElement(SettingsPage, {
+			...baseProps,
+			fpcalcAvailable: true,
+			duplicates: [
+				{
+					fingerprint: "fp1",
+					tracks: [
+						{
+							id: 1,
+							title: "Dup One",
+							duration_seconds: 125,
+							file_path: "/music/dup1.mp3",
+							album: "Some Album",
+							artists: ["Artist A"],
+						},
+						{
+							id: 2,
+							title: "Dup Two",
+							duration_seconds: null,
+							file_path: "/music/dup2.mp3",
+							album: null,
+							artists: [],
+						},
+					],
+				},
+			],
+		}) as string;
+		expect(html).toContain("Dup One");
+		expect(html).toContain("Dup Two");
+		expect(html).toContain("2:05");
+		expect(html).toContain("Unknown artist");
+	});
+
+	it("shows the no-duplicates message when fpcalc is available but none found", () => {
+		const html = Html.createElement(SettingsPage, {
+			...baseProps,
+			fpcalcAvailable: true,
+			duplicates: [],
+		}) as string;
+		expect(html).toContain("No duplicate tracks found");
+	});
+
+	it("renders sessions, marking the current device and offering revoke for others", () => {
+		const html = Html.createElement(SettingsPage, {
+			...baseProps,
+			sessions: [
+				{
+					id: 1,
+					token_hash: "hash1",
+					ip_address: "127.0.0.1",
+					user_agent: "Safari",
+					created_at: new Date("2024-01-01"),
+					last_active_at: new Date("2024-01-02"),
+				},
+				{
+					id: 2,
+					token_hash: "hash2",
+					ip_address: null,
+					user_agent: null,
+					created_at: new Date("2024-01-01"),
+					last_active_at: new Date("2024-01-02"),
+				},
+			],
+		}) as string;
+		expect(html).toContain("This device");
+		expect(html).toContain("Unknown device");
+		expect(html).toContain("Unknown IP");
+		expect(html).toContain("/settings/sessions/2/revoke");
+	});
+
+	it("renders the sign-up config card for each mode", () => {
+		for (const mode of ["closed", "open", "allowlist"] as const) {
+			const html = Html.createElement(SettingsPage, {
+				...baseProps,
+				users: [user],
+				stats: {
+					tracks: 0,
+					albums: 0,
+					artists: 0,
+					users: 1,
+					musicDir: "/music",
+					dataDir: "/data",
+				},
+				signupConfig: { mode, emails: ["a@b.com"] },
+			}) as string;
+			expect(html).toContain("Who can create an account");
+			expect(html).toContain("a@b.com");
+		}
 	});
 });
 
