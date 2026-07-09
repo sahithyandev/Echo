@@ -21,3 +21,11 @@ if (!result.success) {
 }
 
 process.env.__ECHO_TEMPLATE_DB__ = templateDb;
+
+// Quiet the app's own logging (request logs, scan/upload progress, intentionally
+// triggered error-path console.error calls) so test output only shows the runner's
+// pass/fail summary. Assertion failures go through bun:test, not console, so this
+// doesn't hide anything relevant to why a test failed.
+for (const method of ["log", "info", "warn", "error"] as const) {
+	console[method] = () => {};
+}
