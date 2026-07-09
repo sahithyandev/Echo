@@ -49,7 +49,11 @@ const assets: Array<{
 await mkdir(distDir, { recursive: true });
 
 for (const { out, src, options } of assets) {
-	const build = await Bun.build({ entrypoints: [src], ...options });
+	const build = await Bun.build({
+		entrypoints: [src],
+		minify: true,
+		...options,
+	});
 	if (!build.success)
 		throw new Error(`Build failed for ${out}: ${build.logs.join("\n")}`);
 	await Bun.write(`${distDir}${out}`, await build.outputs[0].text());
