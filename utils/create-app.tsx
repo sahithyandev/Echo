@@ -13,6 +13,7 @@ import createLibraryModule from "../modules/library";
 import createSearchModule from "../modules/search";
 import createSettingsModule from "../modules/settings";
 import createSubsonicModule from "../modules/subsonic";
+import { assetRoute, assetSources } from "./asset-manifest";
 import { getEnvVar } from "./env";
 import { unused } from "./misc";
 import { VERSION } from "./version";
@@ -36,40 +37,23 @@ async function buildAsset(
 }
 
 /**
- * Runtime bundling for dev, so edits under client/ and styles.css are picked
+ * Runtime bundling for dev, so edits under client/ and global.css are picked
  * up without a build step. bun-plugin-tailwind is a devDependency, so it's
  * imported lazily here — a top-level import would make production (which
  * never calls this function) require it too, and it isn't installed there.
  */
 async function loadDevAssets(base: (p: string) => string) {
 	const { default: tailwind } = await import("bun-plugin-tailwind");
-	return Promise.all([
-		buildAsset("/global.css", base("../styles.css"), {
-			plugins: [tailwind],
-			external: ["*.woff2"],
-		}),
-		buildAsset("/player.js", base("../client/player.ts"), {
-			target: "browser",
-		}),
-		buildAsset("/search.js", base("../client/search.ts"), {
-			target: "browser",
-		}),
-		buildAsset("/nav.js", base("../client/nav.ts"), {
-			target: "browser",
-		}),
-		buildAsset("/upload.js", base("../client/upload.ts"), {
-			target: "browser",
-		}),
-		buildAsset("/upload-metadata.js", base("../client/upload-metadata.ts"), {
-			target: "browser",
-		}),
-		buildAsset("/flash.js", base("../client/flash.ts"), {
-			target: "browser",
-		}),
-		buildAsset("/infinite-scroll.js", base("../client/infinite-scroll.ts"), {
-			target: "browser",
-		}),
-	]);
+	return Promise.all(
+		assetSources.map((src) =>
+			src.endsWith(".css")
+				? buildAsset(assetRoute(src), base(src), {
+						plugins: [tailwind],
+						external: ["*.woff2"],
+					})
+				: buildAsset(assetRoute(src), base(src), { target: "browser" }),
+		),
+	);
 }
 
 /**
@@ -96,16 +80,20 @@ async function loadProdAssets() {
 		import("../dist/flash.js", { with: { type: "text" } }),
 		import("../dist/infinite-scroll.js", { with: { type: "text" } }),
 	]);
-	return [
-		{ route: "/global.css", content: globalCss.default },
-		{ route: "/player.js", content: playerJs.default },
-		{ route: "/search.js", content: searchJs.default },
-		{ route: "/nav.js", content: navJs.default },
-		{ route: "/upload.js", content: uploadJs.default },
-		{ route: "/upload-metadata.js", content: uploadMetadataJs.default },
-		{ route: "/flash.js", content: flashJs.default },
-		{ route: "/infinite-scroll.js", content: infinityScrollJs.default },
+	const contents = [
+		globalCss.default,
+		playerJs.default,
+		searchJs.default,
+		navJs.default,
+		uploadJs.default,
+		uploadMetadataJs.default,
+		flashJs.default,
+		infinityScrollJs.default,
 	];
+	return assetSources.map((src, i) => ({
+		route: assetRoute(src),
+		content: contents[i],
+	}));
 }
 
 export async function createApp(db: DbLike) {
