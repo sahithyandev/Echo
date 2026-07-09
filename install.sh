@@ -21,12 +21,6 @@ linux-x64 | linux-arm64 | darwin-x64 | darwin-arm64) ;;
 	;;
 esac
 
-list_versions() {
-	curl -fsSL "https://api.github.com/repos/${REPO}/releases" |
-		grep -o '"tag_name": *"[^"]*"' |
-		sed -E 's/.*"([^"]+)"$/\1/'
-}
-
 detect_existing_install() {
 	if command -v systemctl >/dev/null 2>&1 && [ -f /etc/systemd/system/echo.service ]; then
 		echo "systemd"
@@ -42,55 +36,11 @@ detect_existing_install() {
 	fi
 }
 
-upgrade_systemd() {
-	local versions version tmp
-	versions="$(list_versions)"
-	echo "Available versions:"
-	echo "$versions"
-	version="$(ask "Version to upgrade to" "$(echo "$versions" | head -1)")"
-
-	tmp="$(mktemp -d)"
-	trap 'rm -rf "$tmp"' EXIT
-	url="https://github.com/${REPO}/releases/download/${version}/echo-${target}.tar.gz"
-	curl -fsSL "$url" | tar -xz -C "$tmp"
-
-	sudo systemctl stop echo
-	sudo cp -r "$tmp"/. /opt/echo/
-	sudo systemctl start echo
-	echo "Echo upgraded to ${version} and restarted."
-}
-
-upgrade_docker() {
-	local versions version id dir
-	id="$(docker ps -a --filter "ancestor=ghcr.io/${REPO}" --format '{{.ID}}' | head -1)"
-	dir="$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}' "$id")"
-	if [ -z "$dir" ] || [ ! -f "$dir/docker-compose.yml" ]; then
-		echo "Could not locate the docker-compose.yml for the running Echo container." >&2
-		exit 1
-	fi
-
-	versions="$(list_versions)"
-	echo "Available versions:"
-	echo "$versions"
-	version="$(ask "Version to upgrade to" "$(echo "$versions" | head -1)")"
-
-	sed -i.bak -E "s#(ghcr\.io/${REPO//\//\\/}):.*#\1:${version}#" "$dir/docker-compose.yml"
-	rm -f "$dir/docker-compose.yml.bak"
-	(cd "$dir" && docker compose pull && docker compose up -d)
-	echo "Echo upgraded to ${version} and restarted."
-}
-
 existing_method="$(detect_existing_install)"
 if [ -n "$existing_method" ]; then
-	do_upgrade="$(ask "Echo is already installed via ${existing_method}. Upgrade instead of reinstalling? [yes/no]" "yes")"
-	if [ "$do_upgrade" = "yes" ]; then
-		if [ "$existing_method" = "systemd" ]; then
-			upgrade_systemd
-		else
-			upgrade_docker
-		fi
-		exit 0
-	fi
+	echo "Echo is already installed via ${existing_method}. Run upgrade.sh instead:"
+	echo "  curl -fsSL https://raw.githubusercontent.com/${REPO}/main/upgrade.sh | bash"
+	exit 0
 fi
 
 method="binary"
