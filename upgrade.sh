@@ -51,7 +51,7 @@ upgrade_systemd() {
 	version="$(ask_version)"
 
 	tmp="$(mktemp -d)"
-	trap 'rm -rf "$tmp"' EXIT
+	trap "rm -rf '$tmp'" EXIT
 	url="https://github.com/${REPO}/releases/download/${version}/echo-${target}.tar.gz"
 	curl -fsSL "$url" | tar -xz -C "$tmp"
 
