@@ -119,7 +119,12 @@ export async function createApp(db: DbLike) {
 			return new Response(content, {
 				headers: {
 					"content-type": `${contentTypes[ext]}; charset=utf-8`,
-					"cache-control": "public, max-age=31536000, immutable",
+					// No content hash in these routes (they're stable paths like
+					// /player.js), so "immutable" would tell browsers to never
+					// revalidate — meaning a deploy that changes this file leaves
+					// old tabs running stale JS against new HTML indefinitely.
+					// must-revalidate forces an ETag check (cheap 304) every load.
+					"cache-control": "public, max-age=0, must-revalidate",
 					etag,
 				},
 			});
