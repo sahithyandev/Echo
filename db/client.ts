@@ -18,18 +18,12 @@ if (dbUrl.includes("/$bunfs/")) {
 }
 
 // Both distribution paths (Dockerfile, install.sh) pre-create the data
-// directory, and libsql silently creates an empty db file otherwise — which
-// would hide a bad ECHO_DATA_DIR/ECHO_DATABASE_URL behind a fresh, tableless
-// database instead of a clear boot failure.
+// directory; if it's missing, ECHO_DATA_DIR/ECHO_DATABASE_URL is misconfigured.
+// The db file itself is fine to auto-create on first run — libsql does that.
 const dbPath = dbUrl.replace(/^file:/, "");
 if (!existsSync(dirname(dbPath))) {
 	throw new Error(
 		`Data directory for ECHO_DATABASE_URL (${dbPath}) does not exist. Create it before starting the server.`,
-	);
-}
-if (!existsSync(dbPath)) {
-	throw new Error(
-		`Database file not found at ${dbPath}. Create it before starting the server, e.g. sqlite3 ${dbPath} "VACUUM;"`,
 	);
 }
 
