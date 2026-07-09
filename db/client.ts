@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
@@ -17,10 +17,21 @@ if (dbUrl.includes("/$bunfs/")) {
 	);
 }
 
-// Docker's Dockerfile pre-creates /data; a bare binary/systemd deployment
-// has no such step, so the production default (~/.echo/echo.db) may not
-// have a parent dir yet on a fresh machine.
-mkdirSync(dirname(dbUrl.replace(/^file:/, "")), { recursive: true });
+// Both distribution paths (Dockerfile, install.sh) pre-create the data
+// directory, and libsql silently creates an empty db file otherwise — which
+// would hide a bad ECHO_DATA_DIR/ECHO_DATABASE_URL behind a fresh, tableless
+// database instead of a clear boot failure.
+const dbPath = dbUrl.replace(/^file:/, "");
+if (!existsSync(dirname(dbPath))) {
+	throw new Error(
+		`Data directory for ECHO_DATABASE_URL (${dbPath}) does not exist. Create it before starting the server.`,
+	);
+}
+if (!existsSync(dbPath)) {
+	throw new Error(
+		`Database file not found at ${dbPath}. Create it before starting the server, e.g. sqlite3 ${dbPath} "VACUUM;"`,
+	);
+}
 
 export const client = drizzle(
 	dbUrl.startsWith("file:") ? dbUrl : `file:${dbUrl}`,
