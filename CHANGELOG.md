@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.1.1
+
+**Features**
+
+- Add update script
+  Re-running the installer now alerts the user to upgrade.
+- Improve the empty library UI
+
+**Bug Fixes**
+
+- Crash on startup when the database is unavailable
+  Fail fast instead of running in a broken state.
+
+**Internal**
+
+- Derive `ECHO_DATABASE_URL` from `ECHO_DATA_DIR` when unset
+- Log directory setup at startup
+
 ## v0.1.0
 
 **Features**
