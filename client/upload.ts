@@ -123,6 +123,10 @@ function uploadBatch(batch: File[]): Promise<number> {
 			if (e.lengthComputable) onBatchProgress?.(e.loaded);
 		};
 		xhr.onload = () => {
+			if (xhr.status === 413) {
+				reject(new Error("too-large"));
+				return;
+			}
 			if (xhr.status < 200 || xhr.status >= 300) {
 				reject(new Error(`Upload failed: ${xhr.status}`));
 				return;
@@ -199,8 +203,9 @@ async function submitUpload(): Promise<void> {
 			await sleep(MIN_PROGRESS_DISPLAY_MS - elapsed);
 		}
 		window.location.href = `/library?${uploadedCount > 0 ? "ok=upload" : "error=upload"}`;
-	} catch {
-		window.location.href = "/library?error=upload";
+	} catch (err) {
+		const reason = err instanceof Error && err.message === "too-large";
+		window.location.href = `/library?error=${reason ? "upload-too-large" : "upload"}`;
 	} finally {
 		onBatchProgress = null;
 		setUploading(false);

@@ -26,6 +26,8 @@ const OK_MESSAGES: Record<string, string> = {
 const ERROR_MESSAGES: Record<string, string> = {
 	upload:
 		"No files were uploaded. Check the file types (mp3, flac, m4a, aac, ogg, wav) and that they don't already exist.",
+	"upload-too-large":
+		"Upload rejected: the file(s) are too large for the server to accept. If you're behind a reverse proxy, its upload size limit needs to be raised.",
 	rename: "Couldn't rename track.",
 };
 

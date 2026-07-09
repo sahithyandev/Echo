@@ -143,6 +143,9 @@ server {
 	listen 80;
 	server_name ${domain};
 
+	# Music files can be much larger than nginx's 1m default.
+	client_max_body_size 25m;
+
 	location / {
 		proxy_pass http://127.0.0.1:${port};
 		proxy_set_header Host \$host;
