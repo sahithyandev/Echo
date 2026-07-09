@@ -200,9 +200,9 @@ export default function createSettingsModule(db: DbLike) {
 				if (!user.is_admin) return status(403);
 				const { musicDir, dataDir } = await SettingsService.getDirs(db);
 				const artDir = `${dataDir}/art`;
-				LibraryService.scanMusicFolder(db, musicDir, artDir).then((n) =>
-					console.log(`Rescanned ${n} tracks from ${musicDir}`),
-				);
+				LibraryService.scanMusicFolder(db, musicDir, artDir)
+					.then((n) => console.log(`Rescanned ${n} tracks from ${musicDir}`))
+					.catch((err) => console.error("Rescan failed", err));
 				return redirect("/settings?ok=rescan");
 			},
 			{ currentUser: true },
