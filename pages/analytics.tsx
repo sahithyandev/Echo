@@ -76,6 +76,9 @@ function AlbumGallery({ rows }: { rows: ByAlbum[] }) {
 								{r.cover_path ? (
 									<img
 										src={r.cover_path}
+										width={110}
+										height={110}
+										loading="lazy"
 										class="w-full h-full object-cover"
 										alt=""
 									/>

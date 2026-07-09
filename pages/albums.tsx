@@ -27,6 +27,9 @@ export function AlbumsPage({ albums }: { albums: Album[] }) {
 									{a.cover_path ? (
 										<img
 											src={a.cover_path}
+											width={110}
+											height={110}
+											loading="lazy"
 											class="w-full h-full object-cover"
 											alt=""
 										/>

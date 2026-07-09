@@ -139,11 +139,26 @@ export default function createLibraryModule(db: DbLike) {
 		)
 		.get("/art/:albumId", async ({ params, headers }) => {
 			const { dataDir } = await SettingsService.getDirs(db);
-			const file = Bun.file(`${dataDir}/art/${params.albumId}.jpg`);
-			if (!(await file.exists())) return new Response("Not found", { status: 404 });
+			const fullPath = `${dataDir}/art/${params.albumId}.jpg`;
+			if (!(await Bun.file(fullPath).exists()))
+				return new Response("Not found", { status: 404 });
 
+			let path = fullPath;
+
+			const thumbPath = `${dataDir}/art/${params.albumId}.thumb.jpg`;
+
+			if (await Bun.file(thumbPath).exists()) {
+				path = thumbPath;
+			} else {
+				const result =
+					await Bun.$`ffmpeg -y -i ${fullPath} -vf scale=256:-1 ${thumbPath}`.quiet();
+				if (result.exitCode === 0) path = thumbPath;
+			}
+
+			const file = Bun.file(path);
 			const etag = `"${file.lastModified.toString(36)}-${file.size.toString(36)}"`;
-			if (headers["if-none-match"] === etag) return new Response(null, { status: 304 });
+			if (headers["if-none-match"] === etag)
+				return new Response(null, { status: 304 });
 
 			return new Response(file, {
 				headers: {

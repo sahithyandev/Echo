@@ -134,6 +134,9 @@ export function LibraryPage({
 									{t.album?.cover_path ? (
 										<img
 											src={t.album.cover_path}
+											width={110}
+											height={110}
+											loading="lazy"
 											class="w-full h-full object-cover"
 											alt=""
 										/>

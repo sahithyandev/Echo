@@ -15,6 +15,7 @@ export function AlbumArt({ size = 36, src }: Props) {
 				src={src}
 				width={size}
 				height={size}
+				loading="lazy"
 				class="rounded-sm shrink-0 object-cover"
 				alt="Album art"
 			/>
