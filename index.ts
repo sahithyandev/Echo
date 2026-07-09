@@ -8,6 +8,10 @@ import { getEnvVar } from "./utils/env";
 const NODE_ENV = getEnvVar("NODE_ENV");
 
 (async () => {
+	console.log("Database:", getEnvVar("ECHO_DATABASE_URL"));
+	console.log("Data directory:", getEnvVar("ECHO_DATA_DIR"));
+	console.log("Music directory:", getEnvVar("ECHO_MUSIC_DIR"));
+
 	if (NODE_ENV === "production") {
 		await runMigrations(client);
 	} else if (NODE_ENV === "development") {
