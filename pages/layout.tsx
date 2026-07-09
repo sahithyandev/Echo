@@ -223,12 +223,19 @@ export function Layout({
 					</div>
 				</div>
 				<audio id="echo-audio" preload="none" />
-				<script src="/player.js" defer />
-				<script src="/search.js" defer />
-				<script src="/nav.js" defer />
-				<script src="/upload.js" defer />
-				<script src="/flash.js" defer />
-				<script src="/infinite-scroll.js" defer />
+				{/*
+					type="module" gives each script its own top-level scope. Without
+					it these are classic scripts sharing one global scope, so once
+					minified (prod only — dev bundles are unminified with distinct
+					names) each file's short variable names collide and later
+					scripts silently clobber earlier ones' globals.
+				*/}
+				<script src="/player.js" type="module" />
+				<script src="/search.js" type="module" />
+				<script src="/nav.js" type="module" />
+				<script src="/upload.js" type="module" />
+				<script src="/flash.js" type="module" />
+				<script src="/infinite-scroll.js" type="module" />
 			</body>
 		</html>
 	);
