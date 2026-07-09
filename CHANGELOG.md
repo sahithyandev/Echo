@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.2
+
+**Bug Fixes**
+
+- Auto-create the database file on first start
+  Previously required the file to already exist; now only the parent data directory needs to be present, and SQLite creates the file itself.
+- Fix a syntax error in `upgrade.sh`
+
+**Internal**
+
+- Add logging for startup (database open, migrations, library scan) and file uploads
+  Failures and skip reasons that used to be silent or a bare stack trace are now logged.
+
 ## v0.1.1
 
 **Features**
