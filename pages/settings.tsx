@@ -215,7 +215,10 @@ export function SettingsPage({
 											<span class="ml-2 text-xs text-accent">This device</span>
 										)}
 									</p>
-									<p class="text-xs text-muted">
+									<p
+										class="text-xs text-muted"
+										title="Client-reported; not verified against the connection"
+									>
 										{s.ip_address ?? "Unknown IP"} · last active{" "}
 										{formatDate(s.last_active_at)}
 									</p>

@@ -26,8 +26,10 @@ function requireId(query: Query): { type: "ar" | "al" | "tr"; id: number } {
 	return parsed;
 }
 
-async function getArtists(db: DbLike) {
-	const rows = await SubsonicQueries.getArtistsIndexed(db);
+function groupArtistsByLetter(
+	rows: Awaited<ReturnType<typeof SubsonicQueries.getArtistsIndexed>>,
+	includeAlbumCount: boolean,
+) {
 	const groups = new Map<string, typeof rows>();
 	for (const row of rows) {
 		const letter = /[a-z]/i.test(row.name[0] ?? "")
@@ -37,36 +39,27 @@ async function getArtists(db: DbLike) {
 		// biome-ignore lint/style/noNonNullAssertion: just set above
 		groups.get(letter)!.push(row);
 	}
-	const index = [...groups.entries()]
+	return [...groups.entries()]
 		.sort(([a], [b]) => a.localeCompare(b))
 		.map(([letter, artists]) => ({
 			name: letter,
 			artist: artists.map((a) => ({
 				id: makeId("ar", a.id),
 				name: a.name,
-				albumCount: a.albumCount,
+				...(includeAlbumCount ? { albumCount: a.albumCount } : {}),
 			})),
 		}));
+}
+
+async function getArtists(db: DbLike) {
+	const rows = await SubsonicQueries.getArtistsIndexed(db);
+	const index = groupArtistsByLetter(rows, true);
 	return ok({ artists: { ignoredArticles: "", index } });
 }
 
 async function getIndexes(db: DbLike) {
 	const rows = await SubsonicQueries.getArtistsIndexed(db);
-	const groups = new Map<string, typeof rows>();
-	for (const row of rows) {
-		const letter = /[a-z]/i.test(row.name[0] ?? "")
-			? row.name[0].toUpperCase()
-			: "#";
-		if (!groups.has(letter)) groups.set(letter, []);
-		// biome-ignore lint/style/noNonNullAssertion: just set above
-		groups.get(letter)!.push(row);
-	}
-	const index = [...groups.entries()]
-		.sort(([a], [b]) => a.localeCompare(b))
-		.map(([letter, artists]) => ({
-			name: letter,
-			artist: artists.map((a) => ({ id: makeId("ar", a.id), name: a.name })),
-		}));
+	const index = groupArtistsByLetter(rows, false);
 	return ok({ indexes: { ignoredArticles: "", index } });
 }
 
