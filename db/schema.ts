@@ -36,22 +36,26 @@ export const users = sqliteTable(
 	],
 );
 
-export const user_sessions = sqliteTable("user_sessions", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	user_id: integer("user_id")
-		.notNull()
-		.references(() => users.id, { onDelete: "cascade" }),
-	token_hash: text("token_hash").notNull(),
-	ip_address: text("ip_address"),
-	user_agent: text("user_agent"),
-	created_at: integer("created_at", { mode: "timestamp" })
-		.$defaultFn(() => new Date())
-		.notNull(),
-	last_active_at: integer("last_active_at", { mode: "timestamp" })
-		.$defaultFn(() => new Date())
-		.notNull(),
-	revoked_at: integer("revoked_at", { mode: "timestamp" }),
-});
+export const user_sessions = sqliteTable(
+	"user_sessions",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		user_id: integer("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		token_hash: text("token_hash").notNull(),
+		ip_address: text("ip_address"),
+		user_agent: text("user_agent"),
+		created_at: integer("created_at", { mode: "timestamp" })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		last_active_at: integer("last_active_at", { mode: "timestamp" })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		revoked_at: integer("revoked_at", { mode: "timestamp" }),
+	},
+	(t) => [index("user_sessions_token_hash").on(t.token_hash)],
+);
 
 export const artists = sqliteTable("artists", {
 	id: integer("id").primaryKey({ autoIncrement: true }),
@@ -66,25 +70,29 @@ export const albums = sqliteTable("albums", {
 	cover_path: text("cover_path"),
 });
 
-export const tracks = sqliteTable("tracks", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	title: text("title").notNull(),
-	album_id: integer("album_id").references(() => albums.id, {
-		onDelete: "set null",
-	}),
-	track_number: integer("track_number"),
-	year: integer("year"),
-	duration_seconds: integer("duration_seconds"),
-	file_path: text("file_path").notNull().unique(),
-	file_mtime: integer("file_mtime"),
-	fingerprint: text("fingerprint"),
-	added_at: integer("added_at", { mode: "timestamp" })
-		.$defaultFn(() => new Date())
-		.notNull(),
-	added_by: integer("added_by").references(() => users.id, {
-		onDelete: "set null",
-	}),
-});
+export const tracks = sqliteTable(
+	"tracks",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		title: text("title").notNull(),
+		album_id: integer("album_id").references(() => albums.id, {
+			onDelete: "set null",
+		}),
+		track_number: integer("track_number"),
+		year: integer("year"),
+		duration_seconds: integer("duration_seconds"),
+		file_path: text("file_path").notNull().unique(),
+		file_mtime: integer("file_mtime"),
+		fingerprint: text("fingerprint"),
+		added_at: integer("added_at", { mode: "timestamp" })
+			.$defaultFn(() => new Date())
+			.notNull(),
+		added_by: integer("added_by").references(() => users.id, {
+			onDelete: "set null",
+		}),
+	},
+	(t) => [index("tracks_album_id").on(t.album_id)],
+);
 
 export const app_settings = sqliteTable(
 	"app_settings",
@@ -119,18 +127,25 @@ export const user_playback_state = sqliteTable("user_playback_state", {
 	playing: integer("playing", { mode: "boolean" }).default(false).notNull(),
 });
 
-export const play_history = sqliteTable("play_history", {
-	id: integer("id").primaryKey({ autoIncrement: true }),
-	user_id: integer("user_id")
-		.notNull()
-		.references(() => users.id, { onDelete: "cascade" }),
-	track_id: integer("track_id")
-		.notNull()
-		.references(() => tracks.id, { onDelete: "cascade" }),
-	played_at: integer("played_at", { mode: "timestamp" })
-		.$defaultFn(() => new Date())
-		.notNull(),
-});
+export const play_history = sqliteTable(
+	"play_history",
+	{
+		id: integer("id").primaryKey({ autoIncrement: true }),
+		user_id: integer("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		track_id: integer("track_id")
+			.notNull()
+			.references(() => tracks.id, { onDelete: "cascade" }),
+		played_at: integer("played_at", { mode: "timestamp" })
+			.$defaultFn(() => new Date())
+			.notNull(),
+	},
+	(t) => [
+		index("play_history_user_id").on(t.user_id),
+		index("play_history_track_id").on(t.track_id),
+	],
+);
 
 export const listening = sqliteTable(
 	"listening",
