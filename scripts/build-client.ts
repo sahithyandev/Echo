@@ -12,7 +12,7 @@ const assets: Array<{
 	{
 		out: "global.css",
 		src: base("../styles.css"),
-		options: { plugins: [tailwind] },
+		options: { plugins: [tailwind], external: ["*.woff2"] },
 	},
 	{
 		out: "player.js",

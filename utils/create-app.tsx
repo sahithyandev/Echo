@@ -44,7 +44,10 @@ async function buildAsset(
 async function loadDevAssets(base: (p: string) => string) {
 	const { default: tailwind } = await import("bun-plugin-tailwind");
 	return Promise.all([
-		buildAsset("/global.css", base("../styles.css"), { plugins: [tailwind] }),
+		buildAsset("/global.css", base("../styles.css"), {
+			plugins: [tailwind],
+			external: ["*.woff2"],
+		}),
 		buildAsset("/player.js", base("../client/player.ts"), {
 			target: "browser",
 		}),
