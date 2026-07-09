@@ -6,7 +6,7 @@
 		"build:client": "bun run scripts/build-client.ts",
 		"build:migrations": "bun run scripts/build-migrations.ts",
 		"build:binary": "bun run build:client && bun run build:migrations && bun run scripts/build-binary.ts",
-		"pretest": "bun run build:migrations",
+		"pretest": "bun run build:client && bun run build:migrations",
 		"test": "bun test",
 		"lint": "biome check",
 		"lint:fix": "biome check --write"
