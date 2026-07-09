@@ -41,6 +41,7 @@ export default function createHomeModule(db: DbLike) {
 			return (
 				<HomePage
 					name={user.name}
+					isAdmin={user.is_admin}
 					continueListening={continueListening}
 					recentlyAdded={recentlyAdded}
 					recentlyPlayed={recentlyPlayed.filter(
