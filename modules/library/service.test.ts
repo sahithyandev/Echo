@@ -101,3 +101,39 @@ describe("LibraryService.listTracks", () => {
 		expect(result).toHaveLength(0);
 	});
 });
+
+describe("LibraryService.listTracksPage", () => {
+	it("orders 0-9 before A-Z before Others, then case-insensitively by title", async () => {
+		await insertTitles(db, ["Zebra", "9 Lives", "!!!", "apple"]);
+		const result = await LibraryService.listTracksPage(db, 0, 10);
+		expect(result.map((t) => t.title)).toEqual([
+			"9 Lives",
+			"apple",
+			"Zebra",
+			"!!!",
+		]);
+	});
+
+	it("paginates with offset and limit", async () => {
+		await insertTitles(db, ["Alpha", "Beta", "Gamma", "Delta"]);
+		const page1 = await LibraryService.listTracksPage(db, 0, 2);
+		const page2 = await LibraryService.listTracksPage(db, 2, 2);
+		expect(page1.map((t) => t.title)).toEqual(["Alpha", "Beta"]);
+		expect(page2.map((t) => t.title)).toEqual(["Delta", "Gamma"]);
+	});
+
+	it("returns empty array past the end", async () => {
+		await insertTitles(db, ["Alpha"]);
+		const result = await LibraryService.listTracksPage(db, 5, 10);
+		expect(result).toHaveLength(0);
+	});
+});
+
+async function insertTitles(client: DbLike, titles: string[]) {
+	for (const [i, title] of titles.entries()) {
+		await client.insert(tracks).values({
+			title,
+			file_path: `/music/${i}.mp3`,
+		});
+	}
+}

@@ -66,6 +66,9 @@ async function loadDevAssets(base: (p: string) => string) {
 		buildAsset("/flash.js", base("../client/flash.ts"), {
 			target: "browser",
 		}),
+		buildAsset("/infinite-scroll.js", base("../client/infinite-scroll.ts"), {
+			target: "browser",
+		}),
 	]);
 }
 
@@ -82,6 +85,7 @@ async function loadProdAssets() {
 		uploadJs,
 		uploadMetadataJs,
 		flashJs,
+		infinityScrollJs,
 	] = await Promise.all([
 		import("../dist/global.css", { with: { type: "text" } }),
 		import("../dist/player.js", { with: { type: "text" } }),
@@ -90,6 +94,7 @@ async function loadProdAssets() {
 		import("../dist/upload.js", { with: { type: "text" } }),
 		import("../dist/upload-metadata.js", { with: { type: "text" } }),
 		import("../dist/flash.js", { with: { type: "text" } }),
+		import("../dist/infinite-scroll.js", { with: { type: "text" } }),
 	]);
 	return [
 		{ route: "/global.css", content: globalCss.default },
@@ -99,6 +104,7 @@ async function loadProdAssets() {
 		{ route: "/upload.js", content: uploadJs.default },
 		{ route: "/upload-metadata.js", content: uploadMetadataJs.default },
 		{ route: "/flash.js", content: flashJs.default },
+		{ route: "/infinite-scroll.js", content: infinityScrollJs.default },
 	];
 }
 

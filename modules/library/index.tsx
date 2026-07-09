@@ -2,7 +2,7 @@ import { unlink } from "node:fs/promises";
 import { Html } from "@elysiajs/html";
 import { Elysia, t } from "elysia";
 import type { DbLike } from "../../db/types";
-import { LibraryPage } from "../../pages/library";
+import { LibraryPage, TrackGroups } from "../../pages/library";
 import { unused } from "../../utils/misc";
 import createAuthMiddleware from "../auth/middleware";
 import { Auth } from "../auth/service";
@@ -10,6 +10,7 @@ import { SettingsService } from "../settings/service";
 import {
 	AUDIO_EXTENSIONS,
 	buildRangeResponse,
+	LIBRARY_PAGE_SIZE,
 	LibraryService,
 } from "./service";
 
@@ -25,7 +26,7 @@ export default function createLibraryModule(db: DbLike) {
 				if (!currentUser) return redirect("/auth/login");
 				const [user, tracks] = await Promise.all([
 					Auth.findUserById(db, currentUser.id),
-					LibraryService.listTracks(db),
+					LibraryService.listTracksPage(db, 0, LIBRARY_PAGE_SIZE),
 				]);
 				return (
 					<LibraryPage
@@ -38,6 +39,33 @@ export default function createLibraryModule(db: DbLike) {
 				);
 			},
 			{ currentUser: true },
+		)
+		.get(
+			"/library/tracks",
+			async ({ currentUser, status, query }) => {
+				if (!currentUser) return status(401);
+				const user = await Auth.findUserById(db, currentUser.id);
+				const offset = Math.max(0, Number(query.offset) || 0);
+				const tracks = await LibraryService.listTracksPage(
+					db,
+					offset,
+					LIBRARY_PAGE_SIZE,
+				);
+				const nextOffset = offset + tracks.length;
+				const hasMore = tracks.length >= LIBRARY_PAGE_SIZE;
+				return (
+					<>
+						<TrackGroups tracks={tracks} isAdmin={user.is_admin} />
+						{hasMore && (
+							<div id="library-sentinel" data-offset={String(nextOffset)} />
+						)}
+					</>
+				);
+			},
+			{
+				currentUser: true,
+				query: t.Object({ offset: t.Optional(t.String()) }),
+			},
 		)
 		.post(
 			"/track/:id/delete",

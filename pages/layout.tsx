@@ -228,6 +228,7 @@ export function Layout({
 				<script src="/nav.js" defer />
 				<script src="/upload.js" defer />
 				<script src="/flash.js" defer />
+				<script src="/infinite-scroll.js" defer />
 			</body>
 		</html>
 	);

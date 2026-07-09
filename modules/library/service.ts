@@ -16,6 +16,9 @@ import type { DbLike } from "../../db/types";
 
 export const AUDIO_EXTENSIONS = ["mp3", "flac", "m4a", "aac", "ogg", "wav"];
 
+/** Number of tracks fetched per library page (initial load and each infinite-scroll batch). */
+export const LIBRARY_PAGE_SIZE = 80;
+
 async function sha1File(filePath: string): Promise<string> {
 	return createHash("sha1")
 		.update(await Bun.file(filePath).bytes())
@@ -247,6 +250,56 @@ export abstract class LibraryService {
 			.orderBy(tracks.title);
 
 		return hydrateTracks(rows);
+	}
+
+	/**
+	 * A page of tracks grouped for the library view: "0-9" first, then A-Z,
+	 * then anything else ("Others"), case-insensitive by title within a group.
+	 * Matches `trackGroup` in utils/misc.ts.
+	 */
+	static async listTracksPage(
+		client: DbLike,
+		offset: number,
+		limit: number,
+	): Promise<TrackEntry[]> {
+		const groupRank = sql`case
+			when substr(upper(${tracks.title}), 1, 1) glob '[0-9]' then 0
+			when substr(upper(${tracks.title}), 1, 1) glob '[A-Z]' then 1
+			else 2
+		end`;
+
+		const pageIds = await client
+			.select({ id: tracks.id })
+			.from(tracks)
+			.orderBy(groupRank, sql`upper(${tracks.title})`)
+			.limit(limit)
+			.offset(offset);
+		if (pageIds.length === 0) return [];
+
+		const rows = await client
+			.select({
+				id: tracks.id,
+				title: tracks.title,
+				duration_seconds: tracks.duration_seconds,
+				artist_id: artists.id,
+				artist_name: artists.name,
+				album_id: albums.id,
+				album_title: albums.title,
+				album_cover_path: albums.cover_path,
+			})
+			.from(tracks)
+			.leftJoin(track_artists, eq(track_artists.track_id, tracks.id))
+			.leftJoin(artists, eq(artists.id, track_artists.artist_id))
+			.leftJoin(albums, eq(albums.id, tracks.album_id))
+			.where(
+				inArray(
+					tracks.id,
+					pageIds.map((r) => r.id),
+				),
+			);
+
+		const byId = new Map(hydrateTracks(rows).map((t) => [t.id, t]));
+		return pageIds.map((r) => byId.get(r.id)).filter((t) => t !== undefined);
 	}
 
 	/** Newest tracks by when they were added to the library. */

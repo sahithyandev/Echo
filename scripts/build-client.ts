@@ -44,6 +44,11 @@ const assets: Array<{
 		src: base("../client/flash.ts"),
 		options: { target: "browser" },
 	},
+	{
+		out: "infinite-scroll.js",
+		src: base("../client/infinite-scroll.ts"),
+		options: { target: "browser" },
+	},
 ];
 
 await mkdir(distDir, { recursive: true });
