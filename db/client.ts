@@ -39,8 +39,11 @@ export const client = drizzle(
 
 // SQLite disables FK enforcement per-connection by default; without this,
 // every .references()/onDelete in schema.ts is silently unenforced.
+// WAL lets readers proceed without blocking on writers (e.g. last_active_at
+// updates), instead of the default rollback journal's exclusive write lock.
 try {
 	await client.run(sql`PRAGMA foreign_keys = ON`);
+	await client.run(sql`PRAGMA journal_mode = WAL`);
 } catch (err) {
 	console.error(`Failed to open database at ${dbPath}:`, err);
 	throw err;
