@@ -49,7 +49,7 @@ export function AlbumPage({
 	const artistNames = artists.map((a) => a.name).join(", ");
 	return (
 		<Layout title={`Echo — ${album.title}`} active="albums">
-			<main class="flex-1 flex flex-col p-6 gap-6">
+			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6">
 				<Flash variant="ok" message={ok && (OK_MESSAGES[ok] ?? "Saved.")} />
 				<Flash
 					variant="error"

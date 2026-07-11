@@ -32,7 +32,7 @@ export function ArtistPage({
 }) {
 	return (
 		<Layout title={`Echo — ${artist.name}`} active="artists">
-			<main class="flex-1 flex flex-col p-6 gap-6">
+			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6">
 				<Flash variant="ok" message={ok && (OK_MESSAGES[ok] ?? "Saved.")} />
 				<Flash
 					variant="error"

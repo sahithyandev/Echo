@@ -239,7 +239,7 @@ export function LibraryPage({
 }) {
 	return (
 		<Layout title="Echo — Library" active="library">
-			<main class="flex-1 flex flex-col p-6 gap-6">
+			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6">
 				<div class="flex items-center justify-between gap-4">
 					<p class="text-sm text-muted">
 						Welcome back, <span class="text-accent font-medium">{name}</span>

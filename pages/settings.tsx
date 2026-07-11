@@ -131,7 +131,7 @@ export function SettingsPage({
 }) {
 	return (
 		<Layout title="Echo — Settings" active="settings">
-			<main class="flex-1 flex flex-col p-6 gap-6 max-w-3xl mx-auto w-full">
+			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6 max-w-3xl mx-auto w-full">
 				<h1 class="text-xl font-bold font-display">Settings</h1>
 
 				<Flash variant="ok" message={ok && (OK_MESSAGES[ok] ?? "Saved.")} />
@@ -272,15 +272,46 @@ export function SettingsPage({
 									type="button"
 									id="copy-subsonic-key"
 									class={secondaryButtonClass}
+									title="Copy"
+									aria-label="Copy"
 								>
-									Copy
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										aria-hidden="true"
+									>
+										<rect x="9" y="9" width="13" height="13" rx="2" />
+										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+									</svg>
 								</button>
 								<button
 									type="button"
 									id="generate-subsonic-key"
 									class={secondaryButtonClass}
+									title="Generate"
+									aria-label="Generate"
 								>
-									Generate
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										aria-hidden="true"
+									>
+										<polyline points="23,4 23,10 17,10" />
+										<polyline points="1,20 1,14 7,14" />
+										<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+									</svg>
 								</button>
 							</div>
 							<span class="text-xs text-subtle">
@@ -295,7 +326,7 @@ export function SettingsPage({
 
 				{user.is_admin && users && stats && (
 					<Card title="Admin">
-						<div class="grid grid-cols-4 gap-4 text-sm">
+						<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
 							<div>
 								<p class="text-xs text-muted">Tracks</p>
 								<p class="font-semibold">{stats.tracks}</p>

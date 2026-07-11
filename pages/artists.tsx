@@ -23,7 +23,7 @@ export function ArtistsPage({ artists }: { artists: Artist[] }) {
 	const groups = groupByLetter(artists);
 	return (
 		<Layout title="Echo — Artists" active="artists">
-			<main class="flex-1 flex flex-col p-6 gap-8">
+			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-8">
 				{artists.length === 0 ? (
 					<div class="flex-1 flex flex-col items-center justify-center gap-3 text-center">
 						<p class="text-sm text-muted">No artists yet.</p>

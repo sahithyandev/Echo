@@ -41,7 +41,7 @@ export function Layout({
 				/>
 			</head>
 			<body class="bg-background text-foreground font-sans antialiased">
-				<div class="min-h-screen flex flex-col">
+				<div class="min-h-screen flex flex-col pb-14 md:pb-0">
 					{active && <Nav active={active} />}
 					<div id="page-content" class="contents">
 						{children}
@@ -49,10 +49,10 @@ export function Layout({
 				</div>
 				<div
 					id="player-bar"
-					class="hidden fixed bottom-0 left-0 right-0 backdrop-blur-xl bg-background/85 border-t border-border/40 z-50"
+					class="hidden fixed bottom-14 md:bottom-0 left-0 right-0 backdrop-blur-xl bg-background/85 border-t border-border/40 z-50"
 				>
-					<div class="flex items-center gap-6 px-6 py-3">
-						<div class="flex items-center gap-3 w-56 shrink-0 min-w-0">
+					<div class="flex flex-wrap items-center gap-x-3 md:gap-6 px-3 md:px-6 py-2 md:py-3">
+						<div class="order-1 flex-1 md:flex-none md:w-56 flex items-center gap-3 shrink-0 min-w-0">
 							<img
 								id="player-art"
 								class="hidden rounded-sm shrink-0 object-cover w-10 h-10"
@@ -73,7 +73,7 @@ export function Layout({
 							</div>
 						</div>
 
-						<div class="flex-1 flex items-center gap-3 min-w-0">
+						<div class="order-3 md:order-2 basis-full md:basis-auto flex-1 flex items-center gap-3 min-w-0">
 							<span
 								id="player-current"
 								class="text-xs text-muted tabular-nums shrink-0"
@@ -97,7 +97,7 @@ export function Layout({
 							</span>
 						</div>
 
-						<div class="flex items-center gap-2 shrink-0">
+						<div class="order-2 md:order-3 ml-auto md:ml-0 flex items-center gap-2 shrink-0">
 							<button
 								id="player-shuffle"
 								type="button"
