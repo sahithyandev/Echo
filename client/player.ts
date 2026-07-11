@@ -395,6 +395,15 @@ audio.addEventListener("durationchange", () => {
 	}
 });
 
+document.addEventListener("auth:signout", () => {
+	audio.pause();
+	audio.removeAttribute("src");
+	audio.dataset.trackId = "";
+	currentIndex = -1;
+	bar.classList.add("hidden");
+	document.body.style.paddingBottom = "";
+});
+
 // Content is swapped in-place on nav.ts navigation: re-apply the "playing" row
 // highlight and remap currentIndex to the newly rendered playlist.
 document.addEventListener("page:loaded", () => {

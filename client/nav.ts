@@ -104,6 +104,9 @@ document.addEventListener("submit", (e) => {
 	const url = new URL(form.action);
 	if (url.origin !== location.origin) return;
 	e.preventDefault();
+	if (url.pathname === "/auth/sign-out") {
+		document.dispatchEvent(new CustomEvent("auth:signout"));
+	}
 	const params = new URLSearchParams();
 	for (const [key, value] of new FormData(form)) {
 		if (typeof value === "string") params.append(key, value);
