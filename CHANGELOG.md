@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.2
+
+**Bug Fixes**
+
+- Stop playback on sign out
+
+**Internal**
+
+- Improve mobile responsiveness
+
 ## v0.2.1
 
 **Bug Fixes**
