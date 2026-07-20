@@ -1,0 +1,1 @@
+ALTER TABLE `app_settings` ADD `site_name` text;

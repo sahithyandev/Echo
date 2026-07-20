@@ -1,5 +1,6 @@
 import { Html } from "@elysiajs/html";
 import { unused } from "../utils/misc";
+import { siteName } from "../utils/site-name";
 
 unused(Html);
 
@@ -126,7 +127,7 @@ export function Nav({ active }: { active: Tab }) {
 		<header class="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border">
 			<div class="flex items-center gap-6">
 				<a href="/" class="wordmark-gradient text-xl font-bold font-display">
-					Echo
+					{siteName}
 				</a>
 				<nav class="hidden md:flex items-center gap-4">
 					{tabs.map((t) => (

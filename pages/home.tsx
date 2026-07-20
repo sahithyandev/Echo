@@ -126,7 +126,7 @@ export function HomePage({
 		recentlyPlayed.length === 0;
 
 	return (
-		<Layout title="Echo — Home" active="home">
+		<Layout title="Home" active="home">
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-8">
 				<p class="text-sm text-muted">
 					Welcome back, <span class="text-accent font-medium">{name}</span>

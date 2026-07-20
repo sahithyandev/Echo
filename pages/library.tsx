@@ -238,7 +238,7 @@ export function LibraryPage({
 	error?: string;
 }) {
 	return (
-		<Layout title="Echo — Library" active="library">
+		<Layout title="Library" active="library">
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6">
 				<div class="flex items-center justify-between gap-4">
 					<p class="text-sm text-muted">

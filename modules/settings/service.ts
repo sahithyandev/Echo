@@ -12,11 +12,33 @@ import {
 } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import { getEnvVar } from "../../utils/env";
+import { setSiteName } from "../../utils/site-name";
 import type { SettingsModel } from "./model";
 
 let dirsCache: { musicDir: string; dataDir: string } | undefined;
 
 export abstract class SettingsService {
+	/** Loads the site name from the DB into the in-memory site-name module, used to render page titles/nav without threading the value through every route. */
+	static async loadSiteName(db: DbLike) {
+		const [row] = await db
+			.select({ site_name: app_settings.site_name })
+			.from(app_settings)
+			.where(eq(app_settings.id, 1))
+			.limit(1);
+		if (row?.site_name) setSiteName(row.site_name);
+	}
+
+	static async setSiteName(db: DbLike, name: string) {
+		await db
+			.insert(app_settings)
+			.values({ id: 1, site_name: name })
+			.onConflictDoUpdate({
+				target: app_settings.id,
+				set: { site_name: name },
+			});
+		setSiteName(name);
+	}
+
 	static async getDirs(db: DbLike) {
 		if (dirsCache) return dirsCache;
 		const [row] = await db

@@ -2,6 +2,7 @@ import { Html } from "@elysiajs/html";
 import { AlbumArt } from "../components/album-art";
 import { Nav, type Tab } from "../components/nav";
 import { unused } from "../utils/misc";
+import { siteName } from "../utils/site-name";
 
 unused(Html);
 
@@ -19,7 +20,9 @@ export function Layout({
 			<head>
 				<meta charset="UTF-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-				<title>{title}</title>
+				<title>
+					{siteName} — {title}
+				</title>
 				<link rel="stylesheet" href="/global.css" />
 				<meta name="theme-color" content="#0c0a09" />
 				<link

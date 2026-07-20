@@ -1,5 +1,6 @@
 import { Html } from "@elysiajs/html";
 import { unused } from "../utils/misc";
+import { siteName } from "../utils/site-name";
 import { Layout } from "./layout";
 
 unused(Html);
@@ -30,10 +31,10 @@ export function LoginPage({
 				: undefined;
 
 	return (
-		<Layout title="Echo — Login">
+		<Layout title="Login">
 			<div class="min-h-screen flex flex-col items-center justify-center p-8 gap-8">
 				<a href="/" class="wordmark-gradient text-3xl font-bold font-display">
-					Echo
+					{siteName}
 				</a>
 
 				<div class="w-full max-w-xs bg-surface border border-border rounded-xl p-6 shadow-sm flex flex-col gap-5">

@@ -1,6 +1,7 @@
 import { Html } from "@elysiajs/html";
 import { Flash } from "../components/flash";
 import { unused } from "../utils/misc";
+import { siteName } from "../utils/site-name";
 import { VERSION } from "../utils/version";
 import { Layout } from "./layout";
 
@@ -60,6 +61,7 @@ const OK_MESSAGES: Record<string, string> = {
 	"user-updated": "User updated.",
 	rescan: "Library rescan started.",
 	dirs: "Directories updated.",
+	"site-name": "Site name updated.",
 	subsonic: "Subsonic access updated.",
 	signups: "Sign-up settings updated.",
 };
@@ -130,7 +132,7 @@ export function SettingsPage({
 	error?: string;
 }) {
 	return (
-		<Layout title="Echo — Settings" active="settings">
+		<Layout title="Settings" active="settings">
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6 max-w-3xl mx-auto w-full">
 				<h1 class="text-xl font-bold font-display">Settings</h1>
 
@@ -347,6 +349,30 @@ export function SettingsPage({
 						<form
 							class="flex flex-col gap-3"
 							method="post"
+							action="/settings/admin/site-name"
+						>
+							<div class="flex flex-col gap-1.5">
+								<label for="site_name" class={labelClass}>
+									Site name
+								</label>
+								<input
+									id="site_name"
+									name="site_name"
+									type="text"
+									required
+									maxlength={60}
+									value={siteName}
+									class={inputClass}
+								/>
+							</div>
+							<button type="submit" class={`${primaryButtonClass} self-start`}>
+								Save site name
+							</button>
+						</form>
+
+						<form
+							class="flex flex-col gap-3"
+							method="post"
 							action="/settings/admin/dirs"
 						>
 							<div class="flex flex-col gap-1.5">
@@ -521,7 +547,9 @@ export function SettingsPage({
 						)}
 					</Card>
 				)}
-				<p class="text-xs text-subtle text-center">Echo v{VERSION}</p>
+				<p class="text-xs text-subtle text-center">
+					{siteName} v{VERSION}
+				</p>
 			</main>
 		</Layout>
 	);

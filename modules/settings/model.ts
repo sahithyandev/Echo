@@ -21,6 +21,11 @@ export namespace SettingsModel {
 	});
 	export type SignupConfigBody = typeof SignupConfigBody.static;
 
+	export const SiteNameBody = t.Object({
+		site_name: t.String({ minLength: 1, maxLength: 60 }),
+	});
+	export type SiteNameBody = typeof SiteNameBody.static;
+
 	export const DirsBody = t.Object({
 		music_dir: t.String({ minLength: 1 }),
 		data_dir: t.String({ minLength: 1 }),

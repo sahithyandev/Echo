@@ -13,7 +13,7 @@ type Album = {
 
 export function AlbumsPage({ albums }: { albums: Album[] }) {
 	return (
-		<Layout title="Echo — Albums" active="albums">
+		<Layout title="Albums" active="albums">
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6">
 				{albums.length === 0 ? (
 					<div class="flex-1 flex flex-col items-center justify-center gap-3 text-center">

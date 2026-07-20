@@ -102,6 +102,7 @@ export const app_settings = sqliteTable(
 		music_dir: text("music_dir"),
 		data_dir: text("data_dir"),
 		signup_mode: text("signup_mode").notNull().default("closed"),
+		site_name: text("site_name"),
 	},
 	(t) => [check("app_settings_singleton", sql`${t.id} = 1`)],
 );

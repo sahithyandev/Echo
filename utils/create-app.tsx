@@ -12,6 +12,7 @@ import createHomeModule from "../modules/home";
 import createLibraryModule from "../modules/library";
 import createSearchModule from "../modules/search";
 import createSettingsModule from "../modules/settings";
+import { SettingsService } from "../modules/settings/service";
 import createSubsonicModule from "../modules/subsonic";
 import { assetRoute, assetSources } from "./asset-manifest";
 import { getEnvVar } from "./env";
@@ -98,6 +99,8 @@ async function loadProdAssets() {
 
 export async function createApp(db: DbLike) {
 	const base = (p: string) => new URL(p, import.meta.url).pathname;
+
+	await SettingsService.loadSiteName(db);
 
 	const assets =
 		getEnvVar("NODE_ENV") === "production"

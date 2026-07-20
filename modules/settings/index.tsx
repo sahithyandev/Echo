@@ -208,6 +208,17 @@ export default function createSettingsModule(db: DbLike) {
 			{ currentUser: true },
 		)
 		.post(
+			"/settings/admin/site-name",
+			async ({ currentUser, redirect, status, body }) => {
+				if (!currentUser) return redirect("/auth/login");
+				const user = await Auth.findUserById(db, currentUser.id);
+				if (!user.is_admin) return status(403);
+				await SettingsService.setSiteName(db, body.site_name.trim());
+				return redirect("/settings?ok=site-name");
+			},
+			{ currentUser: true, body: SettingsModel.SiteNameBody },
+		)
+		.post(
 			"/settings/admin/dirs",
 			async ({ currentUser, redirect, status, body }) => {
 				if (!currentUser) return redirect("/auth/login");

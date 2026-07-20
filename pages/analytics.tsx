@@ -161,7 +161,7 @@ export function AnalyticsPage({
 	byDay: ByDay[];
 }) {
 	return (
-		<Layout title="Echo — Analytics" active="analytics">
+		<Layout title="Analytics" active="analytics">
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-8">
 				<div>
 					<p class="text-xs text-accent font-medium uppercase tracking-wide mb-0.5">
