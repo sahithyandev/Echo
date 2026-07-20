@@ -1,4 +1,5 @@
 import { Html } from "@elysiajs/html";
+import { AlbumArt } from "../components/album-art";
 import { formatHours, unused } from "../utils/misc";
 import { Layout } from "./layout";
 
@@ -13,6 +14,57 @@ type ByAlbum = {
 };
 type ByYear = { year: number | null; seconds: number };
 type ByDay = { day: string; seconds: number };
+type RecentPlay = {
+	track_id: number;
+	title: string;
+	album_title: string | null;
+	cover_path: string | null;
+	artist_name: string | null;
+	played_at: Date;
+};
+
+/** e.g. "5m ago", "3h ago", "2d ago" — falls back to a date once it's old. */
+function relativeTime(date: Date): string {
+	const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+	if (seconds < 60) return "just now";
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return `${minutes}m ago`;
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `${hours}h ago`;
+	const days = Math.floor(hours / 24);
+	if (days < 30) return `${days}d ago`;
+	return date.toLocaleDateString();
+}
+
+function RecentPlays({ rows }: { rows: RecentPlay[] }) {
+	return (
+		<div>
+			<h2 class="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
+				Recent scrobbles
+			</h2>
+			{rows.length === 0 ? (
+				<p class="text-sm text-subtle">No plays yet.</p>
+			) : (
+				<div class="flex flex-col gap-2 max-h-100 overflow-y-auto">
+					{rows.map((r) => (
+						<div class="flex items-center gap-3">
+							<AlbumArt size={32} src={r.cover_path} />
+							<div class="min-w-0 flex-1">
+								<p class="text-xs font-medium truncate">{r.title}</p>
+								<p class="text-xs text-subtle truncate">
+									{r.artist_name ?? "Unknown artist"}
+								</p>
+							</div>
+							<p class="text-xs text-subtle shrink-0 tabular-nums">
+								{relativeTime(new Date(r.played_at))}
+							</p>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
 
 function BarChart({ rows }: { rows: ByDay[] }) {
 	const max = Math.max(...rows.map((r) => r.seconds), 1);
@@ -153,12 +205,14 @@ export function AnalyticsPage({
 	byAlbum,
 	byYear,
 	byDay,
+	recentPlays,
 }: {
 	totalSeconds: number;
 	byArtist: ByArtist[];
 	byAlbum: ByAlbum[];
 	byYear: ByYear[];
 	byDay: ByDay[];
+	recentPlays: RecentPlay[];
 }) {
 	return (
 		<Layout title="Analytics" active="analytics">
@@ -194,6 +248,8 @@ export function AnalyticsPage({
 							.slice(0, 10)
 							.map((r) => ({ label: String(r.year), seconds: r.seconds }))}
 					/>
+
+					<RecentPlays rows={recentPlays} />
 				</div>
 			</main>
 		</Layout>

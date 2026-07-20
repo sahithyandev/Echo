@@ -20,12 +20,14 @@ const ERROR_MESSAGES: Record<string, string> = {
 export function ArtistPage({
 	artist,
 	tracks,
+	playCounts = new Map(),
 	isAdmin,
 	ok,
 	error,
 }: {
 	artist: { id: number; name: string };
 	tracks: Track[];
+	playCounts?: Map<number, number>;
 	isAdmin: boolean;
 	ok?: string;
 	error?: string;
@@ -102,6 +104,7 @@ export function ArtistPage({
 						<tr class="border-b border-border text-left text-xs text-muted">
 							<th class="pb-2 pr-4 font-medium w-8">#</th>
 							<th class="pb-2 font-medium">Title</th>
+							<th class="pb-2 font-medium text-right">Plays</th>
 							<th class="pb-2 font-medium text-right">Duration</th>
 						</tr>
 					</thead>
@@ -132,6 +135,9 @@ export function ArtistPage({
 									</span>
 								</td>
 								<td class="py-3 font-medium track-title">{t.title}</td>
+								<td class="py-3 text-muted text-right tabular-nums">
+									{playCounts.get(t.id) ?? 0}
+								</td>
 								<td class="py-3 text-muted text-right tabular-nums">
 									{formatDuration(t.duration_seconds)}
 								</td>

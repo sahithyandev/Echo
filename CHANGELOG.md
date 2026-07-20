@@ -5,6 +5,8 @@
 **Features**
 
 - Add option to change site name (from `Echo` to something else) by the admins.
+- Implement scrobble
+  Scrobbling records a play once a track passes the Last.fm threshold (50% played or 4 minutes), and shows play counts on the library, album, and artist pages plus recent plays on the analytics page. A Last.fm-compatible AudioScrobbler 1.2 endpoint also lets external scrobbler apps submit plays directly into Echo's own history.
 
 ## v0.2.2
 

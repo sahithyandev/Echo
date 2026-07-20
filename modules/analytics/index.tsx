@@ -13,13 +13,14 @@ export default function createAnalyticsModule(db: DbLike) {
 		"/analytics",
 		async ({ currentUser, redirect }) => {
 			if (!currentUser) return redirect("/auth/login");
-			const [totalSeconds, byArtist, byAlbum, byYear, byDay] =
+			const [totalSeconds, byArtist, byAlbum, byYear, byDay, recentPlays] =
 				await Promise.all([
 					AnalyticsService.totalPlaybackSeconds(db, currentUser.id),
 					AnalyticsService.playbackByArtist(db, currentUser.id),
 					AnalyticsService.playbackByAlbum(db, currentUser.id),
 					AnalyticsService.playbackByYear(db, currentUser.id),
 					AnalyticsService.playbackByDay(db, currentUser.id),
+					AnalyticsService.recentPlays(db, currentUser.id),
 				]);
 			return (
 				<AnalyticsPage
@@ -28,6 +29,7 @@ export default function createAnalyticsModule(db: DbLike) {
 					byAlbum={byAlbum}
 					byYear={byYear}
 					byDay={byDay}
+					recentPlays={recentPlays}
 				/>
 			);
 		},

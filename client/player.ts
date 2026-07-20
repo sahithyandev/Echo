@@ -115,6 +115,7 @@ function savePlaybackPosition(beacon = false): void {
 let listenTrackId: string | null = null;
 let listenAnchor = 0;
 let listenAccrued = 0;
+let scrobbled = false;
 
 /** Report accrued listening time for the current track, then reset the accrual. */
 function flushListening(beacon = false): void {
@@ -129,6 +130,20 @@ function resetListenTracking(trackId: string): void {
 	listenTrackId = trackId;
 	listenAnchor = 0;
 	listenAccrued = 0;
+	scrobbled = false;
+}
+
+/** Record a completed play once a track has passed the Last.fm threshold (50% or 4 min). */
+function maybeScrobble(): void {
+	if (scrobbled || !audio.dataset.trackId) return;
+	if (!audio.duration || Number.isNaN(audio.duration)) return;
+	if (audio.currentTime < audio.duration / 2 && audio.currentTime < 240) return;
+	scrobbled = true;
+	fetch("/history", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ track_id: Number(audio.dataset.trackId) }),
+	});
 }
 
 function resumeOnNextInteraction(): void {
@@ -248,11 +263,6 @@ function playTrack(
 		audio.src = `/track/${id}/stream`;
 		audio.dataset.trackId = id;
 		resetListenTracking(id);
-		fetch("/history", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ track_id: Number(id) }),
-		});
 	}
 	audio.play();
 	titleEl.textContent = title;
@@ -316,6 +326,7 @@ nextBtn.addEventListener("click", () => {
 });
 
 audio.addEventListener("ended", () => {
+	maybeScrobble();
 	if (repeatMode === "one") {
 		audio.currentTime = 0;
 		audio.play();
@@ -361,6 +372,8 @@ audio.addEventListener("timeupdate", () => {
 	if (!audio.paused && delta > 0 && delta < 1.5) {
 		listenAccrued += delta;
 	}
+
+	maybeScrobble();
 
 	if (audio.currentTime - lastSavedAt < 5) return;
 	lastSavedAt = audio.currentTime;

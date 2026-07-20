@@ -4,6 +4,7 @@ import type { DbLike } from "../../db/types";
 import { AlbumPage } from "../../pages/album";
 import { AlbumsPage } from "../../pages/albums";
 import { unused } from "../../utils/misc";
+import { AnalyticsService } from "../analytics/service";
 import createAuthMiddleware from "../auth/middleware";
 import { Auth } from "../auth/service";
 import { AlbumService } from "./service";
@@ -45,11 +46,17 @@ export default function createAlbumModule(db: DbLike) {
 					isNoAlbum ? [] : AlbumService.getAlbumArtists(db, albumId),
 				]);
 				if (!album) return redirect("/library");
+				const playCounts = await AnalyticsService.getPlayCounts(
+					db,
+					currentUser.id,
+					tracks.map((t) => t.id),
+				);
 				return (
 					<AlbumPage
 						album={album}
 						tracks={tracks}
 						artists={artists}
+						playCounts={playCounts}
 						isAdmin={user.is_admin}
 						ok={typeof query.ok === "string" ? query.ok : undefined}
 						error={typeof query.error === "string" ? query.error : undefined}

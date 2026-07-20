@@ -3,6 +3,7 @@ import {
 	albums,
 	artists,
 	listening,
+	play_history,
 	track_artists,
 	tracks,
 	users,
@@ -127,5 +128,67 @@ describe("AnalyticsService.playbackByYear", () => {
 		const { user } = await seed(db);
 		const result = await AnalyticsService.playbackByYear(db, user.id);
 		expect(result).toEqual([{ year: 2021, seconds: 150 }]);
+	});
+});
+
+describe("AnalyticsService.getPlayCounts", () => {
+	it("counts plays per track, scoped to the given user", async () => {
+		const { user, track } = await seed(db);
+		await db.insert(play_history).values([
+			{ user_id: user.id, track_id: track.id },
+			{ user_id: user.id, track_id: track.id },
+		]);
+		const [otherUser] = await db
+			.insert(users)
+			.values({
+				email: "other@b.com",
+				password: "hash",
+				name: "Other",
+				subsonic_password: "key3",
+			})
+			.returning({ id: users.id });
+		await db
+			.insert(play_history)
+			.values({ user_id: otherUser.id, track_id: track.id });
+
+		const result = await AnalyticsService.getPlayCounts(db, user.id, [
+			track.id,
+		]);
+		expect(result.get(track.id)).toBe(2);
+	});
+
+	it("returns an empty map for an empty track id list", async () => {
+		const { user } = await seed(db);
+		expect(await AnalyticsService.getPlayCounts(db, user.id, [])).toEqual(
+			new Map(),
+		);
+	});
+});
+
+describe("AnalyticsService.recentPlays", () => {
+	it("returns plays newest first with track/artist/album hydrated", async () => {
+		const { user, track } = await seed(db);
+		await db.insert(play_history).values({
+			user_id: user.id,
+			track_id: track.id,
+			played_at: new Date("2024-01-01T00:00:00Z"),
+		});
+		await db.insert(play_history).values({
+			user_id: user.id,
+			track_id: track.id,
+			played_at: new Date("2024-02-01T00:00:00Z"),
+		});
+
+		const result = await AnalyticsService.recentPlays(db, user.id);
+		expect(result).toHaveLength(2);
+		expect(result[0].played_at.getTime()).toBeGreaterThan(
+			result[1].played_at.getTime(),
+		);
+		expect(result[0]).toMatchObject({
+			track_id: track.id,
+			title: "Track One",
+			album_title: "Album One",
+			artist_name: "Artist A",
+		});
 	});
 });

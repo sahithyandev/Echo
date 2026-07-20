@@ -35,6 +35,7 @@ export function AlbumPage({
 	album,
 	tracks,
 	artists,
+	playCounts = new Map(),
 	isAdmin,
 	ok,
 	error,
@@ -42,6 +43,7 @@ export function AlbumPage({
 	album: Album;
 	tracks: Track[];
 	artists: Artist[];
+	playCounts?: Map<number, number>;
 	isAdmin: boolean;
 	ok?: string;
 	error?: string;
@@ -131,6 +133,7 @@ export function AlbumPage({
 						<tr class="border-b border-border text-left text-xs text-muted">
 							<th class="pb-2 pr-4 font-medium w-8">#</th>
 							<th class="pb-2 font-medium">Title</th>
+							<th class="pb-2 font-medium text-right">Plays</th>
 							<th class="pb-2 font-medium text-right">Duration</th>
 							{isAdmin && <th class="pb-2 pl-2 font-medium w-8" />}
 						</tr>
@@ -164,6 +167,9 @@ export function AlbumPage({
 									</span>
 								</td>
 								<td class="py-3 font-medium track-title">{t.title}</td>
+								<td class="py-3 text-muted text-right tabular-nums">
+									{playCounts.get(t.id) ?? 0}
+								</td>
 								<td class="py-3 text-muted text-right tabular-nums">
 									{formatDuration(t.duration_seconds)}
 								</td>

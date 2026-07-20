@@ -4,6 +4,7 @@ import { Elysia, t } from "elysia";
 import type { DbLike } from "../../db/types";
 import { LibraryPage, TrackGroups } from "../../pages/library";
 import { unused } from "../../utils/misc";
+import { AnalyticsService } from "../analytics/service";
 import createAuthMiddleware from "../auth/middleware";
 import { Auth } from "../auth/service";
 import { SettingsService } from "../settings/service";
@@ -28,10 +29,16 @@ export default function createLibraryModule(db: DbLike) {
 					Auth.findUserById(db, currentUser.id),
 					LibraryService.listTracksPage(db, 0, LIBRARY_PAGE_SIZE),
 				]);
+				const playCounts = await AnalyticsService.getPlayCounts(
+					db,
+					currentUser.id,
+					tracks.map((t) => t.id),
+				);
 				return (
 					<LibraryPage
 						name={user.name}
 						tracks={tracks}
+						playCounts={playCounts}
 						isAdmin={user.is_admin}
 						ok={typeof query.ok === "string" ? query.ok : undefined}
 						error={typeof query.error === "string" ? query.error : undefined}
@@ -51,11 +58,20 @@ export default function createLibraryModule(db: DbLike) {
 					offset,
 					LIBRARY_PAGE_SIZE,
 				);
+				const playCounts = await AnalyticsService.getPlayCounts(
+					db,
+					currentUser.id,
+					tracks.map((t) => t.id),
+				);
 				const nextOffset = offset + tracks.length;
 				const hasMore = tracks.length >= LIBRARY_PAGE_SIZE;
 				return (
 					<>
-						<TrackGroups tracks={tracks} isAdmin={user.is_admin} />
+						<TrackGroups
+							tracks={tracks}
+							playCounts={playCounts}
+							isAdmin={user.is_admin}
+						/>
 						{hasMore && (
 							<div id="library-sentinel" data-offset={String(nextOffset)} />
 						)}

@@ -1,14 +1,58 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import {
 	albums,
 	artists,
 	listening,
+	play_history,
 	track_artists,
 	tracks,
 } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 
 export abstract class AnalyticsService {
+	/** Per-user play counts for a set of tracks, keyed by track id. */
+	static async getPlayCounts(
+		client: DbLike,
+		userId: number,
+		trackIds: number[],
+	): Promise<Map<number, number>> {
+		if (trackIds.length === 0) return new Map();
+		const rows = await client
+			.select({ track_id: play_history.track_id, count: sql<number>`count(*)` })
+			.from(play_history)
+			.where(
+				and(
+					eq(play_history.user_id, userId),
+					inArray(play_history.track_id, trackIds),
+				),
+			)
+			.groupBy(play_history.track_id);
+		return new Map(rows.map((r) => [r.track_id, r.count]));
+	}
+
+	/** Most recent completed plays for a user, newest first. */
+	static async recentPlays(client: DbLike, userId: number, limit = 100) {
+		const rows = await client
+			.select({
+				track_id: tracks.id,
+				title: tracks.title,
+				album_title: albums.title,
+				cover_path: albums.cover_path,
+				artist_name: artists.name,
+				played_at: play_history.played_at,
+			})
+			.from(play_history)
+			.innerJoin(tracks, eq(tracks.id, play_history.track_id))
+			.leftJoin(albums, eq(albums.id, tracks.album_id))
+			.leftJoin(track_artists, eq(track_artists.track_id, tracks.id))
+			.leftJoin(artists, eq(artists.id, track_artists.artist_id))
+			.where(eq(play_history.user_id, userId))
+			.groupBy(play_history.id)
+			.orderBy(desc(play_history.played_at))
+			.limit(limit);
+		return rows;
+	}
+
 	static async totalPlaybackSeconds(
 		client: DbLike,
 		userId: number,

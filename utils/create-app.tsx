@@ -10,6 +10,7 @@ import createAuthModule from "../modules/auth";
 import createAuthMiddleware from "../modules/auth/middleware";
 import createHomeModule from "../modules/home";
 import createLibraryModule from "../modules/library";
+import createScrobbleModule from "../modules/scrobble";
 import createSearchModule from "../modules/search";
 import createSettingsModule from "../modules/settings";
 import { SettingsService } from "../modules/settings/service";
@@ -159,7 +160,8 @@ export async function createApp(db: DbLike) {
 		.use(createSearchModule(db))
 		.use(createSettingsModule(db))
 		.use(createAnalyticsModule(db))
-		.use(createSubsonicModule(db));
+		.use(createSubsonicModule(db))
+		.use(createScrobbleModule(db));
 }
 
 export type App = Awaited<ReturnType<typeof createApp>>;

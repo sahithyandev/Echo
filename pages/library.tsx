@@ -32,7 +32,15 @@ const ERROR_MESSAGES: Record<string, string> = {
 	rename: "Couldn't rename track.",
 };
 
-function TrackCard({ t, isAdmin }: { t: Track; isAdmin: boolean }) {
+function TrackCard({
+	t,
+	playCount,
+	isAdmin,
+}: {
+	t: Track;
+	playCount: number;
+	isAdmin: boolean;
+}) {
 	return (
 		<div
 			class="group cursor-pointer"
@@ -182,6 +190,11 @@ function TrackCard({ t, isAdmin }: { t: Track; isAdmin: boolean }) {
 					<>—</>
 				)}
 			</p>
+			{playCount > 0 && (
+				<p class="text-xs text-subtle tabular-nums">
+					{playCount} play{playCount !== 1 ? "s" : ""}
+				</p>
+			)}
 		</div>
 	);
 }
@@ -194,9 +207,11 @@ function TrackCard({ t, isAdmin }: { t: Track; isAdmin: boolean }) {
  */
 export function TrackGroups({
 	tracks,
+	playCounts = new Map(),
 	isAdmin,
 }: {
 	tracks: Track[];
+	playCounts?: Map<number, number>;
 	isAdmin: boolean;
 }) {
 	let lastGroup: string | null = null;
@@ -216,7 +231,11 @@ export function TrackGroups({
 								{group}
 							</h2>
 						)}
-						<TrackCard t={t} isAdmin={isAdmin} />
+						<TrackCard
+							t={t}
+							playCount={playCounts.get(t.id) ?? 0}
+							isAdmin={isAdmin}
+						/>
 					</>
 				);
 			})}
@@ -227,12 +246,14 @@ export function TrackGroups({
 export function LibraryPage({
 	name,
 	tracks,
+	playCounts = new Map(),
 	isAdmin,
 	ok,
 	error,
 }: {
 	name: string;
 	tracks: Track[];
+	playCounts?: Map<number, number>;
 	isAdmin: boolean;
 	ok?: string;
 	error?: string;
@@ -287,7 +308,11 @@ export function LibraryPage({
 						id="library-grid"
 						class="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-3"
 					>
-						<TrackGroups tracks={tracks} isAdmin={isAdmin} />
+						<TrackGroups
+							tracks={tracks}
+							playCounts={playCounts}
+							isAdmin={isAdmin}
+						/>
 					</div>
 				)}
 
