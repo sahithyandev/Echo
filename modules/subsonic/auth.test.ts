@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { createHash } from "node:crypto";
 import { users } from "../../db/schema";
 import { makeTestDb } from "../../db/test-client";
 import type { DbLike } from "../../db/types";
+import { setAllowAnonymous } from "../../utils/anonymous";
+import { SettingsService } from "../settings/service";
 import { MissingCredentialsError, resolveSubsonicUser } from "./auth";
 import { SubsonicError, SubsonicErrorCode } from "./respond";
 
@@ -125,5 +127,56 @@ describe("resolveSubsonicUser", () => {
 		await expect(resolveSubsonicUser(db, { u: "alice" })).rejects.toMatchObject(
 			{ code: SubsonicErrorCode.wrongCredentials },
 		);
+	});
+});
+
+describe("resolveSubsonicUser with the anonymous username", () => {
+	afterEach(() => {
+		setAllowAnonymous(false);
+	});
+
+	it("throws wrongCredentials when anonymous access is disabled", async () => {
+		await SettingsService.setAnonymousSubsonicPassword(db, "guestkey");
+		await expect(
+			resolveSubsonicUser(db, { u: "anonymous", p: "guestkey" }),
+		).rejects.toMatchObject({ code: SubsonicErrorCode.wrongCredentials });
+	});
+
+	it("throws wrongCredentials when no anonymous key has been set", async () => {
+		await SettingsService.setAllowAnonymous(db, true);
+		await expect(
+			resolveSubsonicUser(db, { u: "anonymous", p: "anything" }),
+		).rejects.toMatchObject({ code: SubsonicErrorCode.wrongCredentials });
+	});
+
+	it("throws wrongCredentials for a wrong key", async () => {
+		await SettingsService.setAllowAnonymous(db, true);
+		await SettingsService.setAnonymousSubsonicPassword(db, "guestkey");
+		await expect(
+			resolveSubsonicUser(db, { u: "anonymous", p: "wrong" }),
+		).rejects.toMatchObject({ code: SubsonicErrorCode.wrongCredentials });
+	});
+
+	it("resolves the guest identity with a correct key, matched case-insensitively", async () => {
+		await SettingsService.setAllowAnonymous(db, true);
+		await SettingsService.setAnonymousSubsonicPassword(db, "guestkey");
+		const user = await resolveSubsonicUser(db, {
+			u: "Anonymous",
+			p: "guestkey",
+		});
+		expect(user).toEqual({ id: 0, name: "Guest", email: "anonymous" });
+	});
+
+	it("resolves via the t/s token scheme", async () => {
+		await SettingsService.setAllowAnonymous(db, true);
+		await SettingsService.setAnonymousSubsonicPassword(db, "guestkey");
+		const salt = "abc123";
+		const token = md5(`guestkey${salt}`);
+		const user = await resolveSubsonicUser(db, {
+			u: "anonymous",
+			t: token,
+			s: salt,
+		});
+		expect(user.id).toBe(0);
 	});
 });

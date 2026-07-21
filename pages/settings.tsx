@@ -64,6 +64,8 @@ const OK_MESSAGES: Record<string, string> = {
 	"site-name": "Site name updated.",
 	subsonic: "Subsonic access updated.",
 	signups: "Sign-up settings updated.",
+	anonymous: "Anonymous listening updated.",
+	"anonymous-subsonic": "Anonymous streaming key updated.",
 };
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -116,6 +118,8 @@ export function SettingsPage({
 	signupConfig,
 	fpcalcAvailable,
 	duplicates,
+	allowAnonymous,
+	anonymousSubsonicPassword,
 	ok,
 	error,
 }: {
@@ -128,6 +132,8 @@ export function SettingsPage({
 	signupConfig?: { mode: "closed" | "open" | "allowlist"; emails: string[] };
 	fpcalcAvailable?: boolean;
 	duplicates?: DuplicateGroup[];
+	allowAnonymous?: boolean;
+	anonymousSubsonicPassword?: string | null;
 	ok?: string;
 	error?: string;
 }) {
@@ -272,7 +278,7 @@ export function SettingsPage({
 								/>
 								<button
 									type="button"
-									id="copy-subsonic-key"
+									data-copy-key="subsonic_password"
 									class={secondaryButtonClass}
 									title="Copy"
 									aria-label="Copy"
@@ -294,7 +300,7 @@ export function SettingsPage({
 								</button>
 								<button
 									type="button"
-									id="generate-subsonic-key"
+									data-generate-key="subsonic_password"
 									class={secondaryButtonClass}
 									title="Generate"
 									aria-label="Generate"
@@ -414,6 +420,110 @@ export function SettingsPage({
 								Rescan library
 							</button>
 						</form>
+
+						<form
+							class="flex items-center justify-between gap-4 border-t border-border pt-4"
+							method="post"
+							action="/settings/admin/anonymous"
+						>
+							<div>
+								<p class="text-sm font-medium">Anonymous listening</p>
+								<p class="text-xs text-muted">
+									Let visitors browse and stream without signing in.
+								</p>
+							</div>
+							<input
+								type="hidden"
+								name="allow_anonymous"
+								value={(!allowAnonymous).toString()}
+							/>
+							<button type="submit" class={`${secondaryButtonClass} shrink-0`}>
+								{allowAnonymous ? "Disable" : "Enable"}
+							</button>
+						</form>
+
+						{allowAnonymous && (
+							<form
+								class="flex flex-col gap-3 border-t border-border pt-4"
+								method="post"
+								action="/settings/admin/anonymous-subsonic"
+							>
+								<p class="text-xs text-muted">
+									A shared key for anonymous listeners to connect Subsonic or
+									OpenSubsonic clients. Username is{" "}
+									<span class="font-mono">anonymous</span>.
+								</p>
+								<div class="flex flex-col gap-1.5">
+									<label for="anonymous_subsonic_password" class={labelClass}>
+										Anonymous streaming key
+									</label>
+									<div class="flex gap-2">
+										<input
+											id="anonymous_subsonic_password"
+											name="anonymous_subsonic_password"
+											type="text"
+											placeholder={anonymousSubsonicPassword ? "" : "Not set"}
+											value={anonymousSubsonicPassword ?? ""}
+											class={`${inputClass} flex-1`}
+										/>
+										<button
+											type="button"
+											data-copy-key="anonymous_subsonic_password"
+											class={secondaryButtonClass}
+											title="Copy"
+											aria-label="Copy"
+										>
+											<svg
+												width="14"
+												height="14"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												aria-hidden="true"
+											>
+												<rect x="9" y="9" width="13" height="13" rx="2" />
+												<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+											</svg>
+										</button>
+										<button
+											type="button"
+											data-generate-key="anonymous_subsonic_password"
+											class={secondaryButtonClass}
+											title="Generate"
+											aria-label="Generate"
+										>
+											<svg
+												width="14"
+												height="14"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												aria-hidden="true"
+											>
+												<polyline points="23,4 23,10 17,10" />
+												<polyline points="1,20 1,14 7,14" />
+												<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+											</svg>
+										</button>
+									</div>
+									<span class="text-xs text-subtle">
+										Leave blank and save to disable anonymous streaming access.
+									</span>
+								</div>
+								<button
+									type="submit"
+									class={`${primaryButtonClass} self-start`}
+								>
+									Save
+								</button>
+							</form>
+						)}
 
 						<div class="flex flex-col gap-2 border-t border-border pt-4">
 							{users.map((u) => (

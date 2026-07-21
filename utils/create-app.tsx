@@ -102,6 +102,7 @@ export async function createApp(db: DbLike) {
 	const base = (p: string) => new URL(p, import.meta.url).pathname;
 
 	await SettingsService.loadSiteName(db);
+	await SettingsService.loadAllowAnonymous(db);
 
 	const assets =
 		getEnvVar("NODE_ENV") === "production"

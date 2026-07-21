@@ -2,7 +2,12 @@ import { createHash } from "node:crypto";
 import { eq, or } from "drizzle-orm";
 import { users } from "../../db/schema";
 import type { DbLike } from "../../db/types";
+import { allowAnonymous } from "../../utils/anonymous";
+import { SettingsService } from "../settings/service";
 import { SubsonicError, SubsonicErrorCode } from "./respond";
+
+/** Fixed username anonymous listeners use with the shared key from Settings > Admin. */
+export const ANONYMOUS_SUBSONIC_USERNAME = "anonymous";
 
 function md5(input: string): string {
 	return createHash("md5").update(input).digest("hex");
@@ -12,6 +17,35 @@ function decodeLegacyPassword(p: string): string {
 	return p.startsWith("enc:")
 		? Buffer.from(p.slice(4), "hex").toString("utf8")
 		: p;
+}
+
+function wrongCredentials(): SubsonicError {
+	return new SubsonicError(
+		SubsonicErrorCode.wrongCredentials,
+		"Wrong username or password",
+	);
+}
+
+/** Guest identity for anonymous streaming — id 0 doesn't exist in `users`, so callers must skip any write keyed on it (see scrobble). */
+async function resolveAnonymousUser(
+	db: DbLike,
+	t: string | undefined,
+	s: string | undefined,
+	p: string | undefined,
+) {
+	if (!allowAnonymous) throw wrongCredentials();
+	const password = await SettingsService.getAnonymousSubsonicPassword(db);
+	if (!password) throw wrongCredentials();
+
+	const valid =
+		t && s
+			? md5(password + s) === t.toLowerCase()
+			: p
+				? decodeLegacyPassword(p) === password
+				: false;
+	if (!valid) throw wrongCredentials();
+
+	return { id: 0, name: "Guest", email: ANONYMOUS_SUBSONIC_USERNAME };
 }
 
 export class MissingCredentialsError extends SubsonicError {
@@ -57,6 +91,10 @@ export async function resolveSubsonicUser(
 		throw new MissingCredentialsError();
 	}
 
+	if (u.toLowerCase().trim() === ANONYMOUS_SUBSONIC_USERNAME) {
+		return resolveAnonymousUser(db, t, s, p);
+	}
+
 	const [user] = await db
 		.select({
 			id: users.id,
@@ -70,10 +108,7 @@ export async function resolveSubsonicUser(
 		.limit(1);
 
 	if (!user?.is_active || !user.subsonic_password) {
-		throw new SubsonicError(
-			SubsonicErrorCode.wrongCredentials,
-			"Wrong username or password",
-		);
+		throw wrongCredentials();
 	}
 
 	const valid =
@@ -84,10 +119,7 @@ export async function resolveSubsonicUser(
 				: false;
 
 	if (!valid) {
-		throw new SubsonicError(
-			SubsonicErrorCode.wrongCredentials,
-			"Wrong username or password",
-		);
+		throw wrongCredentials();
 	}
 
 	return { id: user.id, name: user.name, email: user.email };

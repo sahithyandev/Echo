@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { albums, tracks } from "../../db/schema";
 import { makeTestDb } from "../../db/test-client";
 import type { DbLike } from "../../db/types";
+import { setAllowAnonymous } from "../../utils/anonymous";
 import { type App, createApp } from "../../utils/create-app";
 import { SettingsService } from "../settings/service";
 
@@ -87,6 +88,60 @@ describe("GET /library/tracks", () => {
 		const html = await res.text();
 		expect(html).toContain("Track One");
 		expect(html).not.toContain("library-sentinel");
+	});
+});
+
+describe("GET /library with anonymous access", () => {
+	afterEach(() => {
+		setAllowAnonymous(false);
+	});
+
+	it("redirects to /login when the flag is off", async () => {
+		const res = await app.handle(new Request("http://localhost/library"));
+		expect(res.status).toBe(302);
+	});
+
+	it("returns 200 for an unauthenticated request once enabled", async () => {
+		await SettingsService.setAllowAnonymous(db, true);
+		const res = await app.handle(new Request("http://localhost/library"));
+		expect(res.status).toBe(200);
+		const html = await res.text();
+		expect(html).toContain("Browsing as guest");
+	});
+
+	it("streams a track for an unauthenticated request once enabled", async () => {
+		await SettingsService.setAllowAnonymous(db, true);
+		const track = await seedTrack();
+		await writeFile(`${musicDir}/track-one.mp3`, "audio-bytes");
+		const res = await app.handle(
+			new Request(`http://localhost/track/${track.id}/stream`),
+		);
+		expect(res.status).toBe(200);
+	});
+
+	it("shows the anonymous streaming key when one is configured", async () => {
+		await SettingsService.setAllowAnonymous(db, true);
+		await SettingsService.setAnonymousSubsonicPassword(db, "guestkey");
+		const res = await app.handle(new Request("http://localhost/library"));
+		const html = await res.text();
+		expect(html).toContain("Stream with a Subsonic app");
+		expect(html).toContain("guestkey");
+	});
+
+	it("omits the streaming key panel when no key is configured", async () => {
+		await SettingsService.setAllowAnonymous(db, true);
+		const res = await app.handle(new Request("http://localhost/library"));
+		const html = await res.text();
+		expect(html).not.toContain("Stream with a Subsonic app");
+	});
+
+	it("omits the streaming key panel for signed-in users", async () => {
+		await SettingsService.setAllowAnonymous(db, true);
+		await SettingsService.setAnonymousSubsonicPassword(db, "guestkey");
+		const token = await signUp();
+		const res = await authed("http://localhost/library", token);
+		const html = await res.text();
+		expect(html).not.toContain("Stream with a Subsonic app");
 	});
 });
 

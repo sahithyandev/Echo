@@ -26,6 +26,17 @@ export namespace SettingsModel {
 	});
 	export type SiteNameBody = typeof SiteNameBody.static;
 
+	export const AnonymousAccessBody = t.Object({
+		allow_anonymous: t.BooleanString(),
+	});
+	export type AnonymousAccessBody = typeof AnonymousAccessBody.static;
+
+	export const AnonymousSubsonicPasswordBody = t.Object({
+		anonymous_subsonic_password: t.String(),
+	});
+	export type AnonymousSubsonicPasswordBody =
+		typeof AnonymousSubsonicPasswordBody.static;
+
 	export const DirsBody = t.Object({
 		music_dir: t.String({ minLength: 1 }),
 		data_dir: t.String({ minLength: 1 }),

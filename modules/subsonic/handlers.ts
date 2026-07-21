@@ -348,6 +348,9 @@ async function scrobble(db: DbLike, user: SubsonicUser, query: Query) {
 	const { type, id } = requireId(query);
 	if (type !== "tr")
 		throw new SubsonicError(SubsonicErrorCode.notFound, "Not found");
+	// The anonymous guest (id 0) has no row in `users`, so there's nothing to
+	// record play history against.
+	if (user.id === 0) return ok({});
 	console.log(
 		`[subsonic] scrobble user=${user.name} track=${id} submission=${str(query, "submission") ?? "(unset)"}`,
 	);

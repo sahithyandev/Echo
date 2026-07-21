@@ -3,6 +3,7 @@ import { Html } from "@elysiajs/html";
 import { Elysia, t } from "elysia";
 import type { DbLike } from "../../db/types";
 import { LibraryPage, TrackGroups } from "../../pages/library";
+import { allowAnonymous } from "../../utils/anonymous";
 import { unused } from "../../utils/misc";
 import { AnalyticsService } from "../analytics/service";
 import createAuthMiddleware from "../auth/middleware";
@@ -24,22 +25,27 @@ export default function createLibraryModule(db: DbLike) {
 		.get(
 			"/library",
 			async ({ currentUser, redirect, query }) => {
-				if (!currentUser) return redirect("/auth/login");
-				const [user, tracks] = await Promise.all([
-					Auth.findUserById(db, currentUser.id),
+				if (!currentUser && !allowAnonymous) return redirect("/auth/login");
+				const [user, tracks, anonymousStreamingKey] = await Promise.all([
+					currentUser ? Auth.findUserById(db, currentUser.id) : null,
 					LibraryService.listTracksPage(db, 0, LIBRARY_PAGE_SIZE),
+					currentUser ? null : SettingsService.getAnonymousSubsonicPassword(db),
 				]);
-				const playCounts = await AnalyticsService.getPlayCounts(
-					db,
-					currentUser.id,
-					tracks.map((t) => t.id),
-				);
+				const playCounts = currentUser
+					? await AnalyticsService.getPlayCounts(
+							db,
+							currentUser.id,
+							tracks.map((t) => t.id),
+						)
+					: new Map<number, number>();
 				return (
 					<LibraryPage
-						name={user.name}
+						name={user?.name ?? "Guest"}
 						tracks={tracks}
 						playCounts={playCounts}
-						isAdmin={user.is_admin}
+						isAdmin={user?.is_admin ?? false}
+						signedIn={currentUser !== null}
+						anonymousStreamingKey={anonymousStreamingKey}
 						ok={typeof query.ok === "string" ? query.ok : undefined}
 						error={typeof query.error === "string" ? query.error : undefined}
 					/>
@@ -50,19 +56,23 @@ export default function createLibraryModule(db: DbLike) {
 		.get(
 			"/library/tracks",
 			async ({ currentUser, status, query }) => {
-				if (!currentUser) return status(401);
-				const user = await Auth.findUserById(db, currentUser.id);
+				if (!currentUser && !allowAnonymous) return status(401);
+				const user = currentUser
+					? await Auth.findUserById(db, currentUser.id)
+					: null;
 				const offset = Math.max(0, Number(query.offset) || 0);
 				const tracks = await LibraryService.listTracksPage(
 					db,
 					offset,
 					LIBRARY_PAGE_SIZE,
 				);
-				const playCounts = await AnalyticsService.getPlayCounts(
-					db,
-					currentUser.id,
-					tracks.map((t) => t.id),
-				);
+				const playCounts = currentUser
+					? await AnalyticsService.getPlayCounts(
+							db,
+							currentUser.id,
+							tracks.map((t) => t.id),
+						)
+					: new Map<number, number>();
 				const nextOffset = offset + tracks.length;
 				const hasMore = tracks.length >= LIBRARY_PAGE_SIZE;
 				return (
@@ -70,7 +80,7 @@ export default function createLibraryModule(db: DbLike) {
 						<TrackGroups
 							tracks={tracks}
 							playCounts={playCounts}
-							isAdmin={user.is_admin}
+							isAdmin={user?.is_admin ?? false}
 						/>
 						{hasMore && (
 							<div id="library-sentinel" data-offset={String(nextOffset)} />
@@ -215,7 +225,7 @@ export default function createLibraryModule(db: DbLike) {
 		.get(
 			"/track/:id",
 			async ({ currentUser, redirect, params }) => {
-				if (!currentUser) return redirect("/auth/login");
+				if (!currentUser && !allowAnonymous) return redirect("/auth/login");
 				const track = await LibraryService.findTrackEntryById(
 					db,
 					Number(params.id),
@@ -228,7 +238,7 @@ export default function createLibraryModule(db: DbLike) {
 		.get(
 			"/track/:id/stream",
 			async ({ currentUser, redirect, params, request }) => {
-				if (!currentUser) return redirect("/auth/login");
+				if (!currentUser && !allowAnonymous) return redirect("/auth/login");
 				const track = await LibraryService.findTrackById(db, Number(params.id));
 				if (!track) return new Response("Not found", { status: 404 });
 

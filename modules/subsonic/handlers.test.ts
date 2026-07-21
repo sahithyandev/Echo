@@ -332,6 +332,18 @@ describe("scrobble", () => {
 		const [state] = await db.select().from(user_playback_state);
 		expect(state.playing).toBe(true);
 	});
+
+	it("no-ops for the anonymous guest (id 0), which has no row in users", async () => {
+		const { track } = await seed();
+		const result = await subsonicHandlers.scrobble(
+			db,
+			{ id: 0, name: "Guest", email: "anonymous" },
+			{ id: makeId("tr", track.id) },
+		);
+		expect(payloadOf(result).status).toBe("ok");
+		const history = await db.select().from(play_history);
+		expect(history).toHaveLength(0);
+	});
 });
 
 describe("scanStatus / getStarred / getPlaylists", () => {

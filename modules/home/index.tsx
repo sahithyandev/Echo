@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { user_playback_state } from "../../db/schema";
 import type { DbLike } from "../../db/types";
 import { HomePage } from "../../pages/home";
+import { allowAnonymous } from "../../utils/anonymous";
 import { unused } from "../../utils/misc";
 import createAuthMiddleware from "../auth/middleware";
 import { Auth } from "../auth/service";
@@ -18,7 +19,9 @@ export default function createHomeModule(db: DbLike) {
 	return new Elysia().use(authMiddleware).get(
 		"/",
 		async ({ currentUser, redirect }) => {
-			if (!currentUser) return redirect("/auth/login");
+			if (!currentUser) {
+				return allowAnonymous ? redirect("/library") : redirect("/auth/login");
+			}
 
 			const [user, playback, recentlyAdded, recentlyPlayed] = await Promise.all(
 				[

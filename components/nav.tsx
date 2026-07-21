@@ -122,7 +122,19 @@ const tabs: { tab: Tab; href: string; label: string }[] = [
 	{ tab: "settings", href: "/settings", label: "Settings" },
 ];
 
-export function Nav({ active }: { active: Tab }) {
+export function Nav({
+	active,
+	signedIn = true,
+}: {
+	active: Tab;
+	signedIn?: boolean;
+}) {
+	const visibleTabs = signedIn
+		? tabs
+		: tabs.filter(
+				(t) =>
+					t.tab !== "home" && t.tab !== "analytics" && t.tab !== "settings",
+			);
 	return (
 		<header class="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border">
 			<div class="flex items-center gap-6">
@@ -130,7 +142,7 @@ export function Nav({ active }: { active: Tab }) {
 					{siteName}
 				</a>
 				<nav class="hidden md:flex items-center gap-4">
-					{tabs.map((t) => (
+					{visibleTabs.map((t) => (
 						<a
 							href={t.href}
 							class={`text-sm font-medium transition-colors ${
@@ -157,16 +169,25 @@ export function Nav({ active }: { active: Tab }) {
 					class="hidden absolute right-0 top-[calc(100%+0.5rem)] w-full max-h-[70vh] overflow-y-auto bg-background border border-border rounded-md shadow-lg z-50"
 				/>
 			</div>
-			<form method="post" action="/auth/sign-out">
-				<button
-					type="submit"
-					class="text-xs text-muted hover:text-foreground border border-border rounded-md px-3 py-1.5 transition-colors hover:bg-surface cursor-pointer"
+			{signedIn ? (
+				<form method="post" action="/auth/sign-out">
+					<button
+						type="submit"
+						class="text-xs text-muted hover:text-foreground border border-border rounded-md px-3 py-1.5 transition-colors hover:bg-surface cursor-pointer"
+					>
+						Sign out
+					</button>
+				</form>
+			) : (
+				<a
+					href="/auth/login"
+					class="text-xs text-muted hover:text-foreground border border-border rounded-md px-3 py-1.5 transition-colors hover:bg-surface"
 				>
-					Sign out
-				</button>
-			</form>
+					Sign in
+				</a>
+			)}
 			<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 flex border-t border-border bg-background/95 backdrop-blur-xl">
-				{tabs.map((t) => (
+				{visibleTabs.map((t) => (
 					<a
 						href={t.href}
 						class={`flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${

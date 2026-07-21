@@ -60,19 +60,20 @@ document.addEventListener("change", (e) => {
 
 document.addEventListener("click", (e) => {
 	if (!(e.target instanceof Element)) return;
-	if (!e.target.closest("#generate-subsonic-key")) return;
+	const button = e.target.closest<HTMLElement>("[data-generate-key]");
+	if (!button) return;
 	const input = document.getElementById(
-		"subsonic_password",
+		button.dataset.generateKey ?? "",
 	) as HTMLInputElement | null;
 	if (input) input.value = crypto.randomUUID().replace(/-/g, "");
 });
 
 document.addEventListener("click", (e) => {
 	if (!(e.target instanceof Element)) return;
-	const button = e.target.closest("#copy-subsonic-key");
+	const button = e.target.closest("[data-copy-key]");
 	if (!(button instanceof HTMLButtonElement)) return;
 	const input = document.getElementById(
-		"subsonic_password",
+		button.dataset.copyKey ?? "",
 	) as HTMLInputElement | null;
 	if (!input?.value) return;
 	navigator.clipboard.writeText(input.value).then(() => {

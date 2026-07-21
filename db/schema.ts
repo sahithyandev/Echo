@@ -103,6 +103,10 @@ export const app_settings = sqliteTable(
 		data_dir: text("data_dir"),
 		signup_mode: text("signup_mode").notNull().default("closed"),
 		site_name: text("site_name"),
+		allow_anonymous: integer("allow_anonymous", { mode: "boolean" })
+			.notNull()
+			.default(false),
+		anonymous_subsonic_password: text("anonymous_subsonic_password"),
 	},
 	(t) => [check("app_settings_singleton", sql`${t.id} = 1`)],
 );

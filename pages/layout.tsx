@@ -9,10 +9,12 @@ unused(Html);
 export function Layout({
 	title,
 	active,
+	signedIn = true,
 	children,
 }: {
 	title: string;
 	active?: Tab;
+	signedIn?: boolean;
 	children: JSX.Element | JSX.Element[];
 }) {
 	return (
@@ -45,7 +47,7 @@ export function Layout({
 			</head>
 			<body class="bg-background text-foreground font-sans antialiased">
 				<div class="min-h-screen flex flex-col pb-14 md:pb-0">
-					{active && <Nav active={active} />}
+					{active && <Nav active={active} signedIn={signedIn} />}
 					<div id="page-content" class="contents">
 						{children}
 					</div>

@@ -50,6 +50,38 @@ describe("SettingsService.getDirs / setDirs", () => {
 	});
 });
 
+describe("SettingsService.loadAllowAnonymous / setAllowAnonymous", () => {
+	it("round-trips the anonymous-access flag through the DB and the in-memory flag", async () => {
+		const { allowAnonymous } = await import("../../utils/anonymous");
+		expect(allowAnonymous).toBe(false);
+
+		await SettingsService.setAllowAnonymous(db, true);
+		expect((await import("../../utils/anonymous")).allowAnonymous).toBe(true);
+
+		// A fresh load from a DB that doesn't know about this in-memory state
+		// should still reflect what was persisted.
+		await SettingsService.loadAllowAnonymous(db);
+		expect((await import("../../utils/anonymous")).allowAnonymous).toBe(true);
+
+		await SettingsService.setAllowAnonymous(db, false);
+		expect((await import("../../utils/anonymous")).allowAnonymous).toBe(false);
+	});
+});
+
+describe("SettingsService.getAnonymousSubsonicPassword / setAnonymousSubsonicPassword", () => {
+	it("is unset by default, then stores and clears a key", async () => {
+		expect(await SettingsService.getAnonymousSubsonicPassword(db)).toBeNull();
+
+		await SettingsService.setAnonymousSubsonicPassword(db, "guestkey");
+		expect(await SettingsService.getAnonymousSubsonicPassword(db)).toBe(
+			"guestkey",
+		);
+
+		await SettingsService.setAnonymousSubsonicPassword(db, null);
+		expect(await SettingsService.getAnonymousSubsonicPassword(db)).toBeNull();
+	});
+});
+
 describe("SettingsService.setSignupConfig", () => {
 	it("sets signup mode and replaces the allowlist", async () => {
 		const admin = await makeUser(db, "admin@b.com");

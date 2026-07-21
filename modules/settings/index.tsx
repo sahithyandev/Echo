@@ -3,6 +3,7 @@ import { Elysia, t } from "elysia";
 import { FPCALC_AVAILABLE } from "../../bindings/chromaprint";
 import type { DbLike } from "../../db/types";
 import { SettingsPage } from "../../pages/settings";
+import { allowAnonymous } from "../../utils/anonymous";
 import { unused } from "../../utils/misc";
 import createAuthMiddleware from "../auth/middleware";
 import { Auth } from "../auth/service";
@@ -27,7 +28,14 @@ export default function createSettingsModule(db: DbLike) {
 					(cookie as Record<string, { value?: string }>).session?.value ?? "",
 				);
 
-				const [users, stats, dirs, duplicates, signupConfig] = user.is_admin
+				const [
+					users,
+					stats,
+					dirs,
+					duplicates,
+					signupConfig,
+					anonymousSubsonicPassword,
+				] = user.is_admin
 					? await Promise.all([
 							Auth.listUsers(db),
 							SettingsService.getStats(db),
@@ -36,8 +44,9 @@ export default function createSettingsModule(db: DbLike) {
 								? LibraryService.listDuplicateTracks(db)
 								: undefined,
 							Auth.signupMode(db),
+							SettingsService.getAnonymousSubsonicPassword(db),
 						])
-					: [undefined, undefined, undefined, undefined, undefined];
+					: [undefined, undefined, undefined, undefined, undefined, undefined];
 				const subsonicPassword = await SettingsService.getSubsonicPassword(
 					db,
 					currentUser.id,
@@ -61,6 +70,8 @@ export default function createSettingsModule(db: DbLike) {
 						signupConfig={signupConfig}
 						fpcalcAvailable={FPCALC_AVAILABLE}
 						duplicates={duplicates}
+						allowAnonymous={allowAnonymous}
+						anonymousSubsonicPassword={anonymousSubsonicPassword}
 						ok={typeof query.ok === "string" ? query.ok : undefined}
 						error={typeof query.error === "string" ? query.error : undefined}
 					/>
@@ -190,6 +201,34 @@ export default function createSettingsModule(db: DbLike) {
 				currentUser: true,
 				params: t.Object({ id: t.String() }),
 				body: t.Object({ is_active: t.BooleanString() }),
+			},
+		)
+		.post(
+			"/settings/admin/anonymous",
+			async ({ currentUser, redirect, status, body }) => {
+				if (!currentUser) return redirect("/auth/login");
+				const user = await Auth.findUserById(db, currentUser.id);
+				if (!user.is_admin) return status(403);
+				await SettingsService.setAllowAnonymous(db, body.allow_anonymous);
+				return redirect("/settings?ok=anonymous");
+			},
+			{ currentUser: true, body: SettingsModel.AnonymousAccessBody },
+		)
+		.post(
+			"/settings/admin/anonymous-subsonic",
+			async ({ currentUser, redirect, status, body }) => {
+				if (!currentUser) return redirect("/auth/login");
+				const user = await Auth.findUserById(db, currentUser.id);
+				if (!user.is_admin) return status(403);
+				await SettingsService.setAnonymousSubsonicPassword(
+					db,
+					body.anonymous_subsonic_password || null,
+				);
+				return redirect("/settings?ok=anonymous-subsonic");
+			},
+			{
+				currentUser: true,
+				body: SettingsModel.AnonymousSubsonicPasswordBody,
 			},
 		)
 		.post(

@@ -11,6 +11,7 @@ import {
 	users,
 } from "../../db/schema";
 import type { DbLike } from "../../db/types";
+import { setAllowAnonymous } from "../../utils/anonymous";
 import { getEnvVar } from "../../utils/env";
 import { setSiteName } from "../../utils/site-name";
 import type { SettingsModel } from "./model";
@@ -37,6 +38,51 @@ export abstract class SettingsService {
 				set: { site_name: name },
 			});
 		setSiteName(name);
+	}
+
+	/** Loads the anonymous-access flag from the DB into the in-memory module, used by page guards without hitting the DB per request. */
+	static async loadAllowAnonymous(db: DbLike) {
+		const [row] = await db
+			.select({ allow_anonymous: app_settings.allow_anonymous })
+			.from(app_settings)
+			.where(eq(app_settings.id, 1))
+			.limit(1);
+		setAllowAnonymous(row?.allow_anonymous ?? false);
+	}
+
+	static async setAllowAnonymous(db: DbLike, value: boolean) {
+		await db
+			.insert(app_settings)
+			.values({ id: 1, allow_anonymous: value })
+			.onConflictDoUpdate({
+				target: app_settings.id,
+				set: { allow_anonymous: value },
+			});
+		setAllowAnonymous(value);
+	}
+
+	static async getAnonymousSubsonicPassword(db: DbLike) {
+		const [row] = await db
+			.select({
+				anonymous_subsonic_password: app_settings.anonymous_subsonic_password,
+			})
+			.from(app_settings)
+			.where(eq(app_settings.id, 1))
+			.limit(1);
+		return row?.anonymous_subsonic_password ?? null;
+	}
+
+	static async setAnonymousSubsonicPassword(
+		db: DbLike,
+		password: string | null,
+	) {
+		await db
+			.insert(app_settings)
+			.values({ id: 1, anonymous_subsonic_password: password })
+			.onConflictDoUpdate({
+				target: app_settings.id,
+				set: { anonymous_subsonic_password: password },
+			});
 	}
 
 	static async getDirs(db: DbLike) {

@@ -243,11 +243,61 @@ export function TrackGroups({
 	);
 }
 
+function AnonymousStreamingAccess({ streamingKey }: { streamingKey: string }) {
+	return (
+		<details class="border border-border rounded-lg bg-surface/40 px-4 py-3">
+			<summary class="text-sm font-medium cursor-pointer">
+				Stream with a Subsonic app
+			</summary>
+			<div class="flex flex-col gap-3 mt-3">
+				<p class="text-xs text-muted">
+					Point any Subsonic or OpenSubsonic client (DSub, Substreamer,
+					Symfonium, Feishin, Amperfy, ...) at this server with the username{" "}
+					<span class="font-mono">anonymous</span> and the key below.
+				</p>
+				<div class="flex gap-2">
+					<input
+						id="anonymous-streaming-key"
+						type="text"
+						readonly
+						value={streamingKey}
+						class="flex-1 bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
+					/>
+					<button
+						type="button"
+						data-copy-key="anonymous-streaming-key"
+						class="rounded-md border border-border text-sm font-medium px-4 py-2 text-muted hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+						title="Copy"
+						aria-label="Copy"
+					>
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<rect x="9" y="9" width="13" height="13" rx="2" />
+							<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+						</svg>
+					</button>
+				</div>
+			</div>
+		</details>
+	);
+}
+
 export function LibraryPage({
 	name,
 	tracks,
 	playCounts = new Map(),
 	isAdmin,
+	signedIn = true,
+	anonymousStreamingKey,
 	ok,
 	error,
 }: {
@@ -255,18 +305,31 @@ export function LibraryPage({
 	tracks: Track[];
 	playCounts?: Map<number, number>;
 	isAdmin: boolean;
+	signedIn?: boolean;
+	anonymousStreamingKey?: string | null;
 	ok?: string;
 	error?: string;
 }) {
 	return (
-		<Layout title="Library" active="library">
+		<Layout title="Library" active="library" signedIn={signedIn}>
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6">
 				<div class="flex items-center justify-between gap-4">
 					<p class="text-sm text-muted">
-						Welcome back, <span class="text-accent font-medium">{name}</span>
+						{signedIn ? (
+							<>
+								Welcome back,{" "}
+								<span class="text-accent font-medium">{name}</span>
+							</>
+						) : (
+							"Browsing as guest"
+						)}
 					</p>
 					{isAdmin && tracks.length > 0 && <UploadButton />}
 				</div>
+
+				{!signedIn && anonymousStreamingKey && (
+					<AnonymousStreamingAccess streamingKey={anonymousStreamingKey} />
+				)}
 
 				{isAdmin && <UploadDialog />}
 

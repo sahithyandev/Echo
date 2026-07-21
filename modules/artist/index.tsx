@@ -3,6 +3,7 @@ import { Elysia, t } from "elysia";
 import type { DbLike } from "../../db/types";
 import { ArtistPage } from "../../pages/artist";
 import { ArtistsPage } from "../../pages/artists";
+import { allowAnonymous } from "../../utils/anonymous";
 import { unused } from "../../utils/misc";
 import { AnalyticsService } from "../analytics/service";
 import createAuthMiddleware from "../auth/middleware";
@@ -17,34 +18,39 @@ export default function createArtistModule(db: DbLike) {
 		.get(
 			"/artists",
 			async ({ currentUser, redirect }) => {
-				if (!currentUser) return redirect("/auth/login");
+				if (!currentUser && !allowAnonymous) return redirect("/auth/login");
 				const artists = await ArtistService.listArtists(db);
-				return <ArtistsPage artists={artists} />;
+				return (
+					<ArtistsPage artists={artists} signedIn={currentUser !== null} />
+				);
 			},
 			{ currentUser: true },
 		)
 		.get(
 			"/artist/:id",
 			async ({ currentUser, redirect, params, query }) => {
-				if (!currentUser) return redirect("/auth/login");
+				if (!currentUser && !allowAnonymous) return redirect("/auth/login");
 				const artistId = Number(params.id);
 				const [user, artist, tracks] = await Promise.all([
-					Auth.findUserById(db, currentUser.id),
+					currentUser ? Auth.findUserById(db, currentUser.id) : null,
 					ArtistService.findArtist(db, artistId),
 					ArtistService.getArtistTracks(db, artistId),
 				]);
 				if (!artist) return redirect("/library");
-				const playCounts = await AnalyticsService.getPlayCounts(
-					db,
-					currentUser.id,
-					tracks.map((t) => t.id),
-				);
+				const playCounts = currentUser
+					? await AnalyticsService.getPlayCounts(
+							db,
+							currentUser.id,
+							tracks.map((t) => t.id),
+						)
+					: new Map<number, number>();
 				return (
 					<ArtistPage
 						artist={artist}
 						tracks={tracks}
 						playCounts={playCounts}
-						isAdmin={user.is_admin}
+						isAdmin={user?.is_admin ?? false}
+						signedIn={currentUser !== null}
 						ok={typeof query.ok === "string" ? query.ok : undefined}
 						error={typeof query.error === "string" ? query.error : undefined}
 					/>

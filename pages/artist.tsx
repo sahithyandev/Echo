@@ -22,6 +22,7 @@ export function ArtistPage({
 	tracks,
 	playCounts = new Map(),
 	isAdmin,
+	signedIn = true,
 	ok,
 	error,
 }: {
@@ -29,11 +30,12 @@ export function ArtistPage({
 	tracks: Track[];
 	playCounts?: Map<number, number>;
 	isAdmin: boolean;
+	signedIn?: boolean;
 	ok?: string;
 	error?: string;
 }) {
 	return (
-		<Layout title={artist.name} active="artists">
+		<Layout title={artist.name} active="artists" signedIn={signedIn}>
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6">
 				<Flash variant="ok" message={ok && (OK_MESSAGES[ok] ?? "Saved.")} />
 				<Flash

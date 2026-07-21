@@ -11,9 +11,15 @@ type Album = {
 	artists: string[];
 };
 
-export function AlbumsPage({ albums }: { albums: Album[] }) {
+export function AlbumsPage({
+	albums,
+	signedIn = true,
+}: {
+	albums: Album[];
+	signedIn?: boolean;
+}) {
 	return (
-		<Layout title="Albums" active="albums">
+		<Layout title="Albums" active="albums" signedIn={signedIn}>
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6">
 				{albums.length === 0 ? (
 					<div class="flex-1 flex flex-col items-center justify-center gap-3 text-center">

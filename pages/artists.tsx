@@ -19,10 +19,16 @@ function groupByLetter(artists: Artist[]): [string, Artist[]][] {
 	return Array.from(groups.entries());
 }
 
-export function ArtistsPage({ artists }: { artists: Artist[] }) {
+export function ArtistsPage({
+	artists,
+	signedIn = true,
+}: {
+	artists: Artist[];
+	signedIn?: boolean;
+}) {
 	const groups = groupByLetter(artists);
 	return (
-		<Layout title="Artists" active="artists">
+		<Layout title="Artists" active="artists" signedIn={signedIn}>
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-8">
 				{artists.length === 0 ? (
 					<div class="flex-1 flex flex-col items-center justify-center gap-3 text-center">

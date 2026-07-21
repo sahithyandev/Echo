@@ -37,6 +37,7 @@ export function AlbumPage({
 	artists,
 	playCounts = new Map(),
 	isAdmin,
+	signedIn = true,
 	ok,
 	error,
 }: {
@@ -45,12 +46,13 @@ export function AlbumPage({
 	artists: Artist[];
 	playCounts?: Map<number, number>;
 	isAdmin: boolean;
+	signedIn?: boolean;
 	ok?: string;
 	error?: string;
 }) {
 	const artistNames = artists.map((a) => a.name).join(", ");
 	return (
-		<Layout title={album.title} active="albums">
+		<Layout title={album.title} active="albums" signedIn={signedIn}>
 			<main class="flex-1 flex flex-col p-4 sm:p-6 gap-6">
 				<Flash variant="ok" message={ok && (OK_MESSAGES[ok] ?? "Saved.")} />
 				<Flash
